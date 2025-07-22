@@ -1,0 +1,213 @@
+/*
+ * register.css
+ * Styles specific to the user registration page.
+ * Leverages variables from guest.css for consistent theming.
+ */
+
+/* Ensure the body is centered and uses the main background */
+body {
+    background-color: var(--bg-primary);
+    font-family: 'Share Tech Mono', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    min-height: 100vh; /* Full viewport height */
+    padding: 20px; /* Add some padding for smaller screens */
+    box-sizing: border-box;
+}
+
+/* The main card container for the form */
+.card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 450px; /* Max width for the form card */
+    padding: 1.5em;
+    background-color: var(--bg-secondary); /* Darker background for the card itself */
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 0 30px rgba(184, 50, 212, 0.2); /* Stronger glow for the main card */
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Slight lift on hover */
+    box-shadow: 0 0 40px var(--color-accent); /* More intense glow on hover */
+}
+
+/* Inner card for the form content */
+.card2 {
+    width: 100%;
+    padding: 1.5em;
+    background-color: var(--bg-tertiary); /* Inner background */
+    border-radius: 15px; /* Slightly less rounded than outer card */
+    box-shadow: inset 0 0 10px rgba(232, 121, 249, 0.05); /* Inner shadow */
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2em; /* Space between form fields */
+}
+
+#heading {
+    text-align: center;
+    font-size: 2.5em;
+    font-weight: bolder;
+    margin-bottom: 1em;
+    background: var(--gradient-main); /* Apply gradient text */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-quaternary); /* Input field background */
+    border-radius: 10px;
+    padding: 0.8em 1em;
+    box-shadow: inset 0 0 5px rgba(232, 121, 249, 0.1);
+}
+
+.input-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 0.8em;
+    color: var(--color-secondary); /* Icon color */
+}
+
+.input-field {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary); /* Input text color */
+    font-size: 1em;
+    padding: 0.2em 0;
+}
+
+.input-field::placeholder {
+    color: var(--text-muted); /* Placeholder text color */
+    opacity: 0.8;
+}
+
+.input-field:focus {
+    box-shadow: none;
+    border-radius: 5px; /* Ensure focus ring is rounded */
+}
+
+.btn {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 1em; /* Space between buttons */
+    margin-top: 1.5em;
+}
+
+.button1, .button2, .button3, .oauth-button {
+    padding: 1em 2em;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none; /* For anchor buttons */
+    display: flex; /* For centering content and icons */
+    justify-content: center;
+    align-items: center;
+}
+
+.button1 { /* Register Button */
+    background: var(--gradient-main); /* Primary gradient background */
+    color: var(--color-primary);
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+}
+
+.button1:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
+    opacity: 0.9;
+}
+
+/* .button2 is commented out in HTML, but if used, style it */
+.button2 { /* Login Button (if reactivated) */
+    background-color: var(--bg-secondary);
+    color: var(--color-primary);
+    border: 1px solid var(--color-secondary);
+}
+
+.button2:hover {
+    background-color: var(--color-secondary);
+    box-shadow: 0 5px 15px rgba(184, 50, 212, 0.3);
+}
+
+.button3 { /* "Want to login?" Button */
+    background: transparent;
+    color: var(--text-muted); /* Muted text color */
+    font-size: 0.95em;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.button3:hover {
+    color: var(--color-accent); /* Brighter on hover */
+    opacity: 1;
+}
+
+.oauth-button {
+    background-color: var(--bg-secondary);
+    color: var(--color-primary);
+    border: 1px solid var(--color-secondary);
+    box-shadow: 0 3px 10px rgba(184, 50, 212, 0.2);
+}
+
+.oauth-button:hover {
+    background-color: var(--color-secondary);
+    box-shadow: 0 5px 15px rgba(184, 50, 212, 0.4);
+    transform: translateY(-2px);
+}
+
+.oauth-button svg {
+    margin-right: 0.8em;
+    width: 20px;
+    height: 20px;
+    fill: currentColor; /* Inherit color from button text */
+}
+
+/* Message display for success/error */
+#message {
+    color: var(--color-warning); /* Default for errors */
+    font-size: 0.9em;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 1em;
+}
+
+#message.success {
+    color: var(--color-accent); /* Greenish for success, or pick a suitable accent color */
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .card {
+        padding: 1em;
+        margin: 10px; /* Smaller margin on very small screens */
+    }
+
+    .card2 {
+        padding: 1em;
+    }
+
+    #heading {
+        font-size: 2em;
+    }
+
+    .button1, .button2, .button3, .oauth-button {
+        padding: 0.8em 1.5em;
+        font-size: 1em;
+    }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Category View</title>
+    <link rel="stylesheet" href="/static/css/guest.css" />
+    <link rel="stylesheet" href="/static/css/guest_category.css" />
+    <script src="/static/js/category.js" type="module"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="navbar-brand" href="/">Forum</a>
+      <ul class="navbar-links">
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
+      </ul>
+    </nav>
+
+    <nav class="side-menu" id="side-menu">
+      <ul>
+        <li><a href="/guest/feed" id="my-feed-link">Feed</a></li>
+        <li class="category-dropdown-toggle">
+          Categories <span class="dropdown-arrow">&#9662;</span>
+        </li>
+        <li>
+          <ul id="category-tabs" class="category-tabs dropdown-content"></ul>
+        </li>
+      </ul>
+      <div class="side-glow"></div>
+    </nav>
+
+    <div class="forum-content" id="forumContainer"></div>
+
+    <template id="post-template">
+      <div class="post">
+        <h3 class="post-header"></h3>
+        <div class="post-title"></div>
+        <p class="post-content"></p>
+        <time class="post-time"></time>
+        <div class="post-reactions">
+          <button class="like-btn" disabled>
+            ▲  <span class="like-count">0</span>
+          </button>
+          <button class="dislike-btn" disabled>
+            ▼  <span class="dislike-count">0</span>
+          </button>
+        </div>
+        <div class="post-comments"></div>
+      </div>
+    </template>
+  </body>
+</html>

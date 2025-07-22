@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Category View</title>
+    <link rel="stylesheet" href="/static/css/user.css" />
+    <link rel="stylesheet" href="/static/css/user_category.css" />
+    <script src="/static/js/user/user_category.js" type="module"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="navbar-brand" href="/user/feed">Forum</a>
+    </nav>
+
+    <nav class="side-menu" id="side-menu">
+      <ul>
+        <li><a href="/user/feed" id="my-feed-link">My Feed</a></li>
+        <li class="category-dropdown-toggle">
+          Categories <span class="dropdown-arrow">&#9662;</span>
+        </li>
+        <li>
+          <ul id="category-tabs" class="category-tabs dropdown-content"></ul>
+        </li>
+      </ul>
+      <div class="side-glow"></div>
+    </nav>
+
+    <div class="forum-content" id="forumContainer"></div>
+
+    <template id="category-template">
+      <div class="category-section">
+        <h2 class="category-title"></h2>
+        <div class="category-posts"></div>
+      </div>
+    </template>
+
+    <template id="post-template">
+      <div class="post">
+        <h3 class="post-header"></h3>
+        <div class="post-title"></div>
+        <p class="post-content"></p>
+        <time class="post-time"></time>
+        <div class="post-reactions">
+          <div class="static-reactions">
+            <span class="up-arrow">&#9650;</span> <span class="like-count">0</span>
+            &nbsp;&nbsp;
+            <span class="down-arrow">&#9660;</span> <span class="dislike-count">0</span>
+          </div>
+        </div>
+        <div class="post-comments"></div>
+      </div>
+    </template>
+  </body>
+</html>

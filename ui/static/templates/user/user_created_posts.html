@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Created Posts</title>
+    <link rel="stylesheet" href="/static/css/user.css" />
+    <link rel="stylesheet" href="/static/css/user_created_posts.css" />
+    <script src="/static/js/user/user_created_posts.js" type="module"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="navbar-brand" href="/user/feed">Forum</a>
+    </nav>
+
+    <main id="forumContainer" class="forum-content"></main>
+
+    <template id="post-template">
+      <div class="post">
+        <h3 class="post-header"></h3>
+        <div class="post-title"></div>
+        <p class="post-content"></p>
+        <time class="post-time"></time>
+        <div class="post-reactions">
+          <span class="up-arrow">▲</span> <span class="like-count">0</span>
+          <span class="down-arrow">▼</span> <span class="dislike-count">0</span>
+        </div>
+        <div class="post-comments"></div>
+      </div>
+    </template>
+  </body>
+</html>

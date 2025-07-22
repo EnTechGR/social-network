@@ -1,0 +1,191 @@
+/* User Created Posts Custom Card Styles */
+
+body, html {
+    overflow-x: hidden;
+  }
+  
+  .forum-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5em;
+    width: calc(100% - 350px); /* 250px sidebar + 20px gap */
+    margin-left: 270px;
+    max-width: none;
+    padding: 2em 0;
+    box-sizing: border-box;
+    align-items: center;
+  }
+  
+  .post {
+    background: linear-gradient(145deg, var(--bg-tertiary), #1c1c1c);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.13);
+    text-align: left;
+    padding: 2em 2.5em 2em 2.5em;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2em;
+    border: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  
+  .post-title, .post-header {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 0.3em;
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.18));
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .post-content {
+    font-size: 1.1em;
+    color: var(--text-primary);
+    margin-bottom: 0.8em;
+    line-height: 1.7;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    max-width: 100%;
+    word-break: break-all;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 10;
+    line-clamp: 10;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .post-time {
+    color: var(--text-muted);
+    font-size: 0.95em;
+    margin-bottom: 0.5em;
+  }
+  
+  .post-reactions {
+    margin-top: 0.5em;
+    display: flex;
+    gap: 1em;
+    align-items: center;
+    justify-content: flex-start;
+    border-top: 1px solid rgba(232, 121, 249, 0.08);
+    padding-top: 0.7em;
+    color: var(--text-secondary);
+  }
+  
+  .like-btn, .dislike-btn {
+    margin-right: 0.5em;
+    padding: 0.4em 1.1em;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: rgba(139, 92, 246, 0.18); /* translucent purple */
+    color: var(--color-primary);
+    transition: background-color 0.2s, box-shadow 0.2s;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    box-shadow: none;
+    text-decoration: none !important;
+  }
+  
+  .like-btn:disabled, .dislike-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: rgba(139, 92, 246, 0.18);
+    color: var(--text-muted);
+    box-shadow: none;
+  }
+  
+  .like-btn:last-child, .dislike-btn:last-child {
+    margin-right: 0;
+  }
+  
+  .post-category-link {
+    color: var(--color-quaternary);
+    text-decoration: none;
+    margin-right: 0.5em;
+    transition: color 0.2s, text-decoration 0.2s;
+  }
+  .post-category-link:hover {
+    text-decoration: underline;
+    color: var(--color-accent);
+  }
+  
+  .post-reactions button, .post-reactions .like-btn, .post-reactions .dislike-btn {
+    margin-right: 0.5em;
+    padding: 0.4em 1.1em;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    background-color: var(--bg-secondary);
+    color: var(--color-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: none;
+    text-decoration: none !important;
+  }
+  .post-reactions button:disabled, .post-reactions .like-btn:disabled, .post-reactions .dislike-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    color: var(--text-muted);
+  }
+  
+  .post-title, .post-header, .post-content, .like-btn, .dislike-btn, .post-reactions button {
+    text-decoration: none !important;
+  }
+  
+  .post-link,
+  .post-link:visited,
+  .post-link:focus,
+  .post-link:hover {
+    width: 100%;
+    max-width: 100%;
+    text-decoration: none !important;
+    cursor: pointer;
+  }
+  
+  @media (max-width: 800px) {
+    .forum-content {
+      padding: 1em 0;
+      gap: 1.2em;
+    }
+    .post {
+      padding: 1em 0.5em 1em 0.5em;
+      border-radius: 10px;
+    }
+    .post-title, .post-header {
+      font-size: 1.1em;
+    }
+  .post-content {
+    font-size: 1em;
+  }
+  }
+
+.post-thumb {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  background: #000;
+  display: block;
+  margin-bottom: 0.5em;
+}

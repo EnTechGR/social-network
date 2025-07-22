@@ -1,0 +1,159 @@
+/*
+ * post.css
+ * This file contains styles specific to the single post view page.
+ * It aims for consistency with the forum feed's post styling.
+ */
+
+.post-container {
+    width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    /* Adopting card-like styling from feed.css posts */
+    background-color: var(--bg-tertiary); /* Consistent with .post background */
+    border-radius: 20px; /* Matching the card2 and feed posts */
+    box-shadow: 0 0 15px rgba(232, 121, 249, 0.05); /* Initial subtle glow */
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.2s ease-in-out; /* For smooth transitions if we add hover later */
+}
+
+.post-container:hover {
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: scale(1.015);
+  z-index: 2;
+}
+
+/* Adding this rule to make the "Comments" heading white */
+.post-container h3 {
+    color: var(--color-primary); /* Ensures all h3 inside the post container are white */
+}
+
+
+.post-title {
+    background: var(--gradient-main); /* Apply the gradient text effect */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.5em; /* Slightly larger for a single post view */
+    font-weight: bolder;
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+    margin-bottom: 0.5em;
+}
+
+.post-meta {
+    color: var(--text-muted); /* More appropriate for meta info */
+    font-size: 1em; /* Adjusted for better flow */
+    margin-bottom: 1em;
+}
+
+.post-image {
+    max-width: 100%;
+    display: block;
+    margin-bottom: 1em;
+}
+
+.post-content {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 1.2em 1.5em;
+  margin: 1.2em 0;
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.06);
+  font-size: 1.15em;
+  max-width: 100%;
+  width: 100%;
+  word-break: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.post-reactions {
+    margin-top: 1.5em; /* A bit more space */
+    border-top: 1px solid rgba(232, 121, 249, 0.1); /* Subtle separator */
+    padding-top: 1em;
+    text-align: center;
+}
+
+.post-reactions button {
+    margin-right: 1em;
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: var(--bg-secondary); /* Use a secondary background */
+    color: var(--color-primary);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-reactions button:hover {
+    background-color: var(--color-secondary); /* A more vibrant purple on hover */
+    box-shadow: 0 0 10px rgba(184, 50, 212, 0.5); /* Matching purple glow */
+}
+
+.post-reactions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--bg-secondary); /* Keep consistent background when disabled */
+    color: var(--text-muted);
+    box-shadow: none;
+}
+
+.post-reactions span {
+    font-weight: bold;
+    margin-left: 0.3em;
+    color: var(--text-primary);
+}
+
+.post-categories {
+    margin-top: 1em;
+    font-style: italic;
+    font-size: 0.95em;
+    color: var(--text-muted); /* Consistent muted text for categories */
+    text-align: center;
+}
+
+.post-category-link {
+    color: var(--color-quaternary); /* Using a purple accent for category links */
+    text-decoration: none; /* No initial underline */
+    margin-right: 0.5em;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.post-category-link:hover {
+    text-decoration: underline;
+    color: var(--color-accent); /* More vibrant on hover */
+}
+
+/* Comment-specific styles to ensure all text within is light */
+.comments-section {
+  text-align: center;
+}
+
+.comment {
+    margin-left: 1em;
+    margin-top: 1em;
+    background-color: var(--bg-quaternary);
+    padding: 0.8em 1em;
+    border-radius: 12px;
+    color: var(--text-secondary); /* Ensures default text inside comment is light */
+    box-shadow: inset 0 0 5px rgba(232, 121, 249, 0.05);
+}
+
+.comment strong {
+    color: var(--color-primary); /* Ensures comment author names are white */
+}
+
+.comment time {
+    display: block; /* Already had this */
+    font-size: 0.8em; /* Already had this */
+    color: var(--text-muted); /* Ensures comment timestamps are light muted purple */
+    margin-top: 0.3em; /* Already had this */
+}
+
+/* If your comment content is within a <p> tag, add this: */
+.comment p {
+    color: var(--text-secondary); /* Ensures paragraph text inside comments is light */
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forum Feed</title>
+    <link rel="stylesheet" href="/static/css/user.css" />
+    <link rel="stylesheet" href="/static/css/modal.css" />
+    <link rel="stylesheet" href="/static/css/user_feed.css" />
+    <script src="/static/js/user/user_mainpage.js" type="module"></script>
+    <script src="/static/js/user/user_feed.js" type="module"></script>
+    <script src="/static/js/user/create_post.js" defer></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="navbar-brand" href="/user/feed">Forum</a>
+      <ul class="navbar-links">
+        <li><a href="#" id="logout-link">Logout</a></li>
+      </ul>
+    </nav>
+
+    <nav class="side-menu" id="side-menu">
+      <ul>
+        <li><a href="/user/feed" id="my-feed-link">My Feed</a></li>
+        <li><a href="#" id="create-post-btn">Create Post</a></li>
+        <li class="category-dropdown-toggle">
+          Categories <span class="dropdown-arrow">&#9662;</span>
+        </li>
+        <li>
+          <ul id="category-tabs" class="category-tabs dropdown-content"></ul>
+        </li>
+        <li>
+          <a href="/user/created-posts" id="created-posts-link"
+            >Created Posts</a
+          >
+        </li>
+        <li>
+          <a href="/user/liked-posts" id="liked-posts-link">Liked Posts</a>
+        </li>
+      </ul>
+      <div class="side-glow"></div>
+    </nav>
+
+    <div class="forum-content" id="forumContainer"></div>
+
+    <template id="category-template">
+      <div class="category-section">
+        <h2 class="category-title"></h2>
+        <div class="category-posts"></div>
+      </div>
+    </template>
+
+    <template id="post-template">
+      <div class="post">
+        <h3 class="post-header"></h3>
+        <div class="post-title"></div>
+        <p class="post-content"></p>
+        <time class="post-time"></time>
+        <div class="post-reactions">
+          <div class="static-reactions">
+            <span class="up-arrow">▲</span> <span class="like-count">0</span>
+            &nbsp;&nbsp;
+            <span class="down-arrow">▼</span>
+            <span class="dislike-count">0</span>
+          </div>
+        </div>
+        <div class="post-comments"></div>
+      </div>
+    </template>
+
+    <template id="comment-template">
+      <div class="comment">
+        <strong class="comment-user"></strong>
+        <span class="comment-content"></span>
+        <time class="comment-time"></time>
+        <div class="comment-reactions">
+          <div class="static-reactions">
+            <span class="up-arrow">▲</span> <span class="like-count">0</span>
+            &nbsp;&nbsp;
+            <span class="down-arrow">▼</span>
+            <span class="dislike-count">0</span>
+          </div>
+        </div>
+      </div>
+    </template>
+    <!-- Create Post Modal -->
+    <div id="post-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="body-container">
+          <button class="close-btn">&times;</button>
+          <h2>Create Post</h2>
+
+          <input id="post-title" placeholder="Post Title" />
+          <div id="post-title-count" class="char-counter">0 / 100</div>
+          <textarea id="post-body" placeholder="Write your post..."></textarea>
+          <div id="post-body-count" class="char-counter">0 / 5000</div>
+        </div>
+
+        <div class="category-container">
+          <div class="image-upload">
+            <input
+              type="file"
+              id="post-image"
+              accept="image/jpeg,image/png,image/gif"
+              hidden
+            />
+            <button id="add-image-btn">Add Image</button>
+            <span id="image-status" class="image-status hidden"></span>
+            <button id="cancel-image-btn" class="hidden">Cancel</button>
+            <img id="image-preview" class="image-preview hidden" />
+            <div id="image-error" class="image-error"></div>
+          </div>
+          <label for="post-category" class="modal-label">Categories</label>
+          <div id="post-category" class="checkbox-group"></div>
+          <button id="submit-post">Submit</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

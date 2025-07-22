@@ -1,0 +1,210 @@
+@font-face {
+    font-family: 'Open Sans';
+    src: ('/ui/static/fonts/Open_Sans/OpenSans-VariableFont_wdth\,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+    :root {
+      --color-primary: #ffffff;
+      --color-secondary: #b832d4;  /* Darker Vivid Pink */
+      --color-tertiary: #9333ea;   /* Darker Orchid Purple */
+      --color-quaternary: #a855f7; /* Slightly deeper Light Lavender */
+      --color-accent: #e879f9;     /* Deeper Soft Pink Accent */
+      --color-warning: #fb7185; /* Warm Coral Red */
+
+      /* Backgrounds */
+      --bg-primary: #0b0b0f;   /* Deep black-blue */
+      --bg-secondary: #13131a; /* Softened dark */
+      --bg-tertiary: #1c1c27;  /* Dark card base */
+      --bg-quaternary: #2c2c3a;/* Muted dark side */
+
+      /* Text colors */
+      --text-primary: #ffffff;
+      --text-secondary: #f3e8ff;
+      --text-muted: #d8b4fe;
+      --text-dark: #a78bfa;
+
+      /* Gradients */
+      --gradient-main: linear-gradient(135deg, #b832d4 0%, #9333ea 50%, #a855f7 100%);
+      --gradient-accent: linear-gradient(45deg, #e879f9 0%, #9333ea 100%);
+      --gradient-glow: radial-gradient(circle, #b832d4 0%, transparent 70%);
+      --gradient-crossing: linear-gradient(45deg, #b832d4 0%, transparent 30%, transparent 70%, #9333ea 100%),
+                           linear-gradient(-45deg, #e879f9 0%, transparent 30%, transparent 70%, #a855f7 100%);
+    }
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    height: 100%;
+    font-family: 'Open Sans', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: var(--bg-primary);
+  }
+  
+  .hero {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    /* background: url('images/sci-fi-bg.jpg') no-repeat center center; */
+    background-size: cover;
+    transform: translateZ(-1px) scale(1.5);
+    z-index: -1;
+    will-change: transform;
+  }
+  
+  .hero-content {
+    position: relative;
+    max-width: 1200px;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4rem;
+  }
+  
+  .foreground-img {
+    width: 50%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  
+  .signup-box {
+    max-width: 40%;
+  }
+  
+  .subtext {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  
+  .signup-box h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .signup-box .desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+  
+  .signup-btn,
+  .btn,
+  .primary,
+  .secondary,
+  .ghost {
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 3px 12px rgba(139, 92, 246, 0.4);
+  }
+
+  .signup-btn::before,
+  .btn::before,
+  .primary::before,
+  .secondary::before,
+  .ghost::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .signup-btn {
+    background-image: var(--gradient-main);
+    color: var(--bg-primary);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .signup-btn:hover,
+  .btn:hover,
+  .primary:hover,
+  .secondary:hover,
+  .ghost:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    background-image: var(--gradient-accent);
+  }
+
+  .signup-btn:hover::before,
+  .btn:hover::before,
+  .primary:hover::before,
+  .secondary:hover::before,
+  .ghost:hover::before {
+    left: 100%;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .primary {
+    background-image: var(--gradient-main);
+    color: var(--text-primary);
+  }
+
+  .secondary {
+    background-image: var(--gradient-main);
+    color: var(--text-primary);
+    border: none;
+  }
+
+  .ghost {
+    background-image: var(--gradient-main);
+    color: var(--text-primary);
+    border: none;
+  }
+  
+  .ghost:hover {
+    background: #111;
+    color: var(--text-primary);
+  }
+
+.container {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: radial-gradient(ellipse, #9333ea, transparent, black) black;
+}
+

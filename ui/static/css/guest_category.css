@@ -1,0 +1,155 @@
+/*
+ * guest_category.css
+ * This file contains styles specific to the category view page.
+ * It aims for consistency with the forum feed and single post styling.
+ */
+
+.forum-content {
+    width: 100%;
+    max-width: 1200px;
+    padding: 2em;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em; /* Space between the category title and posts */
+    margin-left: 250px; /* Adjust for side menu */
+}
+
+/* Category Title - Make it fancy like the post-title */
+.forum-content h2 {
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.8em; /* Slightly larger for a main title */
+    font-weight: bolder;
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+    margin-bottom: 0.5em; /* Space below the title */
+    text-align: center; /* Center the category title */
+    padding-bottom: 0.2em; /* Some padding below the text */
+    border-bottom: 2px solid var(--color-primary); /* A line below the title */
+    padding-bottom: 0.5em;
+}
+
+/* Styling for the wrapper around each post (the clickable area) */
+.post-link {
+    display: block; /* Make it a block element to contain the post */
+    text-decoration: none;
+    color: inherit; /* Inherit color from the contained post elements */
+
+    /* Apply card-like styling */
+    background-color: var(--bg-tertiary); /* Consistent with .post background */
+    border-radius: 20px; /* Matching the card2 and feed posts */
+    padding: 1.2em; /* Consistent padding */
+    margin-bottom: 1.5em; /* Space between posts */
+    box-shadow: 0 0 10px rgba(232, 121, 249, 0.05); /* Initial subtle glow */
+    transition: transform 0.3s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.post-link:hover {
+    background-color: var(--bg-quaternary); /* Darker purple background on hover */
+    transform: scale(1.02); /* Apply the scale effect from card2 */
+    box-shadow: 0 0 25px var(--color-accent); /* Stronger glow like card2:hover */
+}
+
+/* Styles for elements INSIDE the .post (from template) */
+.post {
+    /* No background/padding/margin here, as .post-link handles the card container */
+    color: var(--text-primary); /* Default text color for post content */
+}
+
+.post-header {
+    color: var(--color-primary); /* Author name */
+    font-size: 1.2em;
+    margin: 0 0 0.5em;
+}
+
+.post-title {
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.8em; /* Slightly smaller than main title, but still prominent */
+    font-weight: bolder;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.2));
+    margin-bottom: 0.5em;
+}
+
+.post-content {
+    font-size: 1.1em;
+    margin-bottom: 0.8em;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.post-time {
+    font-size: 0.85em;
+    color: var(--text-muted); /* Light muted purple for time */
+    display: block; /* Ensures time is on its own line */
+    margin-bottom: 1em; /* Space before reactions */
+}
+
+.post-reactions {
+    margin-top: 1em;
+    display: flex;
+    gap: 0.8em;
+}
+
+.post-reactions button {
+    padding: 0.4em 0.8em;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    background-color: var(--bg-secondary);
+    color: var(--color-primary);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-reactions button:hover {
+    background-color: var(--color-secondary);
+    box-shadow: 0 0 8px rgba(184, 50, 212, 0.4);
+}
+
+.post-reactions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--bg-secondary);
+    color: var(--text-muted);
+    box-shadow: none;
+}
+
+.post-reactions span {
+    font-weight: bold;
+    margin-left: 0.2em;
+    color: var(--text-primary); /* Ensure counts are white */
+}
+
+.post-comments {
+    font-size: 0.9em;
+    color: var(--text-muted); /* Color for comments text, if any */
+    margin-top: 0.5em;
+}
+
+/* Placeholder for when no posts are found */
+.no-posts {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 1.1em;
+    margin-top: 2em;
+}
+
+/* Ensure default text in forumContainer is light */
+#forumContainer p {
+    color: var(--text-primary);
+}
+
+.post-thumb {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    background: #000;
+    display: block;
+    margin-bottom: 0.5em;
+}

@@ -88,8 +88,9 @@ function renderSinglePost(post) {
   reactions.className = 'post-reactions';
 
   // Count likes & dislikes
-  let likes = post.reactions?.filter(r => r.reaction_type === 1).length || 0;
-  let dislikes = post.reactions?.filter(r => r.reaction_type === 2).length || 0;
+  const reactionsArray = Array.isArray(post.reactions) ? post.reactions : [];
+  let likes = reactionsArray.filter(r => r.reaction_type === 1).length || 0;
+  let dislikes = reactionsArray.filter(r => r.reaction_type === 2).length || 0;
 
   const likeBtn = document.createElement('button');
   likeBtn.textContent = `▲ ${likes}`;
@@ -288,8 +289,9 @@ function createCommentElement(comment) {
   const commentReactions = document.createElement('div');
   commentReactions.className = 'comment-reactions';
 
-  const likeCount = comment.reactions?.filter(r => r.reaction_type === 1).length || 0;
-  const dislikeCount = comment.reactions?.filter(r => r.reaction_type === 2).length || 0;
+  const reactionsArray = Array.isArray(comment.reactions) ? comment.reactions : [];
+  const likeCount = reactionsArray.filter(r => r.reaction_type === 1).length || 0;
+  const dislikeCount = reactionsArray.filter(r => r.reaction_type === 2).length || 0;
 
   const likeBtn = document.createElement('button');
   likeBtn.textContent = `▲ ${likeCount}`;
@@ -362,8 +364,9 @@ async function handleReaction(targetId, targetType, reactionType, likeBtn, disli
     }
 
     const reactions = await resp.json();
-    const likes = reactions.filter(r => r.reaction_type === 1).length;
-    const dislikes = reactions.filter(r => r.reaction_type === 2).length;
+    const reactionsArray = Array.isArray(reactions) ? reactions : [];
+    const likes = reactionsArray.filter(r => r.reaction_type === 1).length;
+    const dislikes = reactionsArray.filter(r => r.reaction_type === 2).length;
 
     likeBtn.textContent = `▲ ${likes}`;
     dislikeBtn.textContent = `▼ ${dislikes}`;

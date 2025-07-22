@@ -2,16 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Created Posts</title>
+    <title>My Reactions</title>
     <link rel="stylesheet" href="/static/css/user.css" />
-    <link rel="stylesheet" href="/static/css/user_created_posts.css" />
-    <script src="/static/js/user/user_created_posts.js" type="module"></script>
+    <link rel="stylesheet" href="/static/css/user_reactions.css" />
+    <script src="/static/js/user/user_reactions.js" type="module"></script>
   </head>
   <body>
     <nav class="navbar">
       <a class="navbar-brand" href="/user/feed">Forum</a>
     </nav>
-
     <nav class="side-menu" id="side-menu">
       <ul>
         <li><a href="/user/feed" id="my-feed-link">My Feed</a></li>
@@ -31,9 +30,16 @@
       </ul>
       <div class="side-glow"></div>
     </nav>
-
-    <main id="forumContainer" class="forum-content"></main>
-
+    <main class="reactions-main">
+      <section class="reactions-column">
+        <h2>Liked Posts</h2>
+        <div id="liked-posts-container" class="reactions-list"></div>
+      </section>
+      <section class="reactions-column">
+        <h2>Disliked Posts</h2>
+        <div id="disliked-posts-container" class="reactions-list"></div>
+      </section>
+    </main>
     <template id="post-template">
       <div class="post">
         <h3 class="post-header"></h3>
@@ -48,4 +54,4 @@
       </div>
     </template>
   </body>
-</html>
+</html> 

@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="/static/css/user_created_posts.css" />
     <script src="/static/js/user/user_comment_posts.js" type="module"></script>
     <script src="/static/js/user/user_mainpage.js" type="module"></script>
-    <script src="/static/js/user/user_feed.js" type="module"></script>
-    <script src="/static/js/user/create_post.js" defer></script>
   </head>
   <body>
     <nav class="navbar">
@@ -17,7 +15,6 @@
     <nav class="side-menu" id="side-menu">
       <ul>
         <li><a href="/user/feed" id="my-feed-link">My Feed</a></li>
-        <li><a href="#" id="create-post-btn">Create Post</a></li>
         <li class="category-dropdown-toggle">
           Categories <span class="dropdown-arrow">&#9662;</span>
         </li>
@@ -45,6 +42,10 @@
         <div class="post-reactions">
           <span class="up-arrow">▲</span> <span class="like-count">0</span>
           <span class="down-arrow">▼</span> <span class="dislike-count">0</span>
+        </div>
+        <div class="post-actions">
+          <button class="edit-post-btn">Edit</button>
+          <button class="remove-post-btn">Remove</button>
         </div>
         <div class="post-comments"></div>
       </div>

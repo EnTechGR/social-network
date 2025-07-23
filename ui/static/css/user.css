@@ -677,3 +677,59 @@ body {
 .hidden {
   display: none !important;
 }
+
+.activity-dropdown-toggle {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.75em 2em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--color-primary);
+  border-radius: 12px;
+}
+.activity-dropdown-toggle:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.15));
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+.activity-dropdown-content {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: var(--bg-tertiary);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+  min-width: 220px;
+  z-index: 10;
+  padding: 0.5em 0;
+  margin: 0;
+  list-style: none;
+}
+.activity-dropdown-toggle.open .activity-dropdown-content {
+  display: block;
+}
+.activity-dropdown-content li a {
+  display: block;
+  padding: 0.7em 2em;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.activity-dropdown-content li a:hover {
+  background: var(--gradient-accent);
+  color: var(--color-primary);
+}
+.activity-dropdown-toggle .dropdown-arrow {
+  margin-left: 0.5em;
+  font-size: 0.8em;
+  color: var(--color-secondary);
+  transition: transform 0.3s;
+}
+.activity-dropdown-toggle.open .dropdown-arrow {
+  transform: rotate(180deg);
+}

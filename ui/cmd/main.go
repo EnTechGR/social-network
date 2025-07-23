@@ -106,18 +106,24 @@ func router(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.ServeFile(w, r, "./static/templates/user/user_post.html")
-	case "/user/created-posts":
+	case "/user/my-activity/my-posts":
 		if ok, _ := checkSession(r); !ok {
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 		http.ServeFile(w, r, "./static/templates/user/user_created_posts.html")
-	case "/user/reactions":
+	case "/user/my-activity/my-reactions":
 		if ok, _ := checkSession(r); !ok {
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 		http.ServeFile(w, r, "./static/templates/user/user_reactions.html")
+	case "/user/my-activity/my-comments":
+		if ok, _ := checkSession(r); !ok {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+		http.ServeFile(w, r, "./static/templates/user/user_comment_posts.html")
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		http.ServeFile(w, r, "./static/templates/error.html")

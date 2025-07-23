@@ -283,3 +283,32 @@ func (r *PostRepository) GetPostsDislikedByUser(userID string) ([]models.PostWit
 	}
 	return posts, nil
 }
+
+// GetPostsCommentedByUser returns posts that the given user has commented on
+func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWithUser, error) {
+	query := `
+		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		WHERE p.post_id IN (
+			SELECT post_id FROM comments WHERE user_id = ?
+		)
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.PostWithUser
+	for rows.Next() {
+		var p models.PostWithUser
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+	return posts, nil
+}

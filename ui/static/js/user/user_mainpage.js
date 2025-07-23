@@ -81,6 +81,28 @@ if (logoutLink) {
   });
 }
 
+// My Activity dropdown logic
+const activityDropdown = document.querySelector('.activity-dropdown-toggle');
+if (activityDropdown) {
+  const dropdownContent = activityDropdown.querySelector('.activity-dropdown-content');
+  activityDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+    activityDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!activityDropdown.contains(e.target)) {
+      activityDropdown.classList.remove('open');
+    }
+  });
+  if (dropdownContent) {
+    dropdownContent.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        activityDropdown.classList.remove('open');
+      });
+    });
+  }
+}
+
 
 // Initialize on DOM ready
 window.addEventListener('DOMContentLoaded', loadCategories);

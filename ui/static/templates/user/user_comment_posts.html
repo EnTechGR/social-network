@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>My Reactions</title>
+    <title>Commented Posts</title>
     <link rel="stylesheet" href="/static/css/user.css" />
-    <link rel="stylesheet" href="/static/css/user_reactions.css" />
-    <script src="/static/js/user/user_reactions.js" type="module"></script>
+    <link rel="stylesheet" href="/static/css/user_created_posts.css" />
+    <script src="/static/js/user/user_comment_posts.js" type="module"></script>
     <script src="/static/js/user/user_mainpage.js" type="module"></script>
     <script src="/static/js/user/user_feed.js" type="module"></script>
     <script src="/static/js/user/create_post.js" defer></script>
@@ -35,16 +35,7 @@
       </ul>
       <div class="side-glow"></div>
     </nav>
-    <main class="reactions-main">
-      <section class="reactions-column">
-        <h2>Liked Posts</h2>
-        <div id="liked-posts-container" class="reactions-list"></div>
-      </section>
-      <section class="reactions-column">
-        <h2>Disliked Posts</h2>
-        <div id="disliked-posts-container" class="reactions-list"></div>
-      </section>
-    </main>
+    <main id="forumContainer" class="forum-content"></main>
     <template id="post-template">
       <div class="post">
         <h3 class="post-header"></h3>

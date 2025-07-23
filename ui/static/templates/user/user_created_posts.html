@@ -2,10 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Created Posts</title>
+    <title>My Posts</title>
     <link rel="stylesheet" href="/static/css/user.css" />
     <link rel="stylesheet" href="/static/css/user_created_posts.css" />
     <script src="/static/js/user/user_created_posts.js" type="module"></script>
+    <script src="/static/js/user/user_mainpage.js" type="module"></script>
+    <script src="/static/js/user/user_feed.js" type="module"></script>
+    <script src="/static/js/user/create_post.js" defer></script>
   </head>
   <body>
     <nav class="navbar">
@@ -22,11 +25,13 @@
         <li>
           <ul id="category-tabs" class="category-tabs dropdown-content"></ul>
         </li>
-        <li>
-          <a href="/user/created-posts" id="created-posts-link">Created Posts</a>
-        </li>
-        <li>
-          <a href="/user/reactions" id="my-reactions-link">My Reactions</a>
+        <li class="activity-dropdown-toggle">
+          My Activity <span class="dropdown-arrow">&#9662;</span>
+          <ul class="activity-dropdown-content">
+            <li><a href="/user/my-activity/my-posts" id="my-posts-link">My Posts</a></li>
+            <li><a href="/user/my-activity/my-comments" id="commented-posts-link">My Comments</a></li>
+            <li><a href="/user/my-activity/my-reactions" id="my-reactions-link">My Reactions</a></li>
+          </ul>
         </li>
       </ul>
       <div class="side-glow"></div>

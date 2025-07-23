@@ -53,6 +53,11 @@ func (h *ImageHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Post ID required", http.StatusBadRequest)
 		return
 	}
+	// Remove any existing images for this post before saving the new one
+	if err := h.ImageRepo.DeleteByPostID(postID); err != nil {
+		utils.ErrorResponse(w, "Failed to remove old images", http.StatusInternalServerError)
+		return
+	}
 
 	file, header, err := r.FormFile("image")
 	if err != nil {
@@ -290,4 +295,21 @@ func createThumbnailGIF(src *gif.GIF) *gif.GIF {
 		}
 	}
 	return dstGif
+}
+
+func (h *ImageHandler) DeleteImagesByPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	postID := utils.GetLastPathParam(r)
+	if postID == "" {
+		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
+		return
+	}
+	if err := h.ImageRepo.DeleteByPostID(postID); err != nil {
+		utils.ErrorResponse(w, "Failed to delete images", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONResponse(w, map[string]string{"status": "images deleted"}, http.StatusOK)
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"forum/models"
@@ -311,4 +312,34 @@ func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWi
 		posts = append(posts, p)
 	}
 	return posts, nil
+}
+
+// UpdatePost updates the title and content of a post and sets updated_at
+func (r *PostRepository) UpdatePost(postID string, title, content *string) error {
+	setClauses := []string{}
+	args := []interface{}{}
+
+	if title != nil {
+		setClauses = append(setClauses, "title = ?")
+		args = append(args, title)
+	}
+	if content != nil {
+		setClauses = append(setClauses, "content = ?")
+		args = append(args, content)
+	}
+	if len(setClauses) == 0 {
+		return nil // nothing to update
+	}
+	setClauses = append(setClauses, "updated_at = ?")
+	args = append(args, time.Now(), postID)
+
+	query := "UPDATE posts SET " + strings.Join(setClauses, ", ") + " WHERE post_id = ?"
+	_, err := r.db.Exec(query, args...)
+	return err
+}
+
+// SoftDeletePost sets title and content to NULL and updates updated_at
+func (r *PostRepository) SoftDeletePost(postID string) error {
+	_, err := r.db.Exec(`UPDATE posts SET title = NULL, content = NULL, updated_at = ? WHERE post_id = ?`, time.Now(), postID)
+	return err
 }

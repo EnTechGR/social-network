@@ -82,13 +82,19 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Protected user routes
 	mux.Handle("/forum/api/posts/create", protected(http.HandlerFunc(postHandler.CreatePost)))
+	mux.Handle("/forum/api/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost))) // DELETE /forum/api/posts/delete/{id}
+	mux.Handle("/forum/api/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle))) // PUT /forum/api/posts/edit-title/{id}
+	mux.Handle("/forum/api/posts/edit-content/", protected(http.HandlerFunc(postHandler.EditPostContent))) // PUT /forum/api/posts/edit-content/{id}
 	mux.Handle("/forum/api/user/posts", protected(http.HandlerFunc(myPostsHandler.GetMyPosts)))
 	mux.Handle("/forum/api/user/liked", protected(http.HandlerFunc(likedPostsHandler.GetLikedPosts)))
 	mux.Handle("/forum/api/user/disliked", protected(http.HandlerFunc(likedPostsHandler.GetDislikedPosts)))
 	mux.Handle("/forum/api/comments/create", protected(http.HandlerFunc(commentHandler.CreateComment)))
+	mux.Handle("/forum/api/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment))) // PUT /forum/api/comments/edit/{id}
+	mux.Handle("/forum/api/comments/delete/", protected(http.HandlerFunc(commentHandler.DeleteComment))) // DELETE /forum/api/comments/delete/{id}
 	mux.Handle("/forum/api/react", protected(http.HandlerFunc(reactionHandler.CreateReact)))
 	mux.Handle("/forum/api/images/upload", protected(http.HandlerFunc(imageHandler.Upload)))
 	mux.Handle("/forum/api/user/commented", protected(http.HandlerFunc(myPostsHandler.GetCommentedPosts)))
+	mux.Handle("/forum/api/images/delete/", protected(http.HandlerFunc(imageHandler.DeleteImagesByPost))) // DELETE /forum/api/images/delete/{post_id}
 
 	// Additional protected routes for user management
 	mux.Handle("/forum/api/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))

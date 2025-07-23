@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"os"
 	"time"
 
 	"forum/models"
@@ -43,4 +44,18 @@ func (r *ImageRepository) GetByPostID(postID string) ([]models.Image, error) {
 		images = append(images, img)
 	}
 	return images, nil
+}
+
+// DeleteByPostID deletes all images for a post from DB and filesystem
+func (r *ImageRepository) DeleteByPostID(postID string) error {
+	images, err := r.GetByPostID(postID)
+	if err != nil {
+		return err
+	}
+	for _, img := range images {
+		_ = os.Remove(img.FilePath)
+		_ = os.Remove(img.ThumbnailPath)
+	}
+	_, err = r.db.Exec(`DELETE FROM images WHERE post_id = ?`, postID)
+	return err
 }

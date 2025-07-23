@@ -48,3 +48,15 @@ func (r *CommentRepository) Create(comment models.Comment) (*models.Comment, err
 	}
 	return &comment, nil
 }
+
+// UpdateComment updates the content of a comment and sets updated_at
+func (r *CommentRepository) UpdateComment(commentID string, content *string) error {
+	_, err := r.db.Exec(`UPDATE comments SET content = ?, updated_at = ? WHERE comment_id = ?`, content, time.Now(), commentID)
+	return err
+}
+
+// SoftDeleteComment sets content to NULL and updates updated_at
+func (r *CommentRepository) SoftDeleteComment(commentID string) error {
+	_, err := r.db.Exec(`UPDATE comments SET content = NULL, updated_at = ? WHERE comment_id = ?`, time.Now(), commentID)
+	return err
+}

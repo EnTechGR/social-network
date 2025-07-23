@@ -39,8 +39,8 @@ const CreateCategoriesTable = `CREATE TABLE IF NOT EXISTS categories (
 const CreatePostsTable = `CREATE TABLE IF NOT EXISTS posts (
         post_id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
-        title TEXT NOT NULL CHECK (LENGTH(title) <= 200),
-        content TEXT NOT NULL CHECK (LENGTH(content) <= 2000),
+        title TEXT CHECK (LENGTH(title) <= 200),
+        content TEXT CHECK (LENGTH(content) <= 2000),
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
@@ -50,7 +50,7 @@ const CreateCommentsTable = `CREATE TABLE IF NOT EXISTS comments (
             comment_id TEXT PRIMARY KEY,
             post_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
-            content TEXT NOT NULL CHECK (LENGTH(content) <= 1000),
+            content TEXT CHECK (LENGTH(content) <= 1000),
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP,
             FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,

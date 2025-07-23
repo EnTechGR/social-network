@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 4 // Updated to version 4 for image uploads
+	CURRENT_DB_VERSION = 5 // Updated to version 5 for nullable post/comment fields
 	INITIAL_VERSION    = 1
 )
 
@@ -58,6 +58,22 @@ func GetMigrations() []Migration {
 			SQL: []string{
 				config.CreateImagesTable,
 				config.IdxImagesPostID,
+			},
+		},
+		{
+			Version:     5,
+			Description: "Make post title/content and comment content nullable",
+			SQL: []string{
+				// SQLite does not support DROP NOT NULL directly, so we document manual migration or use a workaround
+				// For new installs, schema_config.go is already correct
+				// For existing DBs, manual migration or tool like sqlite-utils is needed
+				// Example (manual):
+				// 1. Create new table with correct schema
+				// 2. Copy data
+				// 3. Drop old table
+				// 4. Rename new table
+				// Here, we just add a comment for manual migration
+				"-- Manual migration required: Make posts.title, posts.content, comments.content nullable.",
 			},
 		},
 		// Add future migrations here

@@ -144,8 +144,8 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 				Username:     post.Username,
 				CategoryID:   post.CategoryID,
 				CategoryName: cat.Name,   // ✅ inject category name
-				Title:        post.Title, // Optional title field
-				Content:      post.Content,
+				Title:        utils.DerefString(post.Title), // Optional title field
+				Content:      utils.DerefString(post.Content),
 				CreatedAt:    post.CreatedAt,
 				Comments:     []CommentResponse{},  // ✅ avoid null
 				Reactions:    []ReactionResponse{}, // ✅ avoid null
@@ -171,7 +171,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 					ID:        comment.ID,
 					UserID:    comment.UserID,
 					Username:  comment.Username,
-					Content:   comment.Content,
+					Content:   utils.DerefString(comment.Content),
 					CreatedAt: comment.CreatedAt,
 					Reactions: []ReactionResponse{}, // ✅ avoid null
 				}

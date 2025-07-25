@@ -421,36 +421,78 @@ body {
 }
 
 .edit-btn {
-  background: #f0f0f0;
-  color: #333;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  padding: 0.3em 0.8em;
+  background-image: var(--gradient-main);
+  color: var(--bg-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 12px rgba(139, 92, 246, 0.4);
+  border: none;
+  border-radius: 8px;
+  padding: 0.8em 1.2em;
   margin-left: 0.5em;
   cursor: pointer;
   font-size: 0.95em;
-  transition: background 0.2s, color 0.2s;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
 }
+
+.edit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
 .edit-btn:hover {
-  background: #e0e0e0;
-  color: #007bff;
+  transform: translateY(-3px);
+  background-image: var(--gradient-accent);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+.edit-btn:hover::before {
+  left: 100%;
 }
 
 .delete-btn {
-  background: #fff0f0;
-  color: #c00;
-  border: 1px solid #c00;
-  border-radius: 4px;
-  padding: 0.4em 1.2em;
+  background-image: linear-gradient(135deg, #fb7185 0%, #e11d48 50%, #dc2626 100%);
+  color: var(--bg-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 12px rgba(251, 113, 133, 0.4);
+  border: none;
+  border-radius: 8px;
+  padding: 0.8em 1.2em;
   font-weight: bold;
   cursor: pointer;
   font-size: 1em;
-  transition: background 0.2s, color 0.2s;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
 }
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
 .delete-btn:hover {
-  background: #ffe0e0;
-  color: #fff;
-  background-color: #c00;
+  transform: translateY(-3px);
+  background-image: linear-gradient(45deg, #dc2626 0%, #e11d48 100%);
+  box-shadow: 0 6px 20px rgba(251, 113, 133, 0.5);
+}
+
+.delete-btn:hover::before {
+  left: 100%;
 }
 
 .deleted-post {

@@ -562,28 +562,146 @@ async function saveContent() {
 }
 
 function showEditImage() {
-    // Find the image element and replace it with upload form
+    // Find the image element and add upload interface right after it
     const imageElement = document.querySelector('.post-image');
     if (imageElement) {
-        const imgDiv = imageElement.parentElement;
-        imgDiv.innerHTML = `<form id="imageForm" enctype="multipart/form-data">
-            <input type="file" name="image" accept="image/*" required />
-            <button type="submit">Upload</button>
-            <button type="button" id="cancelImageBtn">Cancel</button>
-        </form>`;
-        document.getElementById('cancelImageBtn').onclick = loadPost;
-        document.getElementById('imageForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('post_id', postId);
-            await fetch('http://localhost:8080/forum/api/images/upload', {
-                method: 'POST',
-                headers: await getAuthHeaders(true), // true = skip content-type
-                body: formData,
-                credentials: 'include'
-            });
-            loadPost();
-        };
+        // Create upload interface
+        const uploadContainer = document.createElement('div');
+        uploadContainer.className = 'image-upload-interface';
+        uploadContainer.innerHTML = `
+            <div class="upload-controls">
+                <button type="button" id="addImageBtn" class="add-image-btn">Choose Image</button>
+                <button type="button" id="cancelImageBtn" class="cancel-image-btn hidden">Cancel</button>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+            <div id="imageStatus" class="image-status hidden"></div>
+            <div id="imageError" class="image-error"></div>
+            <img id="imagePreview" class="image-preview hidden" alt="Image preview" style="max-width: 150px; max-height: 150px; object-fit: cover;" />
+            <button type="button" id="uploadImageBtn" class="upload-btn hidden" disabled>Upload Image</button>
+        `;
+
+        // Insert right after the image element
+        imageElement.parentNode.insertBefore(uploadContainer, imageElement.nextSibling);
+
+        const imageInput = document.getElementById('imageInput');
+        const addImageBtn = document.getElementById('addImageBtn');
+        const cancelImageBtn = document.getElementById('cancelImageBtn');
+        const uploadImageBtn = document.getElementById('uploadImageBtn');
+        const imageStatus = document.getElementById('imageStatus');
+        const imageError = document.getElementById('imageError');
+        const imagePreview = document.getElementById('imagePreview');
+
+        function resetImageSelection() {
+            imageInput.value = "";
+            imageStatus.textContent = "";
+            imageStatus.classList.add("hidden");
+            imageStatus.classList.remove("status-valid", "status-error");
+            imageError.textContent = "";
+            cancelImageBtn.classList.add("hidden");
+            uploadImageBtn.classList.add("hidden");
+            addImageBtn.disabled = false;
+            uploadImageBtn.disabled = true;
+            imagePreview.src = "";
+            imagePreview.classList.add("hidden");
+        }
+
+        function validateSelectedImage() {
+            imageError.textContent = "";
+            const file = imageInput.files[0];
+            if (!file) {
+                return true;
+            }
+            
+            const allowed = ["image/jpeg", "image/png", "image/gif"];
+            if (!allowed.includes(file.type)) {
+                imageStatus.textContent = file.name;
+                imageStatus.classList.remove("hidden", "status-valid");
+                imageStatus.classList.add("status-error");
+                imageError.textContent = "Unsupported image type. Only jpeg, png, gif";
+                imageInput.value = "";
+                imagePreview.src = "";
+                imagePreview.classList.add("hidden");
+                cancelImageBtn.classList.remove("hidden");
+                uploadImageBtn.classList.add("hidden");
+                uploadImageBtn.disabled = true;
+                return false;
+            }
+            
+            if (file.size > 20 * 1024 * 1024) {
+                imageStatus.textContent = file.name;
+                imageStatus.classList.remove("hidden", "status-valid");
+                imageStatus.classList.add("status-error");
+                imageError.textContent = "Image exceeds 20 MB limit";
+                imageInput.value = "";
+                imagePreview.src = "";
+                imagePreview.classList.add("hidden");
+                cancelImageBtn.classList.remove("hidden");
+                uploadImageBtn.classList.add("hidden");
+                uploadImageBtn.disabled = true;
+                return false;
+            }
+
+            imageStatus.textContent = file.name;
+            imageStatus.classList.remove("hidden", "status-error");
+            imageStatus.classList.add("status-valid");
+            cancelImageBtn.classList.remove("hidden");
+            uploadImageBtn.classList.remove("hidden");
+            addImageBtn.disabled = true;
+            uploadImageBtn.disabled = false;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+            return true;
+        }
+
+        // Event listeners
+        addImageBtn.addEventListener("click", () => imageInput.click());
+        cancelImageBtn.addEventListener("click", () => {
+            resetImageSelection();
+            uploadContainer.remove();
+        });
+
+        imageInput.addEventListener("change", () => {
+            validateSelectedImage();
+        });
+
+        uploadImageBtn.addEventListener("click", async () => {
+            if (!imageInput.files[0]) return;
+            
+            uploadImageBtn.disabled = true;
+            uploadImageBtn.textContent = "Uploading...";
+            
+            try {
+                const formData = new FormData();
+                formData.append('post_id', postId);
+                formData.append('image', imageInput.files[0]);
+                
+                const resp = await fetch('http://localhost:8080/forum/api/images/upload', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(true),
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                if (!resp.ok) {
+                    const errorData = await resp.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Upload failed');
+                }
+                
+                // Remove upload interface and reload the post to show the new image
+                uploadContainer.remove();
+                loadPost();
+            } catch (error) {
+                console.error('Image upload failed:', error);
+                imageError.textContent = `Upload failed: ${error.message}`;
+                uploadImageBtn.disabled = false;
+                uploadImageBtn.textContent = "Upload Image";
+            }
+        });
     }
 }
 

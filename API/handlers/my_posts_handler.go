@@ -83,6 +83,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 				Username:  c.Username,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
 				Reactions: []ReactionResponse{},
 			}
 			reactions, err := h.ReactionRepo.GetReactionsByCommentWithUser(c.ID)
@@ -189,6 +190,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 				Username:  c.Username,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
 				Reactions: []ReactionResponse{},
 			}
 			reactions, err := h.ReactionRepo.GetReactionsByCommentWithUser(c.ID)

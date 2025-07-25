@@ -31,6 +31,7 @@ type CommentResponse struct {
 	Username  string             `json:"username"`
 	Content   string             `json:"content"`
 	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
 	Reactions []ReactionResponse `json:"reactions,omitempty"`
 }
 
@@ -175,6 +176,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 					Username:  comment.Username,
 					Content:   utils.DerefString(comment.Content),
 					CreatedAt: comment.CreatedAt,
+					UpdatedAt: comment.UpdatedAt,
 					Reactions: []ReactionResponse{}, // ✅ avoid null
 				}
 

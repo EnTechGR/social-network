@@ -72,7 +72,7 @@ func (r *CategoryRepository) GetCategoryByID(id int) (*models.Category, error) {
 
 // // repository/comment_repository.go
 func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.CommentWithUser, error) {
-	query := `SELECT c.comment_id, c.post_id, c.user_id, u.username, c.content, c.created_at
+	query := `SELECT c.comment_id, c.post_id, c.user_id, u.username, c.content, c.created_at, c.updated_at
 			  FROM comments c JOIN user u ON c.user_id = u.user_id
 			  WHERE c.post_id = ?`
 
@@ -85,7 +85,7 @@ func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.C
 	var comments []models.CommentWithUser
 	for rows.Next() {
 		var c models.CommentWithUser
-		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Username, &c.Content, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Username, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		comments = append(comments, c)

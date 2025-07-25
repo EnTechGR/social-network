@@ -51,8 +51,18 @@ function renderCommentedPosts(posts) {
     const reactionsArray = Array.isArray(post.reactions) ? post.reactions : [];
     node.querySelector('.like-count').textContent = reactionsArray.filter(r => r.reaction_type === 1).length;
     node.querySelector('.dislike-count').textContent = reactionsArray.filter(r => r.reaction_type === 2).length;
+    
+    const commentCount =
+      post.comment_count || (post.comments ? post.comments.length : 0);
+    const commentContainer = document.createElement('span');
+    commentContainer.className = 'comment-count';
+    commentContainer.innerHTML = `💬 ${commentCount}`;
+    node
+      .querySelector('.like-count')
+      .parentNode.appendChild(commentContainer);
+    
     const wrapper = document.createElement('a');
-    wrapper.href = `/user/post?id=${post.id}`;
+    wrapper.href = `/user/my-activity/my-posts/edit/post?id=${post.id}`;
     wrapper.className = 'post-link';
     wrapper.appendChild(node);
     forumContainer.appendChild(wrapper);

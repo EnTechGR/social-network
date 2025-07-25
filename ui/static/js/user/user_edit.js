@@ -89,13 +89,14 @@ function renderSinglePostWithEdit(post) {
 
     const meta = document.createElement('div');
     meta.className = 'post-meta';
-    let metaDate;
-    if (isDeleted && post.updated_at) {
+    let metaDate, isEdited = false;
+    if (post.updated_at && post.updated_at !== post.created_at) {
         metaDate = new Date(post.updated_at).toLocaleString();
+        isEdited = true;
     } else {
         metaDate = new Date(post.created_at).toLocaleString();
     }
-    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}`;
+    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}${isEdited ? ' (Edited)' : ''}`;
 
     const content = document.createElement('div');
     content.className = isDeleted ? 'deleted-content' : 'post-content';
@@ -339,11 +340,35 @@ function renderSinglePostWithEdit(post) {
     commentUser.textContent = comment.username || comment.user_id || 'Anonymous';
   
     const commentTime = document.createElement('time');
-    commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+    if (comment.content === "") {
+      commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()})`;
+    } else {
+      commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+    }
   
     const commentContent = document.createElement('div');
-    commentContent.textContent = comment.content || '';
-  
+    if (comment.content === "") {
+      commentContent.textContent = 'This comment was deleted';
+    } else {
+      commentContent.textContent = comment.content || '';
+    }
+    commentContent.className = 'comment-content';
+
+    // Add (Edited) label to the date if the comment was edited
+    let isEdited = false;
+    if (comment.updated_at && comment.updated_at !== comment.created_at) {
+      isEdited = true;
+    }
+    if (commentTime) {
+      if (comment.content === "") {
+        commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()})`;
+      } else if (isEdited) {
+        commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()}) (Edited)`;
+      } else {
+        commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+      }
+    }
+
     // Reactions: visually match guest (inline, compact, no extra box)
     const commentReactions = document.createElement('div');
     commentReactions.className = 'comment-reactions';
@@ -370,7 +395,112 @@ function renderSinglePostWithEdit(post) {
   
     commentReactions.appendChild(likeBtn);
     commentReactions.appendChild(dislikeBtn);
-  
+
+    // --- Edit/Delete for own comments ---
+    if (currentUserId && comment.user_id === currentUserId && !isPostDeleted) {
+      // Edit button
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Edit';
+      editBtn.className = 'edit-comment-btn';
+      editBtn.addEventListener('click', () => {
+        // Replace content with textarea and save/cancel buttons
+        const textarea = document.createElement('textarea');
+        textarea.value = comment.content || '';
+        textarea.rows = 3;
+        textarea.maxLength = 1000;
+        textarea.className = 'edit-comment-textarea';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.className = 'save-comment-btn';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'cancel-comment-btn';
+        // Replace content
+        commentContent.replaceWith(textarea);
+        editBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+        commentEl.insertBefore(saveBtn, commentReactions);
+        commentEl.insertBefore(cancelBtn, commentReactions);
+        // Save handler
+        saveBtn.addEventListener('click', async () => {
+          const newContent = textarea.value.trim();
+          if (!newContent) {
+            alert('Comment cannot be empty.');
+            return;
+          }
+          if (!csrfTokenFromResponse) {
+            csrfTokenFromResponse = await loadCSRFTokenFromSession();
+            if (!csrfTokenFromResponse) {
+              alert('Session expired. Please log in again.');
+              return;
+            }
+          }
+          saveBtn.disabled = true;
+          try {
+            const resp = await fetch(`http://localhost:8080/forum/api/comments/edit/${comment.id}`, {
+              method: 'PUT',
+              credentials: 'include',
+              headers: await getAuthHeaders(),
+              body: JSON.stringify({ content: newContent }),
+            });
+            if (!resp.ok) {
+              const errData = await resp.json().catch(() => ({}));
+              alert('Error: ' + (errData.message || 'Could not edit comment.'));
+              return;
+            }
+            loadPost();
+          } finally {
+            saveBtn.disabled = false;
+          }
+        });
+        // Cancel handler
+        cancelBtn.addEventListener('click', () => {
+          textarea.replaceWith(commentContent);
+          saveBtn.remove();
+          cancelBtn.remove();
+          editBtn.style.display = '';
+          deleteBtn.style.display = '';
+        });
+      });
+      // Delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.className = 'delete-comment-btn';
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+        if (!csrfTokenFromResponse) {
+          csrfTokenFromResponse = await loadCSRFTokenFromSession();
+          if (!csrfTokenFromResponse) {
+            alert('Session expired. Please log in again.');
+            return;
+          }
+        }
+        deleteBtn.disabled = true;
+        try {
+          const resp = await fetch(`http://localhost:8080/forum/api/comments/delete/${comment.id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: await getAuthHeaders(),
+          });
+          if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            alert('Error: ' + (errData.message || 'Could not delete comment.'));
+            return;
+          }
+          loadPost();
+        } finally {
+          deleteBtn.disabled = false;
+        }
+      });
+      if (comment.content === "") {
+        editBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+      }
+      commentReactions.appendChild(editBtn);
+      commentReactions.appendChild(deleteBtn);
+    }
+    // --- End edit/delete ---
+
     // Layout: username, time, content, reactions (all compact)
     commentEl.appendChild(commentUser);
     commentEl.appendChild(commentTime);
@@ -498,6 +628,22 @@ async function loadCSRFTokenFromSession() {
   }
 }
 
+let currentUserId = null;
+
+// Fetch current user info at page load
+async function fetchCurrentUserId() {
+  try {
+    const resp = await fetch('http://localhost:8080/forum/api/session/verify', {
+      credentials: 'include',
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.user?.id || (data.user && data.user.ID) || null;
+  } catch (err) {
+    return null;
+  }
+}
+
 // Helper: merge posts from categories (same as your original)
 function mergePostsFromCategories(categories) {
     const postsMap = new Map();
@@ -520,9 +666,10 @@ function mergePostsFromCategories(categories) {
     return Array.from(postsMap.values());
 }
 
-// On page load, fetch CSRF token first, then load post
+// On page load, fetch CSRF token and current user ID, then load post
 (async () => {
   csrfTokenFromResponse = await loadCSRFTokenFromSession();
+  currentUserId = await fetchCurrentUserId();
   if (!csrfTokenFromResponse) {
     alert("Session expired or not authenticated. Please log in again.");
     return;

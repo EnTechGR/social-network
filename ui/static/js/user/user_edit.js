@@ -96,7 +96,15 @@ function renderSinglePostWithEdit(post) {
     } else {
         metaDate = new Date(post.created_at).toLocaleString();
     }
-    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}${isEdited ? ' (Edited)' : ''}`;
+
+    let label = "";
+    if (isDeleted) {
+        label = " (Deleted)";
+    } else if (isEdited) {
+        label = " (Edited)";
+    }
+
+    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}${label}`;
 
     const content = document.createElement('div');
     content.className = isDeleted ? 'deleted-content' : 'post-content';

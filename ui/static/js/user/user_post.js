@@ -25,6 +25,19 @@ async function loadCSRFTokenFromSession() {
   }
 }
 
+// Helper to determine deleted post display state
+function getPostDisplayState(post) {
+  let isDeleted = false;
+  let displayTitle = post.title;
+  let displayContent = post.content;
+  if ((post.title === "") && (post.content === "")) {
+      displayTitle = 'This post was deleted';
+      displayContent = null;
+      isDeleted = true;
+  }
+  return { isDeleted, displayTitle, displayContent };
+}
+
 // Fetch post feed and find the single post by id
 async function loadPost() {
   if (!postId) {
@@ -59,17 +72,34 @@ async function loadPost() {
 function renderSinglePost(post) {
   postContainer.innerHTML = '';
 
+  const { isDeleted, displayTitle, displayContent } = getPostDisplayState(post);
+
   const title = document.createElement('h1');
-  title.className = 'post-title';
-  title.textContent = post.title || 'Untitled';
+  title.className = isDeleted ? 'deleted-title' : 'post-title';
+  title.textContent = displayTitle;
 
   const meta = document.createElement('div');
-  meta.className = 'post-meta';
-  meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${new Date(post.created_at).toLocaleString()}`;
+    meta.className = 'post-meta';
+    let metaDate, isEdited = false;
+    if (post.updated_at && post.updated_at !== post.created_at) {
+        metaDate = new Date(post.updated_at).toLocaleString();
+        isEdited = true;
+    } else {
+        metaDate = new Date(post.created_at).toLocaleString();
+    }
+
+    let label = "";
+    if (isDeleted) {
+        label = " (Deleted)";
+    } else if (isEdited) {
+        label = " (Edited)";
+    }
+
+    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}${label}`;
 
   const content = document.createElement('div');
-  content.className = 'post-content';
-  content.textContent = post.content || '';
+  content.className = isDeleted ? 'deleted-content' : 'post-content';
+  content.textContent = displayContent;
 
    let imageEl = null;
   if (post.image_url) {
@@ -96,11 +126,13 @@ function renderSinglePost(post) {
   likeBtn.textContent = `▲ ${likes}`;
   likeBtn.className = 'like-btn';
   likeBtn.title = 'Like';
+  if (isDeleted) likeBtn.disabled = true;
 
   const dislikeBtn = document.createElement('button');
   dislikeBtn.textContent = `▼ ${dislikes}`;
   dislikeBtn.className = 'dislike-btn';
   dislikeBtn.title = 'Dislike';
+  if (isDeleted) dislikeBtn.disabled = true;
 
   reactions.appendChild(likeBtn);
   reactions.appendChild(dislikeBtn);
@@ -244,7 +276,7 @@ function renderSinglePost(post) {
   // Comments list
   if (post.comments?.length > 0) {
     post.comments.forEach(comment => {
-      commentSection.appendChild(createCommentElement(comment));
+      commentSection.appendChild(createCommentElement(comment, isDeleted));
     });
   } else {
     const noComments = document.createElement('p');
@@ -259,11 +291,14 @@ function renderSinglePost(post) {
 
   postBox.appendChild(title);
   postBox.appendChild(meta);
-   if (imageEl) postBox.appendChild(imageEl);
-  postBox.appendChild(postContentCard); // instead of content
+  if (imageEl) postBox.appendChild(imageEl);
+  if (!isDeleted) {
+    postBox.appendChild(postContentCard);
+    postBox.appendChild(commentFormContainer);
+  }
   postBox.appendChild(reactions);
   postBox.appendChild(categoryEl);
-  postBox.appendChild(commentFormContainer);
+  
   postBox.appendChild(commentSection);
 
   // Add everything to the DOM
@@ -271,7 +306,7 @@ function renderSinglePost(post) {
 }
 
 // Helper: create comment element with reactions
-function createCommentElement(comment) {
+function createCommentElement(comment, isPostDeleted) {
   // Match guest style: compact, simple, but keep interactive buttons
   const commentEl = document.createElement('div');
   commentEl.className = 'comment';
@@ -297,11 +332,13 @@ function createCommentElement(comment) {
   likeBtn.textContent = `▲ ${likeCount}`;
   likeBtn.className = 'like-btn';
   likeBtn.title = 'Like';
+  if (isPostDeleted) likeBtn.disabled = true;
 
   const dislikeBtn = document.createElement('button');
   dislikeBtn.textContent = `▼ ${dislikeCount}`;
   dislikeBtn.className = 'dislike-btn';
   dislikeBtn.title = 'Dislike';
+  if (isPostDeleted) dislikeBtn.disabled = true;
 
   // Attach handlers for comment reactions (keep interactive)
   likeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 1, likeBtn, dislikeBtn));

@@ -118,7 +118,7 @@ func (r *PostRepository) Create(post models.Post, categoryIDs []int) (*models.Po
 
 func (r *PostRepository) GetPostsByUser(userID string) ([]models.PostWithUser, error) {
 	rows, err := r.db.Query(`
-        SELECT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
+        SELECT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at, p.updated_at
         FROM posts p
         JOIN user u ON p.user_id = u.user_id
         WHERE p.user_id = ?
@@ -131,7 +131,7 @@ func (r *PostRepository) GetPostsByUser(userID string) ([]models.PostWithUser, e
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
@@ -288,7 +288,7 @@ func (r *PostRepository) GetPostsDislikedByUser(userID string) ([]models.PostWit
 // GetPostsCommentedByUser returns posts that the given user has commented on
 func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWithUser, error) {
 	query := `
-		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
+		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at, p.updated_at
 		FROM posts p
 		JOIN user u ON p.user_id = u.user_id
 		WHERE p.post_id IN (
@@ -306,7 +306,7 @@ func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWi
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)

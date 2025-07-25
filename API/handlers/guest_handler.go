@@ -43,6 +43,7 @@ type PostResponse struct {
 	Title        string             `json:"title"`         // Optional title field
 	Content      string             `json:"content"`
 	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    *time.Time         `json:"updated_at,omitempty"`
 	ImageURL     string             `json:"image_url,omitempty"`
 	ThumbnailURL string             `json:"thumbnail_url,omitempty"`
 	Comments     []CommentResponse  `json:"comments,omitempty"`
@@ -147,6 +148,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 				Title:        utils.DerefString(post.Title), // Optional title field
 				Content:      utils.DerefString(post.Content),
 				CreatedAt:    post.CreatedAt,
+				UpdatedAt:    post.UpdatedAt,
 				Comments:     []CommentResponse{},  // ✅ avoid null
 				Reactions:    []ReactionResponse{}, // ✅ avoid null
 			}

@@ -95,7 +95,7 @@ func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.C
 
 func (r *PostRepository) GetPostsByCategoryWithUser(categoryID int) ([]models.PostWithUser, error) {
 	rows, err := r.db.Query(`
-		SELECT p.post_id, p.user_id, u.username, pc.category_id, p.title, p.content, p.created_at
+		SELECT p.post_id, p.user_id, u.username, pc.category_id, p.title, p.content, p.created_at, p.updated_at
 		FROM posts p
 		JOIN post_categories pc ON p.post_id = pc.post_id
 		JOIN user u ON p.user_id = u.user_id
@@ -110,7 +110,7 @@ func (r *PostRepository) GetPostsByCategoryWithUser(categoryID int) ([]models.Po
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var post models.PostWithUser
-		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.CategoryID, &post.Title, &post.Content, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.CategoryID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

@@ -35,6 +35,7 @@ type MyPostResponse struct {
 	ImageURL     string             `json:"image_url,omitempty"`
 	ThumbnailURL string             `json:"thumbnail_url,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    *time.Time         `json:"updated_at,omitempty"`
 	Comments     []CommentResponse  `json:"comments,omitempty"`
 	Reactions    []ReactionResponse `json:"reactions,omitempty"`
 }
@@ -136,6 +137,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 			ImageURL:     imgURL,
 			ThumbnailURL: thumbURL,
 			CreatedAt:    post.CreatedAt,
+			UpdatedAt:    post.UpdatedAt,
 			Comments:     commentResp,
 			Reactions:    reactResp,
 		})
@@ -241,6 +243,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 			ImageURL:     imgURL,
 			ThumbnailURL: thumbURL,
 			CreatedAt:    post.CreatedAt,
+			UpdatedAt:    post.UpdatedAt,
 			Comments:     commentResp,
 			Reactions:    reactResp,
 		})

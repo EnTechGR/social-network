@@ -50,19 +50,27 @@ function renderFeed(categories) {
       }
     });
 
-    // Username
+    // Username, Title, Content, and Timestamp with deleted/edited logic
     postNode.querySelector(".post-header").textContent =
       post.username || post.user_id || "Unknown user";
+    let isEdited = false;
+    let displayDate;
+    if (post.updated_at && post.updated_at !== post.created_at) {
+      displayDate = new Date(post.updated_at).toLocaleString();
+      isEdited = true;
+    } else {
+      displayDate = new Date(post.created_at).toLocaleString();
+    }
 
-    // Title & content
-    postNode.querySelector(".post-title").textContent = post.title || "";
-    postNode.querySelector(".post-content").textContent = post.content || "";
-
-    // Timestamp
-    if (post.created_at) {
-      postNode.querySelector(".post-time").textContent = new Date(
-        post.created_at
-      ).toLocaleString();
+    if (post.title === "" && post.content === "") {
+      postNode.querySelector(".post-title").textContent = "This post was deleted";
+      postNode.querySelector(".post-content").textContent = "";
+      postNode.querySelector(".post-time").textContent = displayDate + (isEdited ? " (Deleted)" : "");
+    } else {
+      postNode.querySelector(".post-header").textContent = post.username || post.user_id || "Unknown user";
+      postNode.querySelector(".post-title").textContent = post.title || "";
+      postNode.querySelector(".post-content").textContent = post.content || "";
+      postNode.querySelector(".post-time").textContent = displayDate + (isEdited ? " (Edited)" : "");
     }
 
     // Reactions

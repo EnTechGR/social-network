@@ -117,9 +117,25 @@ function renderCategoryPosts(category, feedCategories) {
     }
 
     postNode.querySelector('.post-header').textContent = post.username || 'Anonymous';
-    postNode.querySelector('.post-title').textContent = post.title;
-    postNode.querySelector('.post-content').textContent = post.content;
-    postNode.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+
+    let isEdited = false;
+    let displayDate;
+    if (post.updated_at && post.updated_at !== post.created_at) {
+      displayDate = new Date(post.updated_at).toLocaleString();
+      isEdited = true;
+    } else {
+      displayDate = new Date(post.created_at).toLocaleString();
+    }
+
+    if ((!post.title || post.title.trim() === "") && (!post.content || post.content.trim() === "")) {
+      postNode.querySelector('.post-title').textContent = "This post was deleted";
+      postNode.querySelector('.post-content').textContent = "";
+      postNode.querySelector('.post-time').textContent = displayDate + (isEdited ? " (Deleted)" : "");
+    } else {
+      postNode.querySelector('.post-title').textContent = post.title;
+      postNode.querySelector('.post-content').textContent = post.content;
+      postNode.querySelector('.post-time').textContent = displayDate + (isEdited ? " (Edited)" : "");
+    }
     postNode.querySelector('.like-count').textContent = likes;
     postNode.querySelector('.dislike-count').textContent = dislikes;
 

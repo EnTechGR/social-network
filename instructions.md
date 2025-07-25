@@ -87,3 +87,32 @@ command again with the same parameters will toggle the reaction off.
 docker compose up --build
 docker compose up
 `
+
+curl -X PUT http://localhost:8080/forum/api/posts/edit-title/b502e547-419a-453d-8037-b6672718964a \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session_id=7c586478-5cbf-4148-8487-28308ed3b77a; csrf_token=109660a3824fcc81edbf9f0b78d30ed733bc147aa62aa6575b2221f01ea3a93d" \
+  -H "X-CSRF-Token: 109660a3824fcc81edbf9f0b78d30ed733bc147aa62aa6575b2221f01ea3a93d" \
+  -d '{"title":"Updated Title"}'
+
+curl -X PUT http://localhost:8080/forum/api/posts/edit-content/b502e547-419a-453d-8037-b6672718964a \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session_id=7c586478-5cbf-4148-8487-28308ed3b77a; csrf_token=109660a3824fcc81edbf9f0b78d30ed733bc147aa62aa6575b2221f01ea3a93d" \
+  -H "X-CSRF-Token: 109660a3824fcc81edbf9f0b78d30ed733bc147aa62aa6575b2221f01ea3a93d" \
+  -d '{"content":"My new content goes here."}'
+
+  curl -X DELETE http://localhost:8080/forum/api/posts/delete/{b3378809-3aa6-45c1-a43a-555128c857d2} \
+  -H "Cookie: session_id=b5f7815a-9990-4814-8f90-9a8a04cb0c29; csrf_token=69114c6d46778cd32e58f511a9ccca73aed94e6517320f8c0515aeaa411c5da5" \
+  -H "X-CSRF-Token: 69114c6d46778cd32e58f511a9ccca73aed94e6517320f8c0515aeaa411c5da5"
+
+curl -X PUT http://localhost:8080/forum/api/comments/edit/{ID} \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session_id=YOUR_SESSION_ID" \
+  -d '{"content":"Updated comment"}'
+
+curl -X DELETE http://localhost:8080/forum/api/comments/delete/{ID} \
+  -H "Cookie: session_id=YOUR_SESSION_ID"    
+
+
+  curl -i -X POST http://localhost:8080/forum/api/session/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"pat@pat.com","password":"pat123456"}'

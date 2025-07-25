@@ -1,0 +1,532 @@
+
+// Helper to get query param
+function getQueryParam(name) {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name);
+}
+
+const postId = getQueryParam('id');
+const postContainer = document.getElementById('postContainer');
+
+if (!postId) {
+    postContainer.textContent = 'No post ID provided.';
+} else {
+    loadPost();
+}
+
+// Helper to determine deleted post display state
+function getPostDisplayState(post) {
+    let isDeleted = false;
+    let displayTitle = post.title;
+    let displayContent = post.content;
+    if ((post.title === "") && (post.content === "")) {
+        displayTitle = 'This post was deleted';
+        displayContent = null;
+        isDeleted = true;
+    }
+    return { isDeleted, displayTitle, displayContent };
+}
+
+async function loadPost() {
+    if (!postId) {
+      postContainer.textContent = 'Post ID missing.';
+      return;
+    }
+  
+    try {
+      const resp = await fetch('http://localhost:8080/forum/api/feed', {
+        credentials: 'include',
+      });
+  
+      if (!resp.ok) throw new Error('Failed to load post');
+  
+      const data = await resp.json();
+      const posts = mergePostsFromCategories(data.categories || []);
+      const post = posts.find(p => p.id === postId);
+  
+      if (!post) {
+        postContainer.textContent = 'Post not found.';
+        return;
+      }
+  
+      renderSinglePostWithEdit(post);
+    } catch (err) {
+      console.error(err);
+      postContainer.textContent = 'Error loading post.';
+    }
+  }
+
+// Render the post with interactive like/dislike buttons & comments
+function renderSinglePostWithEdit(post) {
+    postContainer.innerHTML = '';
+
+    // --- Deleted post check ---
+    const { isDeleted, displayTitle, displayContent } = getPostDisplayState(post);
+    
+    // --- Add Delete control ---
+    const controls = document.createElement('div');
+    controls.className = 'post-controls';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.onclick = deletePost;
+    // --- End controls ---
+
+
+    const title = document.createElement('h1');
+    title.className = isDeleted ? 'deleted-title' : 'post-title';
+    title.textContent = displayTitle;
+
+    // Add edit button for title
+    const titleEditBtn = document.createElement('button');
+    titleEditBtn.textContent = 'Edit Title';
+    titleEditBtn.className = 'edit-btn';
+    titleEditBtn.onclick = () => {
+        showEditTitle(post.title);
+    };
+    if (isDeleted) titleEditBtn.style.display = 'none';
+
+    const meta = document.createElement('div');
+    meta.className = 'post-meta';
+    let metaDate;
+    if (isDeleted && post.updated_at) {
+        metaDate = new Date(post.updated_at).toLocaleString();
+    } else {
+        metaDate = new Date(post.created_at).toLocaleString();
+    }
+    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}`;
+
+    const content = document.createElement('div');
+    content.className = isDeleted ? 'deleted-content' : 'post-content';
+    content.textContent = displayContent;
+
+    // Add edit button for content
+    const contentEditBtn = document.createElement('button');
+    contentEditBtn.textContent = 'Edit Content';
+    contentEditBtn.className = 'edit-btn';
+    contentEditBtn.onclick = () => {
+        showEditContent(post.content);
+    };
+    if (isDeleted) contentEditBtn.style.display = 'none';
+
+          let imageEl = null;
+     if (post.image_url) {
+       imageEl = document.createElement('img');
+       imageEl.src = post.image_url;
+       imageEl.className = 'post-image';
+     }
+
+     // Add edit button for image
+     const imageEditBtn = document.createElement('button');
+     imageEditBtn.textContent = 'Edit Image';
+     imageEditBtn.className = 'edit-btn';
+     imageEditBtn.onclick = () => {
+         showEditImage();
+     };
+     if (isDeleted || !post.image_url) imageEditBtn.style.display = 'none';
+
+    // Wrap post content in a card
+    const postContentCard = document.createElement('div');
+    postContentCard.className = 'post-content-card';
+    if (content) postContentCard.appendChild(content);
+
+    // Reactions container with interactive buttons
+    const reactions = document.createElement('div');
+    reactions.className = 'post-reactions';
+  
+    // Count likes & dislikes
+    const reactionsArray = Array.isArray(post.reactions) ? post.reactions : [];
+    let likes = reactionsArray.filter(r => r.reaction_type === 1).length || 0;
+    let dislikes = reactionsArray.filter(r => r.reaction_type === 2).length || 0;
+  
+    const likeBtn = document.createElement('button');
+    likeBtn.textContent = `▲ ${likes}`;
+    likeBtn.className = 'like-btn';
+    likeBtn.title = 'Like';
+    if (isDeleted) likeBtn.disabled = true;
+
+    const dislikeBtn = document.createElement('button');
+    dislikeBtn.textContent = `▼ ${dislikes}`;
+    dislikeBtn.className = 'dislike-btn';
+    dislikeBtn.title = 'Dislike';
+    if (isDeleted) dislikeBtn.disabled = true;
+  
+    reactions.appendChild(likeBtn);
+    reactions.appendChild(dislikeBtn);
+  
+    const commentCount =
+      post.comment_count || (post.comments ? post.comments.length : 0);
+    const commentCounter = document.createElement('span');
+    commentCounter.className = 'comment-count';
+    commentCounter.textContent = `💬 ${commentCount}`;
+    reactions.appendChild(commentCounter);
+  
+    // Reaction button click handlers
+    likeBtn.addEventListener('click', () => handleReaction(post.id, 'post', 1, likeBtn, dislikeBtn));
+    dislikeBtn.addEventListener('click', () => handleReaction(post.id, 'post', 2, likeBtn, dislikeBtn));
+  
+    // Categories
+    const categoryEl = document.createElement('div');
+    categoryEl.className = 'post-categories';
+    categoryEl.innerHTML = `<span class="Posted-on-text">Posted on the </span>`;
+    post.categories?.forEach((cat, idx) => {
+      const a = document.createElement('a');
+      a.href = `/user/category?id=${encodeURIComponent(cat.id)}`;
+      a.textContent = cat.name;
+      a.className = 'post-category-link';
+      categoryEl.appendChild(a);
+      if (idx < post.categories.length - 1) {
+        categoryEl.appendChild(document.createTextNode(', '));
+      }
+    });
+  
+    // Comments Section
+    const commentSection = document.createElement('div');
+    commentSection.className = 'comments-section';
+  
+    const commentHeader = document.createElement('h3');
+    commentHeader.textContent = 'Comments';
+    commentSection.appendChild(commentHeader);
+  
+    // Inline Comment Form (no modal, always visible)
+    const commentFormContainer = document.createElement('div');
+    commentFormContainer.className = 'comment-form-container';
+  
+    const commentForm = document.createElement('form');
+    commentForm.className = 'comment-form';
+    commentForm.autocomplete = 'off';
+  
+    const commentTextarea = document.createElement('textarea');
+    commentTextarea.className = 'comment-textarea';
+    commentTextarea.placeholder = "Write your comment...";
+    commentTextarea.required = true;
+    commentTextarea.rows = 3;
+    commentTextarea.maxLength = 1000;
+  
+    const submitCommentBtn = document.createElement('button');
+    submitCommentBtn.type = 'submit';
+    submitCommentBtn.className = 'submit-comment-btn';
+    submitCommentBtn.textContent = 'Submit Comment';
+  
+    // Error message element for comment form
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'comment-error-msg';
+  
+    // Character count element
+    const charCount = document.createElement('div');
+    charCount.className = 'comment-char-count';
+    charCount.textContent = '0 / 1000';
+  
+    // Update character count on input
+    commentTextarea.addEventListener('input', () => {
+      charCount.textContent = `${commentTextarea.value.length} / 1000`;
+      if (commentTextarea.value.length > 1000) {
+        commentTextarea.value = commentTextarea.value.slice(0, 1000);
+      }
+      errorMsg.classList.remove('visible');
+    });
+  
+    // Insert elements in the form
+    commentForm.appendChild(errorMsg);
+    commentForm.appendChild(commentTextarea);
+    commentForm.appendChild(charCount);
+    commentForm.appendChild(submitCommentBtn);
+  
+    // Submit comment handler (with validation)
+    commentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = commentTextarea.value.trim();
+      if (!content) {
+        errorMsg.textContent = 'Comment cannot be empty.';
+        errorMsg.classList.add('visible');
+        return;
+      }
+      if (content.length > 1000) {
+        errorMsg.textContent = 'Comment cannot exceed 1000 characters.';
+        errorMsg.classList.add('visible');
+        return;
+      }
+      errorMsg.classList.remove('visible');
+      if (!csrfTokenFromResponse) {
+        csrfTokenFromResponse = await loadCSRFTokenFromSession();
+        if (!csrfTokenFromResponse) {
+          alert('Session expired or not authenticated. Please log in again.');
+          return;
+        }
+      }
+      submitCommentBtn.disabled = true;
+      submitCommentBtn.textContent = 'Submitting...';
+      try {
+        const resp = await fetch('http://localhost:8080/forum/api/comments/create', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfTokenFromResponse,
+          },
+          body: JSON.stringify({
+            post_id: post.id,
+            content,
+          }),
+        });
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          errorMsg.textContent = 'Error: ' + (errData.message || 'Could not submit comment.');
+          errorMsg.classList.add('visible');
+          return;
+        }
+        commentTextarea.value = '';
+        errorMsg.classList.remove('visible');
+        await loadPost();
+      } catch (err) {
+        console.error('Failed to submit comment:', err);
+        errorMsg.textContent = 'Failed to submit comment. Try again later.';
+        errorMsg.classList.add('visible');
+      } finally {
+        submitCommentBtn.disabled = false;
+        submitCommentBtn.textContent = 'Submit Comment';
+      }
+    });
+  
+    commentFormContainer.appendChild(commentForm);
+  
+    // Comments list
+    if (post.comments?.length > 0) {
+      post.comments.forEach(comment => {
+        commentSection.appendChild(createCommentElement(comment, isDeleted));
+      });
+    } else {
+      const noComments = document.createElement('p');
+      noComments.textContent = 'No comments yet.';
+      noComments.className = 'no-comments';
+      commentSection.appendChild(noComments);
+    }
+  
+    // Create a boxed post container
+    const postBox = document.createElement('div');
+    postBox.className = 'post';
+
+    postBox.appendChild(title);
+    if (!isDeleted) postBox.appendChild(titleEditBtn);
+         postBox.appendChild(meta);
+      if (imageEl) postBox.appendChild(imageEl);
+     if (imageEl && !isDeleted) postBox.appendChild(imageEditBtn);
+    if (!isDeleted) {
+        postBox.appendChild(postContentCard);
+        postBox.appendChild(contentEditBtn);
+        postBox.appendChild(commentFormContainer);
+    }
+    postBox.appendChild(reactions);
+    postBox.appendChild(categoryEl);
+    if (!isDeleted) {
+        postBox.appendChild(deleteBtn);
+    }
+    postBox.appendChild(commentSection);
+  
+    // Add everything to the DOM
+    postContainer.appendChild(postBox);
+  }
+  
+  // Helper: create comment element with reactions
+  function createCommentElement(comment, isPostDeleted) {
+
+    // Match guest style: compact, simple, but keep interactive buttons
+    const commentEl = document.createElement('div');
+    commentEl.className = 'comment';
+  
+    const commentUser = document.createElement('strong');
+    commentUser.textContent = comment.username || comment.user_id || 'Anonymous';
+  
+    const commentTime = document.createElement('time');
+    commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+  
+    const commentContent = document.createElement('div');
+    commentContent.textContent = comment.content || '';
+  
+    // Reactions: visually match guest (inline, compact, no extra box)
+    const commentReactions = document.createElement('div');
+    commentReactions.className = 'comment-reactions';
+  
+    const reactionsArray = Array.isArray(comment.reactions) ? comment.reactions : [];
+    const likeCount = reactionsArray.filter(r => r.reaction_type === 1).length || 0;
+    const dislikeCount = reactionsArray.filter(r => r.reaction_type === 2).length || 0;
+  
+    const likeBtn = document.createElement('button');
+    likeBtn.textContent = `▲ ${likeCount}`;
+    likeBtn.className = 'like-btn';
+    likeBtn.title = 'Like';
+    if (isPostDeleted) likeBtn.disabled = true;
+  
+    const dislikeBtn = document.createElement('button');
+    dislikeBtn.textContent = `▼ ${dislikeCount}`;
+    dislikeBtn.className = 'dislike-btn';
+    dislikeBtn.title = 'Dislike';
+    if (isPostDeleted) dislikeBtn.disabled = true;
+
+    // Attach handlers for comment reactions (keep interactive)
+    likeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 1, likeBtn, dislikeBtn));
+    dislikeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 2, likeBtn, dislikeBtn));
+  
+    commentReactions.appendChild(likeBtn);
+    commentReactions.appendChild(dislikeBtn);
+  
+    // Layout: username, time, content, reactions (all compact)
+    commentEl.appendChild(commentUser);
+    commentEl.appendChild(commentTime);
+    commentEl.appendChild(commentContent);
+    commentEl.appendChild(commentReactions);
+  
+    return commentEl;
+  }
+// --- End: Copied rendering logic ---
+
+function showEditTitle(currentTitle) {
+    // Find the title element and replace it with edit form
+    const titleElement = document.querySelector('.post-title, .deleted-title');
+    if (titleElement) {
+        titleElement.innerHTML = `<input id="titleInput" value="${currentTitle ?? ''}" style="width:60%;-webkit-text-fill-color:black"/> <button id="saveTitleBtn" style="-webkit-text-fill-color:black">Save</button> <button id="cancelTitleBtn" style="-webkit-text-fill-color:black">Cancel</button>`;
+        document.getElementById('saveTitleBtn').onclick = saveTitle;
+        document.getElementById('cancelTitleBtn').onclick = loadPost;
+    }
+}
+
+async function saveTitle() {
+    const newTitle = document.getElementById('titleInput').value;
+    await fetch(`http://localhost:8080/forum/api/posts/edit-title/${postId}`, {
+        method: 'PUT',
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({ title: newTitle }),
+        credentials: 'include'
+    });
+    loadPost();
+}
+
+function showEditContent(currentContent) {
+    // Find the content element and replace it with edit form
+    const contentElement = document.querySelector('.post-content, .deleted-content');
+    if (contentElement) {
+        contentElement.innerHTML = `<textarea id="contentInput" style="width:90%">${currentContent ?? ''}</textarea><br/><button id="saveContentBtn">Save</button> <button id="cancelContentBtn">Cancel</button>`;
+        document.getElementById('saveContentBtn').onclick = saveContent;
+        document.getElementById('cancelContentBtn').onclick = loadPost;
+    }
+}
+
+async function saveContent() {
+    const newContent = document.getElementById('contentInput').value;
+    await fetch(`http://localhost:8080/forum/api/posts/edit-content/${postId}`, {
+        method: 'PUT',
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({ content: newContent }),
+        credentials: 'include'
+    });
+    loadPost();
+}
+
+function showEditImage() {
+    // Find the image element and replace it with upload form
+    const imageElement = document.querySelector('.post-image');
+    if (imageElement) {
+        const imgDiv = imageElement.parentElement;
+        imgDiv.innerHTML = `<form id="imageForm" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required />
+            <button type="submit">Upload</button>
+            <button type="button" id="cancelImageBtn">Cancel</button>
+        </form>`;
+        document.getElementById('cancelImageBtn').onclick = loadPost;
+        document.getElementById('imageForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('post_id', postId);
+            await fetch('http://localhost:8080/forum/api/images/upload', {
+                method: 'POST',
+                headers: await getAuthHeaders(true), // true = skip content-type
+                body: formData,
+                credentials: 'include'
+            });
+            loadPost();
+        };
+    }
+}
+
+async function deletePost() {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+        // Delete the post (soft-delete)
+        await fetch(`http://localhost:8080/forum/api/posts/delete/${postId}`, {
+            method: 'DELETE',
+            headers: await getAuthHeaders(),
+            credentials: 'include'
+        });
+        // Delete the images for the post
+        await fetch(`http://localhost:8080/forum/api/images/delete/${postId}`, {
+            method: 'DELETE',
+            headers: await getAuthHeaders(),
+            credentials: 'include'
+        });
+        // Refresh the page after successful deletion
+        window.location.reload();
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Failed to delete post. Please try again.');
+    }
+}
+
+// Helper to get auth headers (including CSRF)
+async function getAuthHeaders(skipContentType) {
+    const headers = {};
+    if (!skipContentType) headers['Content-Type'] = 'application/json';
+    if (csrfTokenFromResponse) {
+        headers['X-CSRF-Token'] = csrfTokenFromResponse;
+    }
+    return headers;
+}
+let csrfTokenFromResponse = null;
+const sessionVerifyURL = 'http://localhost:8080/forum/api/session/verify';
+
+async function loadCSRFTokenFromSession() {
+  try {
+    const resp = await fetch(sessionVerifyURL, {
+      credentials: 'include',
+    });
+    if (!resp.ok) throw new Error('Session not valid');
+    const data = await resp.json();
+    return data.csrf_token || data.CSRFToken;
+  } catch (err) {
+    console.warn("Failed to load CSRF token from session:", err);
+    return null;
+  }
+}
+
+// Helper: merge posts from categories (same as your original)
+function mergePostsFromCategories(categories) {
+    const postsMap = new Map();
+    categories.forEach(category => {
+      const categoryId = category.id;
+      const categoryName = category.name;
+  
+      category.posts.forEach(post => {
+        if (!postsMap.has(post.id)) {
+          postsMap.set(post.id, {
+            ...post,
+            categories: [{ id: categoryId, name: categoryName }],
+          });
+        } else {
+          const existing = postsMap.get(post.id);
+          existing.categories.push({ id: categoryId, name: categoryName });
+        }
+      });
+    });
+    return Array.from(postsMap.values());
+}
+
+// On page load, fetch CSRF token first, then load post
+(async () => {
+  csrfTokenFromResponse = await loadCSRFTokenFromSession();
+  if (!csrfTokenFromResponse) {
+    alert("Session expired or not authenticated. Please log in again.");
+    return;
+  }
+  loadPost();
+})();
+

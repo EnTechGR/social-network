@@ -124,6 +124,12 @@ func router(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.ServeFile(w, r, "./static/templates/user/user_comment_posts.html")
+	case "/user/my-activity/my-posts/edit/post":
+		if ok, _ := checkSession(r); !ok {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+		http.ServeFile(w, r, "./static/templates/user/user_edit.html")
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		http.ServeFile(w, r, "./static/templates/error.html")

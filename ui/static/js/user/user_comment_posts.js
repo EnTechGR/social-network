@@ -38,10 +38,16 @@ function renderCommentedPosts(posts) {
       img.className = 'post-thumb';
       postEl.insertBefore(img, postEl.firstChild);
     }
-    node.querySelector('.post-header').textContent = post.username || 'Anonymous';
-    node.querySelector('.post-title').textContent = post.title;
-    node.querySelector('.post-content').textContent = post.content;
-    node.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+    if (post.title === "" && post.content === "") {
+      node.querySelector('.post-title').textContent = 'This post was deleted';
+      node.querySelector('.post-content').textContent = '';
+      node.querySelector('.post-time').textContent = new Date(post.updated_at).toLocaleString();
+  } else {
+      node.querySelector('.post-header').textContent = post.username || 'You';
+      node.querySelector('.post-title').textContent = post.title;
+      node.querySelector('.post-content').textContent = post.content;
+      node.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+  }
     const reactionsArray = Array.isArray(post.reactions) ? post.reactions : [];
     node.querySelector('.like-count').textContent = reactionsArray.filter(r => r.reaction_type === 1).length;
     node.querySelector('.dislike-count').textContent = reactionsArray.filter(r => r.reaction_type === 2).length;

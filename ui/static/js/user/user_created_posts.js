@@ -43,10 +43,16 @@ function renderCreatedPosts(posts) {
       postEl.insertBefore(img, postEl.firstChild);
     }
 
-    node.querySelector('.post-header').textContent = post.username || 'You';
-    node.querySelector('.post-title').textContent = post.title;
-    node.querySelector('.post-content').textContent = post.content;
-    node.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+    if (post.title === "" && post.content === "") {
+        node.querySelector('.post-title').textContent = 'This post was deleted';
+        node.querySelector('.post-content').textContent = '';
+        node.querySelector('.post-time').textContent = new Date(post.updated_at).toLocaleString();
+    } else {
+        node.querySelector('.post-header').textContent = post.username || 'You';
+        node.querySelector('.post-title').textContent = post.title;
+        node.querySelector('.post-content').textContent = post.content;
+        node.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+    }
 
     const likeCount = (post.reactions || []).filter(r => r.reaction_type === 1).length;
     const dislikeCount = (post.reactions || []).filter(r => r.reaction_type === 2).length;

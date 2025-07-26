@@ -71,7 +71,7 @@ func (h *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	posts, err := h.PostRepo.GetPostsByCategoryWithUser(id)
+	posts, err := h.CategoryRepo.GetPostsByCategoryWithUser(id)
 	if err != nil {
 		utils.ErrorResponse(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return

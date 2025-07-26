@@ -132,7 +132,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 			Posts: []PostResponse{}, // ✅ always initialized to avoid null
 		}
 
-		posts, err := h.postRepo.GetPostsByCategoryWithUser(cat.ID)
+		posts, err := h.categoryRepo.GetPostsByCategoryWithUser(cat.ID)
 
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to load posts", http.StatusInternalServerError)

@@ -68,32 +68,8 @@ func (r *CategoryRepository) GetCategoryByID(id int) (*models.Category, error) {
 	return &category, nil
 }
 
-	
 
-// // repository/comment_repository.go
-func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.CommentWithUser, error) {
-	query := `SELECT c.comment_id, c.post_id, c.user_id, u.username, c.content, c.created_at, c.updated_at
-			  FROM comments c JOIN user u ON c.user_id = u.user_id
-			  WHERE c.post_id = ?`
-
-	rows, err := r.db.Query(query, postID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var comments []models.CommentWithUser
-	for rows.Next() {
-		var c models.CommentWithUser
-		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Username, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
-			return nil, err
-		}
-		comments = append(comments, c)
-	}
-	return comments, nil
-}
-
-func (r *PostRepository) GetPostsByCategoryWithUser(categoryID int) ([]models.PostWithUser, error) {
+func (r *CategoryRepository) GetPostsByCategoryWithUser(categoryID int) ([]models.PostWithUser, error) {
 	rows, err := r.db.Query(`
 		SELECT p.post_id, p.user_id, u.username, pc.category_id, p.title, p.content, p.created_at, p.updated_at
 		FROM posts p

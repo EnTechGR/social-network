@@ -20,7 +20,11 @@ function renderFeed(categories) {
   container.innerHTML = '';
 
   // Merge posts from categories to avoid duplicates & collect categories per post
-  const posts = mergePostsFromCategories(categories);
+  const posts = mergePostsFromCategories(categories).sort((a, b) => {
+    const timeA = new Date(a.created_at).getTime();
+    const timeB = new Date(b.created_at).getTime();
+    return timeB - timeA; // descending (newest first)
+  });
 
   if (posts.length === 0) {
     container.textContent = 'No posts available';
@@ -51,16 +55,27 @@ function renderFeed(categories) {
     });
 
 
-    // Post user info
-    postNode.querySelector('.post-header').textContent = post.username || post.user_id || 'Unknown user';
+    // Username, Title, Content, and Timestamp with deleted/edited logic
+    postNode.querySelector(".post-header").textContent =
+      post.username || post.user_id || "Unknown user";
+    let isEdited = false;
+    let displayDate;
+    if (post.updated_at && post.updated_at !== post.created_at) {
+      displayDate = new Date(post.updated_at).toLocaleString();
+      isEdited = true;
+    } else {
+      displayDate = new Date(post.created_at).toLocaleString();
+    }
 
-    // Post title and content
-    postNode.querySelector('.post-title').textContent = post.title || '';
-    postNode.querySelector('.post-content').textContent = post.content || '';
-
-    // Post created time
-    if (post.created_at) {
-      postNode.querySelector('.post-time').textContent = new Date(post.created_at).toLocaleString();
+    if (post.title === "" && post.content === "") {
+      postNode.querySelector(".post-title").textContent = "This post was deleted";
+      postNode.querySelector(".post-content").textContent = "";
+      postNode.querySelector(".post-time").textContent = displayDate + (isEdited ? " (Deleted)" : "");
+    } else {
+      postNode.querySelector(".post-header").textContent = post.username || post.user_id || "Unknown user";
+      postNode.querySelector(".post-title").textContent = post.title || "";
+      postNode.querySelector(".post-content").textContent = post.content || "";
+      postNode.querySelector(".post-time").textContent = displayDate + (isEdited ? " (Edited)" : "");
     }
 
     // Reactions count

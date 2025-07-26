@@ -30,17 +30,47 @@ async function loadPost() {
   }
 }
 
+// Helper to determine deleted post display state
+function getPostDisplayState(post) {
+  let isDeleted = false;
+  let displayTitle = post.title;
+  let displayContent = post.content;
+  if ((post.title === "") && (post.content === "")) {
+      displayTitle = 'This post was deleted';
+      displayContent = null;
+      isDeleted = true;
+  }
+  return { isDeleted, displayTitle, displayContent };
+}
+
 function renderSinglePost(post) {
   const container = document.getElementById('postContainer');
   container.innerHTML = '';
 
+  const { isDeleted, displayTitle, displayContent } = getPostDisplayState(post);
+
   const title = document.createElement('h1');
-  title.className = 'post-title';
-  title.textContent = post.title || 'Untitled';
+  title.className = isDeleted ? 'deleted-title' : 'post-title';
+  title.textContent = displayTitle;
 
   const meta = document.createElement('div');
-  meta.className = 'post-meta';
-  meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${new Date(post.created_at).toLocaleString()}`;
+    meta.className = 'post-meta';
+    let metaDate, isEdited = false;
+    if (post.updated_at && post.updated_at !== post.created_at) {
+        metaDate = new Date(post.updated_at).toLocaleString();
+        isEdited = true;
+    } else {
+        metaDate = new Date(post.created_at).toLocaleString();
+    }
+
+    let label = "";
+    if (isDeleted) {
+        label = " (Deleted)";
+    } else if (isEdited) {
+        label = " (Edited)";
+    }
+
+    meta.textContent = `By ${post.username || post.user_id || 'Unknown'} on ${metaDate}${label}`;
 
   let imageEl = null;
   if (post.image_url) {
@@ -50,8 +80,8 @@ function renderSinglePost(post) {
   }
 
   const content = document.createElement('div');
-  content.className = 'post-content';
-  content.textContent = post.content || '';
+  content.className = isDeleted ? 'deleted-content' : 'post-content';
+  content.textContent = displayContent;
 
   const reactions = document.createElement('div');
   reactions.className = 'post-reactions';
@@ -150,7 +180,7 @@ function renderSinglePost(post) {
   container.appendChild(title);
   container.appendChild(meta);
   if (imageEl) container.appendChild(imageEl);
-  container.appendChild(content);
+  if (!isDeleted) container.appendChild(content);
   container.appendChild(reactions);
   container.appendChild(categoryEl);
   container.appendChild(commentSection);

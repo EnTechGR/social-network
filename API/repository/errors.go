@@ -13,4 +13,6 @@ var (
 	ErrOAuthStateNotFound   = errors.New("oauth state not found")
 	ErrOAuthStateExpired    = errors.New("oauth state expired")
 	ErrOAuthAccountExists   = errors.New("oauth account already exists")
+	ErrCommentNotFound      = errors.New("comment not found")
+	ErrPostNotFound         = errors.New("post not found")
 )

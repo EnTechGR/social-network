@@ -30,7 +30,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	commentHandler := handlers.NewCommentHandler(commentRepo)
 	reactionHandler := handlers.NewReactionHandler(reactionRepo)
-	imageHandler := handlers.NewImageHandler(imageRepo)
+	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 
 	// Create middleware

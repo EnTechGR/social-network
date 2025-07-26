@@ -317,20 +317,21 @@ function renderSinglePostWithEdit(post) {
     postBox.className = 'post';
 
     postBox.appendChild(title);
-    if (!isDeleted) postBox.appendChild(titleEditBtn);
-         postBox.appendChild(meta);
-      if (imageEl) postBox.appendChild(imageEl);
-     if (imageEl && !isDeleted) postBox.appendChild(imageEditBtn);
+    // --- Edit/Delete for own posts ---
+    if (currentUserId && post.user_id === currentUserId && !isDeleted) {
+        postBox.appendChild(titleEditBtn);
+        if (imageEl) postBox.appendChild(imageEditBtn);
+        postBox.appendChild(contentEditBtn);
+        postBox.appendChild(deleteBtn);
+    }
+    postBox.appendChild(meta);
+    if (imageEl) postBox.appendChild(imageEl);
     if (!isDeleted) {
         postBox.appendChild(postContentCard);
-        postBox.appendChild(contentEditBtn);
         postBox.appendChild(commentFormContainer);
     }
     postBox.appendChild(reactions);
     postBox.appendChild(categoryEl);
-    if (!isDeleted) {
-        postBox.appendChild(deleteBtn);
-    }
     postBox.appendChild(commentSection);
   
     // Add everything to the DOM

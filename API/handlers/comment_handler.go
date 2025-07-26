@@ -77,6 +77,22 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Missing comment ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only comment owner can edit
+	comment, err := h.CommentRepo.GetCommentByID(commentID)
+	if err != nil {
+		if err == repository.ErrCommentNotFound {
+			utils.ErrorResponse(w, "Comment not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve comment", http.StatusInternalServerError)
+		}
+		return
+	}
+	if comment.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only edit your own comments", http.StatusForbidden)
+		return
+	}
+
 	var req struct {
 		Content *string `json:"content"`
 	}
@@ -111,6 +127,22 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Missing comment ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only comment owner can delete
+	comment, err := h.CommentRepo.GetCommentByID(commentID)
+	if err != nil {
+		if err == repository.ErrCommentNotFound {
+			utils.ErrorResponse(w, "Comment not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve comment", http.StatusInternalServerError)
+		}
+		return
+	}
+	if comment.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only delete your own comments", http.StatusForbidden)
+		return
+	}
+
 	if err := h.CommentRepo.SoftDeleteComment(commentID); err != nil {
 		utils.ErrorResponse(w, "Failed to delete comment", http.StatusInternalServerError)
 		return

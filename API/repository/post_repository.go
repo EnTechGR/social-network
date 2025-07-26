@@ -314,6 +314,22 @@ func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWi
 	return posts, nil
 }
 
+// GetPostByID retrieves a post by its ID
+func (r *PostRepository) GetPostByID(postID string) (*models.Post, error) {
+	var post models.Post
+	err := r.db.QueryRow(`
+		SELECT post_id, user_id, title, content, created_at, updated_at 
+		FROM posts WHERE post_id = ?`, postID).Scan(
+		&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+	return &post, nil
+}
+
 // UpdatePost updates the title and content of a post and sets updated_at
 func (r *PostRepository) UpdatePost(postID string, title, content *string) error {
 	setClauses := []string{}

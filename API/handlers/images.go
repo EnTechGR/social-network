@@ -25,10 +25,11 @@ const uploadBaseDir = "uploads/images"
 
 type ImageHandler struct {
 	ImageRepo *repository.ImageRepository
+	PostRepo  *repository.PostRepository
 }
 
-func NewImageHandler(repo *repository.ImageRepository) *ImageHandler {
-	return &ImageHandler{ImageRepo: repo}
+func NewImageHandler(imageRepo *repository.ImageRepository, postRepo *repository.PostRepository) *ImageHandler {
+	return &ImageHandler{ImageRepo: imageRepo, PostRepo: postRepo}
 }
 
 func (h *ImageHandler) Upload(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +54,22 @@ func (h *ImageHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Post ID required", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only post owner can upload images
+	post, err := h.PostRepo.GetPostByID(postID)
+	if err != nil {
+		if err == repository.ErrPostNotFound {
+			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		}
+		return
+	}
+	if post.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only upload images to your own posts", http.StatusForbidden)
+		return
+	}
+
 	// Remove any existing images for this post before saving the new one
 	if err := h.ImageRepo.DeleteByPostID(postID); err != nil {
 		utils.ErrorResponse(w, "Failed to remove old images", http.StatusInternalServerError)
@@ -302,11 +319,34 @@ func (h *ImageHandler) DeleteImagesByPost(w http.ResponseWriter, r *http.Request
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	postID := utils.GetLastPathParam(r)
 	if postID == "" {
 		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only post owner can delete images
+	post, err := h.PostRepo.GetPostByID(postID)
+	if err != nil {
+		if err == repository.ErrPostNotFound {
+			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		}
+		return
+	}
+	if post.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only delete images from your own posts", http.StatusForbidden)
+		return
+	}
+
 	if err := h.ImageRepo.DeleteByPostID(postID); err != nil {
 		utils.ErrorResponse(w, "Failed to delete images", http.StatusInternalServerError)
 		return

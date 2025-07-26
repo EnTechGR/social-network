@@ -72,6 +72,22 @@ func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.C
 	return comments, nil
 }
 
+// GetCommentByID retrieves a comment by its ID
+func (r *CommentRepository) GetCommentByID(commentID string) (*models.Comment, error) {
+	var comment models.Comment
+	err := r.db.QueryRow(`
+		SELECT comment_id, post_id, user_id, content, created_at, updated_at 
+		FROM comments WHERE comment_id = ?`, commentID).Scan(
+		&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrCommentNotFound
+		}
+		return nil, err
+	}
+	return &comment, nil
+}
+
 // UpdateComment updates the content of a comment and sets updated_at
 func (r *CommentRepository) UpdateComment(commentID string, content *string) error {
 	_, err := r.db.Exec(`UPDATE comments SET content = ?, updated_at = ? WHERE comment_id = ?`, content, time.Now(), commentID)

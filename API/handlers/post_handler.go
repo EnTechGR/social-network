@@ -79,6 +79,22 @@ func (h *PostHandler) EditPostTitle(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only post owner can edit
+	post, err := h.PostRepo.GetPostByID(postID)
+	if err != nil {
+		if err == repository.ErrPostNotFound {
+			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		}
+		return
+	}
+	if post.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only edit your own posts", http.StatusForbidden)
+		return
+	}
+
 	var req struct {
 		Title *string `json:"title"`
 	}
@@ -113,6 +129,22 @@ func (h *PostHandler) EditPostContent(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only post owner can edit
+	post, err := h.PostRepo.GetPostByID(postID)
+	if err != nil {
+		if err == repository.ErrPostNotFound {
+			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		}
+		return
+	}
+	if post.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only edit your own posts", http.StatusForbidden)
+		return
+	}
+
 	var req struct {
 		Content *string `json:"content"`
 	}
@@ -147,6 +179,22 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
 		return
 	}
+
+	// Check ownership - only post owner can delete
+	post, err := h.PostRepo.GetPostByID(postID)
+	if err != nil {
+		if err == repository.ErrPostNotFound {
+			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		}
+		return
+	}
+	if post.UserID != user.ID {
+		utils.ErrorResponse(w, "Forbidden - you can only delete your own posts", http.StatusForbidden)
+		return
+	}
+
 	if err := h.PostRepo.SoftDeletePost(postID); err != nil {
 		utils.ErrorResponse(w, "Failed to delete post", http.StatusInternalServerError)
 		return

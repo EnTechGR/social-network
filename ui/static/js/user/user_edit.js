@@ -347,12 +347,6 @@ function renderSinglePostWithEdit(post) {
     const commentUser = document.createElement('strong');
     commentUser.textContent = comment.username || comment.user_id || 'Anonymous';
   
-    const commentTime = document.createElement('time');
-    if (comment.content === "") {
-      commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()})`;
-    } else {
-      commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
-    }
   
     const commentContent = document.createElement('div');
     if (comment.content === "") {
@@ -363,13 +357,14 @@ function renderSinglePostWithEdit(post) {
     commentContent.className = 'comment-content';
 
     // Add (Edited) label to the date if the comment was edited
+    const commentTime = document.createElement('time');
     let isEdited = false;
     if (comment.updated_at && comment.updated_at !== comment.created_at) {
       isEdited = true;
     }
     if (commentTime) {
       if (comment.content === "") {
-        commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()})`;
+        commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()}) (Deleted)`;
       } else if (isEdited) {
         commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()}) (Edited)`;
       } else {
@@ -390,12 +385,14 @@ function renderSinglePostWithEdit(post) {
     likeBtn.className = 'like-btn';
     likeBtn.title = 'Like';
     if (isPostDeleted) likeBtn.disabled = true;
+    if (comment.content === "") likeBtn.disabled = true;
   
     const dislikeBtn = document.createElement('button');
     dislikeBtn.textContent = `▼ ${dislikeCount}`;
     dislikeBtn.className = 'dislike-btn';
     dislikeBtn.title = 'Dislike';
     if (isPostDeleted) dislikeBtn.disabled = true;
+    if (comment.content === "") dislikeBtn.disabled = true;
 
     // Attach handlers for comment reactions (keep interactive)
     likeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 1, likeBtn, dislikeBtn));

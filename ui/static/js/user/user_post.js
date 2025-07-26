@@ -314,11 +314,29 @@ function createCommentElement(comment, isPostDeleted) {
   const commentUser = document.createElement('strong');
   commentUser.textContent = comment.username || comment.user_id || 'Anonymous';
 
+  // Add (Edited) label to the date if the comment was edited
   const commentTime = document.createElement('time');
-  commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+  let isEdited = false;
+  if (comment.updated_at && comment.updated_at !== comment.created_at) {
+    isEdited = true;
+  }
+  if (commentTime) {
+    if (comment.content === "") {
+      commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()}) (Deleted)`;
+    } else if (isEdited) {
+      commentTime.textContent = ` (${new Date(comment.updated_at).toLocaleString()}) (Edited)`;
+    } else {
+      commentTime.textContent = ` (${new Date(comment.created_at).toLocaleString()})`;
+    }
+  }
 
   const commentContent = document.createElement('div');
-  commentContent.textContent = comment.content || '';
+    if (comment.content === "") {
+      commentContent.textContent = 'This comment was deleted';
+    } else {
+      commentContent.textContent = comment.content || '';
+    }
+    commentContent.className = 'comment-content';
 
   // Reactions: visually match guest (inline, compact, no extra box)
   const commentReactions = document.createElement('div');
@@ -333,13 +351,15 @@ function createCommentElement(comment, isPostDeleted) {
   likeBtn.className = 'like-btn';
   likeBtn.title = 'Like';
   if (isPostDeleted) likeBtn.disabled = true;
+  if (comment.content === "") likeBtn.disabled = true;
 
   const dislikeBtn = document.createElement('button');
   dislikeBtn.textContent = `▼ ${dislikeCount}`;
   dislikeBtn.className = 'dislike-btn';
   dislikeBtn.title = 'Dislike';
   if (isPostDeleted) dislikeBtn.disabled = true;
-
+  if (comment.content === "") dislikeBtn.disabled = true;
+  
   // Attach handlers for comment reactions (keep interactive)
   likeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 1, likeBtn, dislikeBtn));
   dislikeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 2, likeBtn, dislikeBtn));

@@ -131,7 +131,7 @@ function renderSinglePostWithEdit(post) {
      imageEditBtn.textContent = 'Edit Image';
      imageEditBtn.className = 'edit-btn';
      imageEditBtn.onclick = () => {
-         showEditImage();
+         showEditImage(imageEditBtn);
      };
      if (isDeleted || !post.image_url) imageEditBtn.style.display = 'none';
 
@@ -317,21 +317,30 @@ function renderSinglePostWithEdit(post) {
     postBox.className = 'post';
 
     postBox.appendChild(title);
-    // --- Edit/Delete for own posts ---
+    // Edit title button right after title
     if (currentUserId && post.user_id === currentUserId && !isDeleted) {
         postBox.appendChild(titleEditBtn);
-        if (imageEl) postBox.appendChild(imageEditBtn);
-        postBox.appendChild(contentEditBtn);
-        postBox.appendChild(deleteBtn);
     }
     postBox.appendChild(meta);
     if (imageEl) postBox.appendChild(imageEl);
+    // Edit image button right after image
+    if (currentUserId && post.user_id === currentUserId && !isDeleted && imageEl) {
+        postBox.appendChild(imageEditBtn);
+    }
     if (!isDeleted) {
         postBox.appendChild(postContentCard);
+        // Edit content button right after content
+        if (currentUserId && post.user_id === currentUserId) {
+            postBox.appendChild(contentEditBtn);
+        }
         postBox.appendChild(commentFormContainer);
     }
     postBox.appendChild(reactions);
     postBox.appendChild(categoryEl);
+    // Delete button before comment section
+    if (currentUserId && post.user_id === currentUserId && !isDeleted) {
+        postBox.appendChild(deleteBtn);
+    }
     postBox.appendChild(commentSection);
   
     // Add everything to the DOM
@@ -559,10 +568,13 @@ async function saveContent() {
     loadPost();
 }
 
-function showEditImage() {
+function showEditImage(imageEditBtn) {
     // Find the image element and add upload interface right after it
     const imageElement = document.querySelector('.post-image');
     if (imageElement) {
+        // Disable the edit image button to prevent multiple upload interfaces
+        imageEditBtn.disabled = true;
+        imageEditBtn.style.opacity = '0.5';
         // Create upload interface
         const uploadContainer = document.createElement('div');
         uploadContainer.className = 'image-upload-interface';
@@ -661,6 +673,9 @@ function showEditImage() {
         cancelImageBtn.addEventListener("click", () => {
             resetImageSelection();
             uploadContainer.remove();
+            // Re-enable the edit image button
+            imageEditBtn.disabled = false;
+            imageEditBtn.style.opacity = '1';
         });
 
         imageInput.addEventListener("change", () => {
@@ -692,12 +707,18 @@ function showEditImage() {
                 
                 // Remove upload interface and reload the post to show the new image
                 uploadContainer.remove();
+                // Re-enable the edit image button
+                imageEditBtn.disabled = false;
+                imageEditBtn.style.opacity = '1';
                 loadPost();
             } catch (error) {
                 console.error('Image upload failed:', error);
                 imageError.textContent = `Upload failed: ${error.message}`;
                 uploadImageBtn.disabled = false;
                 uploadImageBtn.textContent = "Upload Image";
+                // Re-enable the edit image button on error
+                imageEditBtn.disabled = false;
+                imageEditBtn.style.opacity = '1';
             }
         });
     }

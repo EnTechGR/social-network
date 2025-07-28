@@ -20,6 +20,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	commentRepo := repository.NewCommentRepository(db)
 	reactionRepo := repository.NewReactionRepository(db)
 	imageRepo := repository.NewImageRepository(db)
+	notificationRepo := repository.NewNotificationRepository(db)
 
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo)
@@ -28,10 +29,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	postHandler := handlers.NewPostHandler(postRepo)
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
-	commentHandler := handlers.NewCommentHandler(commentRepo)
-	reactionHandler := handlers.NewReactionHandler(reactionRepo)
+	commentHandler := handlers.NewCommentHandler(commentRepo, postRepo, notificationRepo)
+	reactionHandler := handlers.NewReactionHandler(reactionRepo, postRepo, commentRepo, notificationRepo)
 	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
+	notificationHandler := handlers.NewNotificationHandler(notificationRepo)
 
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
@@ -82,14 +84,14 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Protected user routes
 	mux.Handle("/forum/api/posts/create", protected(http.HandlerFunc(postHandler.CreatePost)))
-	mux.Handle("/forum/api/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost))) // DELETE /forum/api/posts/delete/{id}
-	mux.Handle("/forum/api/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle))) // PUT /forum/api/posts/edit-title/{id}
+	mux.Handle("/forum/api/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost)))            // DELETE /forum/api/posts/delete/{id}
+	mux.Handle("/forum/api/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle)))     // PUT /forum/api/posts/edit-title/{id}
 	mux.Handle("/forum/api/posts/edit-content/", protected(http.HandlerFunc(postHandler.EditPostContent))) // PUT /forum/api/posts/edit-content/{id}
 	mux.Handle("/forum/api/user/posts", protected(http.HandlerFunc(myPostsHandler.GetMyPosts)))
 	mux.Handle("/forum/api/user/liked", protected(http.HandlerFunc(likedPostsHandler.GetLikedPosts)))
 	mux.Handle("/forum/api/user/disliked", protected(http.HandlerFunc(likedPostsHandler.GetDislikedPosts)))
 	mux.Handle("/forum/api/comments/create", protected(http.HandlerFunc(commentHandler.CreateComment)))
-	mux.Handle("/forum/api/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment))) // PUT /forum/api/comments/edit/{id}
+	mux.Handle("/forum/api/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment)))     // PUT /forum/api/comments/edit/{id}
 	mux.Handle("/forum/api/comments/delete/", protected(http.HandlerFunc(commentHandler.DeleteComment))) // DELETE /forum/api/comments/delete/{id}
 	mux.Handle("/forum/api/react", protected(http.HandlerFunc(reactionHandler.CreateReact)))
 	mux.Handle("/forum/api/images/upload", protected(http.HandlerFunc(imageHandler.Upload)))
@@ -98,6 +100,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Additional protected routes for user management
 	mux.Handle("/forum/api/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))
+	mux.Handle("/forum/api/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
 	mux.Handle("/forum/api/session/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
 
 	return authMiddleware.Authenticate(mux)

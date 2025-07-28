@@ -9,13 +9,14 @@
     <link rel="stylesheet" href="/static/css/user_feed.css" />
     <script src="/static/js/user/user_mainpage.js" type="module"></script>
     <script src="/static/js/user/user_feed.js" type="module"></script>
+    <script src="/static/js/user/notification_modal.js" type="module"></script>
     <script src="/static/js/user/create_post.js" defer></script>
   </head>
   <body>
     <nav class="navbar">
       <a class="navbar-brand" href="/user/feed">Forum</a>
       <ul class="navbar-links">
-        <li><span class="user-welcome">Welcome, <span id="username-display">User</span></span></li>
+        <li><span id="notification-bell" class="notification-bell">&#128276;</span></li>
         <li><a href="#" id="logout-link">Logout</a></li>
       </ul>
     </nav>
@@ -117,5 +118,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Notifications Modal -->
+    <div id="notifications-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="body-container">
+          <button class="close-btn">&times;</button>
+          <h2>Notifications</h2>
+          <div id="notification-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <template id="notif-item-template">
+      <div class="notification-item">
+        <p class="notification-message"></p>
+        <time class="notification-time"></time>
+      </div>
+    </template>
   </body>
 </html>

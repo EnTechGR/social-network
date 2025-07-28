@@ -1,0 +1,40 @@
+/* Notifications page styles */
+
+.forum-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+  width: calc(100% - 350px);
+  margin-left: 270px;
+  max-width: none;
+  padding: 2em 0;
+  box-sizing: border-box;
+}
+
+.notification-item {
+  background: linear-gradient(145deg, var(--bg-tertiary), #1c1c1c);
+  border-radius: 15px;
+  padding: 1em 1.5em;
+  color: var(--text-primary);
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.13);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.notification-item:hover {
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.22);
+  transform: translateY(-2px);
+}
+
+.notification-message {
+  margin: 0 0 0.5em;
+}
+
+.notification-time {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.notification-link {
+  text-decoration: none;
+  color: inherit;
+}

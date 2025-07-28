@@ -39,6 +39,19 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
+// GetByID retrieves a post by ID
+func (r *PostRepository) GetByID(postID string) (*models.Post, error) {
+	row := r.db.QueryRow(`SELECT post_id, user_id, title, content, created_at, updated_at FROM posts WHERE post_id = ?`, postID)
+	var p models.Post
+	if err := row.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &p, nil
+}
+
 func (r *PostRepository) GetAllPosts() ([]models.Post, error) {
 	rows, err := r.db.Query(`
 		SELECT post_id, user_id, title, content, created_at, updated_at
@@ -191,7 +204,6 @@ func (r *PostRepository) GetCategoriesByPostID(postID string) ([]models.Category
 // 	}
 // 	return posts, nil
 // }
-
 
 func (r *PostRepository) GetPostsReactedByUser(userID string) ([]models.PostWithUser, error) {
 	query := `

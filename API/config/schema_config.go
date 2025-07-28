@@ -73,6 +73,21 @@ const CreateReactionsTable = `CREATE TABLE IF NOT EXISTS reactions (
             )
         );`
 
+const CreateNotificationsTable = `CREATE TABLE IF NOT EXISTS notifications (
+        notification_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        from_user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        post_id TEXT NOT NULL,
+        comment_id TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        is_read BOOLEAN NOT NULL DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (from_user_id) REFERENCES user(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE
+    );`
+
 // CreateImagesTable stores image uploads linked to posts
 const CreateImagesTable = `CREATE TABLE IF NOT EXISTS images (
         image_id TEXT PRIMARY KEY,

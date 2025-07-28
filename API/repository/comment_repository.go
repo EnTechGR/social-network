@@ -15,6 +15,19 @@ func NewCommentRepository(db *sql.DB) *CommentRepository {
 	return &CommentRepository{db: db}
 }
 
+// GetByID retrieves a comment by ID
+func (r *CommentRepository) GetByID(commentID string) (*models.Comment, error) {
+	row := r.db.QueryRow(`SELECT comment_id, post_id, user_id, content, created_at, updated_at FROM comments WHERE comment_id = ?`, commentID)
+	var c models.Comment
+	if err := row.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &c, nil
+}
+
 func (r *CommentRepository) GetAllComments() ([]models.Comment, error) {
 	rows, err := r.db.Query(`
 		SELECT comment_id, post_id, user_id, content, created_at, updated_at 

@@ -125,6 +125,21 @@ body {
     width: 100%;
 }
 
+.user-welcome {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+#username-display {
+    color: var(--color-accent);
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(232, 121, 249, 0.3);
+}
+
 .card-container {
     display: flex;
     flex-wrap: wrap;

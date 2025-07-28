@@ -6,10 +6,15 @@
   <title>Post</title>
   <link rel="stylesheet" href="/static/css/user.css" />
   <link rel="stylesheet" href="/static/css/user_post.css" />
+  <script src="/static/js/user/user_mainpage.js" type="module"></script>
 </head>
 <body>
   <nav class="navbar">
     <a class="navbar-brand" href="/user/feed">Forum</a>
+    <ul class="navbar-links">
+      <li><span class="user-welcome">Welcome, <span id="username-display">User</span></span></li>
+      <li><a href="#" id="logout-link">Logout</a></li>
+    </ul>
   </nav>
 
   <main class="post-container" id="postContainer">

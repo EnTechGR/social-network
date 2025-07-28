@@ -104,5 +104,26 @@ if (activityDropdown) {
 }
 
 
+// Load user profile
+async function loadUserProfile() {
+  try {
+    const resp = await fetch('http://localhost:8080/forum/api/user/profile', { 
+      credentials: 'include' 
+    });
+    if (!resp.ok) throw new Error('Failed to load user profile');
+    const user = await resp.json();
+    
+    const usernameDisplay = document.getElementById('username-display');
+    if (usernameDisplay) {
+      usernameDisplay.textContent = user.username;
+    }
+  } catch (err) {
+    console.error('Error loading user profile:', err);
+  }
+}
+
 // Initialize on DOM ready
-window.addEventListener('DOMContentLoaded', loadCategories);
+window.addEventListener('DOMContentLoaded', () => {
+  loadCategories();
+  loadUserProfile();
+});

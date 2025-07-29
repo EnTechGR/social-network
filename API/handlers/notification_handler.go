@@ -50,3 +50,26 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 
 	utils.JSONResponse(w, resp, http.StatusOK)
 }
+
+// HideNotification marks a notification as not visible for the current user.
+func (h *NotificationHandler) HideNotification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	notifID := utils.GetLastPathParam(r)
+	if notifID == "" {
+		utils.ErrorResponse(w, "Missing notification ID", http.StatusBadRequest)
+		return
+	}
+	if err := h.Repo.Hide(notifID, user.ID); err != nil {
+		utils.ErrorResponse(w, "Failed to delete notification", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONResponse(w, map[string]string{"status": "deleted"}, http.StatusOK)
+}

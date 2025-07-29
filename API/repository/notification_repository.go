@@ -21,8 +21,9 @@ func NewNotificationRepository(db *sql.DB) *NotificationRepository {
 func (r *NotificationRepository) Create(n models.Notification) error {
 	n.ID = utils.GenerateUUID()
 	n.CreatedAt = time.Now()
-	_, err := r.db.Exec(`INSERT INTO notifications (notification_id, user_id, from_user_id, type, post_id, comment_id, created_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		n.ID, n.UserID, n.FromUserID, n.Type, n.PostID, n.CommentID, n.CreatedAt, n.Read)
+	n.Visible = true
+	_, err := r.db.Exec(`INSERT INTO notifications (notification_id, user_id, from_user_id, type, post_id, comment_id, created_at, is_read, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		n.ID, n.UserID, n.FromUserID, n.Type, n.PostID, n.CommentID, n.CreatedAt, n.Read, n.Visible)
 	return err
 }
 
@@ -32,10 +33,10 @@ func (r *NotificationRepository) Create(n models.Notification) error {
 // notification (from_user_id).
 func (r *NotificationRepository) GetByUser(userID string) ([]models.NotificationView, error) {
 	rows, err := r.db.Query(`
-                SELECT n.notification_id, u.username, n.type, n.post_id, n.comment_id, n.created_at, n.is_read
+                SELECT n.notification_id, u.username, n.type, n.post_id, n.comment_id, n.created_at, n.is_read, n.is_visible
                 FROM notifications n
                 JOIN user u ON n.from_user_id = u.user_id
-                WHERE n.user_id = ?
+                WHERE n.user_id = ? AND n.is_visible = 1
                 ORDER BY n.created_at DESC`, userID)
 	if err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func (r *NotificationRepository) GetByUser(userID string) ([]models.Notification
 	var notifs []models.NotificationView
 	for rows.Next() {
 		var n models.NotificationView
-		if err := rows.Scan(&n.ID, &n.Username, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read); err != nil {
+		if err := rows.Scan(&n.ID, &n.Username, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read, &n.Visible); err != nil {
 			return nil, err
 		}
 		notifs = append(notifs, n)
@@ -56,8 +57,14 @@ func (r *NotificationRepository) GetByUser(userID string) ([]models.Notification
 // CountByUser returns the number of notifications for a user.
 func (r *NotificationRepository) CountByUser(userID string) (int, error) {
 	var count int
-	if err := r.db.QueryRow(`SELECT COUNT(*) FROM notifications WHERE user_id = ?`, userID).Scan(&count); err != nil {
+	if err := r.db.QueryRow(`SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_visible = 1`, userID).Scan(&count); err != nil {
 		return 0, err
 	}
 	return count, nil
+}
+
+// Hide marks a notification as not visible for the given user.
+func (r *NotificationRepository) Hide(id, userID string) error {
+	_, err := r.db.Exec(`UPDATE notifications SET is_visible = 0 WHERE notification_id = ? AND user_id = ?`, id, userID)
+	return err
 }

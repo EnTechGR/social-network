@@ -185,6 +185,14 @@ body, html {
   color: var(--text-muted);
 }
 
+.delete-notification-btn {
+  margin-left: 1em;
+  background: transparent;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+}
+
 @media (max-width: 800px) {
   .forum-content {
     padding: 1em 0;

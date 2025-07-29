@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 5 // Updated to version 5 for nullable post/comment fields
+	CURRENT_DB_VERSION = 8 // version 8 adds is_visible column to notifications
 	INITIAL_VERSION    = 1
 )
 
@@ -74,6 +74,30 @@ func GetMigrations() []Migration {
 				// 4. Rename new table
 				// Here, we just add a comment for manual migration
 				"-- Manual migration required: Make posts.title, posts.content, comments.content nullable.",
+			},
+		},
+		{
+			Version:     6,
+			Description: "Add notifications table",
+			SQL: []string{
+				config.CreateNotificationsTable,
+				config.IdxNotificationsUserID,
+				config.IdxNotificationsFromUserID,
+			},
+		},
+		{
+			Version:     7,
+			Description: "Add from_user_id to notifications",
+			SQL: []string{
+				"ALTER TABLE notifications ADD COLUMN from_user_id TEXT;",
+				config.IdxNotificationsFromUserID,
+			},
+		},
+		{
+			Version:     8,
+			Description: "Add is_visible to notifications",
+			SQL: []string{
+				"ALTER TABLE notifications ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1;",
 			},
 		},
 		// Add future migrations here
@@ -183,7 +207,7 @@ func getDatabaseVersion(db *sql.DB) (int, error) {
 				}
 				return INITIAL_VERSION, nil
 			}
-			return 0, nil  // No version and no existing user table, implies brand new DB
+			return 0, nil // No version and no existing user table, implies brand new DB
 		}
 		return 0, fmt.Errorf("failed to get database version: %v", err)
 	}
@@ -266,6 +290,35 @@ func cleanupOldBackups(maxAgeDays int) error {
 	return nil
 }
 
+// columnExists checks if a column is present in the given table using
+// `PRAGMA table_info`.
+func columnExists(db *sql.DB, tableName, columnName string) (bool, error) {
+	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
+	rows, err := db.Query(query)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	var (
+		cid     int
+		name    string
+		ctype   string
+		notnull int
+		dflt    sql.NullString
+		pk      int
+	)
+	for rows.Next() {
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+			return false, err
+		}
+		if name == columnName {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
+}
+
 func runMigrations(db *sql.DB) error {
 	currentVersion, err := getDatabaseVersion(db)
 	if err != nil {
@@ -283,13 +336,13 @@ func runMigrations(db *sql.DB) error {
 	if len(pending) == 0 && currentVersion == CURRENT_DB_VERSION {
 		fmt.Printf("Database is up to date (version %d)\n", currentVersion)
 		return nil
-		} else if len(pending) == 0 && currentVersion < CURRENT_DB_VERSION {
-			// This case means there are no migrations defined beyond the current version
-			// but the current version is not yet the latest expected version.
-			// This can happen if CURRENT_DB_VERSION constant is updated, but no
-			// corresponding migration is added to GetMigrations().
-			fmt.Printf("Warning: Database version (%d) is not at the latest expected version (%d), but no pending migrations found.\n", currentVersion, CURRENT_DB_VERSION)
-			return nil
+	} else if len(pending) == 0 && currentVersion < CURRENT_DB_VERSION {
+		// This case means there are no migrations defined beyond the current version
+		// but the current version is not yet the latest expected version.
+		// This can happen if CURRENT_DB_VERSION constant is updated, but no
+		// corresponding migration is added to GetMigrations().
+		fmt.Printf("Warning: Database version (%d) is not at the latest expected version (%d), but no pending migrations found.\n", currentVersion, CURRENT_DB_VERSION)
+		return nil
 	}
 
 	fmt.Printf("Running %d migration(s)...\n", len(pending))
@@ -307,11 +360,31 @@ func runMigrations(db *sql.DB) error {
 
 	for _, m := range pending {
 		fmt.Printf("Applying migration %d: %s\n", m.Version, m.Description)
+
+		sqlStmts := m.SQL
+		if m.Version == 7 {
+			exists, err := columnExists(db, "notifications", "from_user_id")
+			if err != nil {
+				return fmt.Errorf("failed to check notifications table: %v", err)
+			}
+			if exists && len(sqlStmts) > 0 {
+				sqlStmts = sqlStmts[1:]
+			}
+		} else if m.Version == 8 {
+			exists, err := columnExists(db, "notifications", "is_visible")
+			if err != nil {
+				return fmt.Errorf("failed to check notifications table: %v", err)
+			}
+			if exists && len(sqlStmts) > 0 {
+				sqlStmts = sqlStmts[1:]
+			}
+		}
+
 		tx, err := db.Begin()
 		if err != nil {
 			return fmt.Errorf("begin tx for migration %d: %v\nBackup: %s", m.Version, err, backupPath)
 		}
-		for i, stmt := range m.SQL {
+		for i, stmt := range sqlStmts {
 			if _, err := tx.Exec(stmt); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("migration %d stmt %d failed: %v\nSQL: %s\nBackup: %s", m.Version, i+1, err, stmt, backupPath)
@@ -347,6 +420,7 @@ func createTables(db *sql.DB) error {
 		config.CreatePostsTable,
 		config.CreateCommentsTable,
 		config.CreateReactionsTable,
+		config.CreateNotificationsTable,
 		config.CreateImagesTable,
 		config.CreatePostCategoriesTable,
 		config.CreateOAuthTable,
@@ -386,6 +460,8 @@ func createIndexes(db *sql.DB) error {
 		config.IdxReactionsPostID,
 		config.IdxReactionsCommentID,
 		config.IdxImagesPostID,
+		config.IdxNotificationsUserID,
+		config.IdxNotificationsFromUserID,
 		// OAuth indexes
 		`CREATE INDEX IF NOT EXISTS idx_oauth_provider_user ON oauth_accounts(provider, provider_user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_oauth_user_id ON oauth_accounts(user_id)`,

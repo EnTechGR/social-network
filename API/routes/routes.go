@@ -101,6 +101,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Additional protected routes for user management
 	mux.Handle("/forum/api/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))
 	mux.Handle("/forum/api/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
+	mux.Handle("/forum/api/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification))) // DELETE /forum/api/notifications/delete/{id}
 	mux.Handle("/forum/api/session/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
 
 	return authMiddleware.Authenticate(mux)

@@ -178,6 +178,13 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Actually delete the comment
+	if err := h.CommentRepo.SoftDeleteComment(commentID); err != nil {
+		utils.ErrorResponse(w, "Failed to delete comment", http.StatusInternalServerError)
+		return
+	}
+
+	// Create notification for post owner
 	if comment != nil {
 		if post, err := h.PostRepo.GetByID(comment.PostID); err == nil && post != nil && post.UserID != user.ID {
 			n := models.Notification{

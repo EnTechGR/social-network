@@ -82,6 +82,7 @@ const CreateNotificationsTable = `CREATE TABLE IF NOT EXISTS notifications (
         comment_id TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         is_read BOOLEAN NOT NULL DEFAULT 0,
+        is_visible BOOLEAN NOT NULL DEFAULT 1,
         FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
         FOREIGN KEY (from_user_id) REFERENCES user(user_id) ON DELETE CASCADE,
         FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,

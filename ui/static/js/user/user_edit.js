@@ -153,13 +153,13 @@ function renderSinglePostWithEdit(post) {
     likeBtn.textContent = `▲ ${likes}`;
     likeBtn.className = 'like-btn';
     likeBtn.title = 'Like';
-    if (isDeleted) likeBtn.disabled = true;
+    likeBtn.disabled = true;
 
     const dislikeBtn = document.createElement('button');
     dislikeBtn.textContent = `▼ ${dislikes}`;
     dislikeBtn.className = 'dislike-btn';
     dislikeBtn.title = 'Dislike';
-    if (isDeleted) dislikeBtn.disabled = true;
+    dislikeBtn.disabled = true;
   
     reactions.appendChild(likeBtn);
     reactions.appendChild(dislikeBtn);
@@ -394,15 +394,13 @@ function renderSinglePostWithEdit(post) {
     likeBtn.textContent = `▲ ${likeCount}`;
     likeBtn.className = 'like-btn';
     likeBtn.title = 'Like';
-    if (isPostDeleted) likeBtn.disabled = true;
-    if (comment.content === "") likeBtn.disabled = true;
+    likeBtn.disabled = true;
   
     const dislikeBtn = document.createElement('button');
     dislikeBtn.textContent = `▼ ${dislikeCount}`;
     dislikeBtn.className = 'dislike-btn';
     dislikeBtn.title = 'Dislike';
-    if (isPostDeleted) dislikeBtn.disabled = true;
-    if (comment.content === "") dislikeBtn.disabled = true;
+    dislikeBtn.disabled = true;
 
     // Attach handlers for comment reactions (keep interactive)
     likeBtn.addEventListener('click', () => handleReaction(comment.id, 'comment', 1, likeBtn, dislikeBtn));

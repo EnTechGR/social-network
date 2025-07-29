@@ -34,7 +34,69 @@
   color: var(--text-muted);
 }
 
+.delete-notification-btn {
+  margin-left: 1em;
+  background: transparent;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+}
+
 .notification-link {
   text-decoration: none;
   color: inherit;
+}
+
+/* Notification Modal Container */
+#notifications-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 90%;
+  background: var(--bg-secondary, #222);
+  box-shadow: -4px 0 12px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+  transform: translateX(100%); /* hidden by default */
+}
+
+/* Show modal when not hidden */
+#notifications-modal:not(.hidden) {
+  transform: translateX(0);
+}
+
+/* Modal Header */
+#notifications-modal .modal-header {
+  padding: 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-tertiary, #333);
+  border-bottom: 1px solid var(--border-color, #444);
+}
+
+/* Scrollable List */
+#notification-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1em;
+}
+
+/* Hide scrollbar but keep scroll */
+#notification-list::-webkit-scrollbar {
+  width: 6px;
+}
+#notification-list::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+#notificationsContainer {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 70vh; /* so it doesn't overflow the viewport */
+  padding: 1em;
 }

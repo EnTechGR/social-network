@@ -15,6 +15,7 @@ type Notification struct {
 	CommentID  *string   `json:"comment_id,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 	Read       bool      `json:"read"`
+	Visible    bool      `json:"visible"`
 }
 
 // NotificationView represents a notification with the sender's username
@@ -28,4 +29,5 @@ type NotificationView struct {
 	CommentID *string   `json:"comment_id,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	Read      bool      `json:"read"`
+	Visible   bool      `json:"visible"`
 }

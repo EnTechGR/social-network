@@ -104,21 +104,24 @@ if (activityDropdown) {
 }
 
 
-// Load user profile
+// Load user profile data
 async function loadUserProfile() {
   try {
-    const resp = await fetch('http://localhost:8080/forum/api/user/profile', { 
-      credentials: 'include' 
+    const response = await fetch('http://localhost:8080/forum/api/user/profile', {
+      credentials: 'include'
     });
-    if (!resp.ok) throw new Error('Failed to load user profile');
-    const user = await resp.json();
     
-    const usernameDisplay = document.getElementById('username-display');
-    if (usernameDisplay) {
-      usernameDisplay.textContent = user.username;
+    if (response.ok) {
+      const userData = await response.json();
+      const usernameDisplay = document.getElementById('username-display');
+      if (usernameDisplay) {
+        usernameDisplay.textContent = userData.username;
+      }
+    } else {
+      console.error('Failed to load user profile:', response.status);
     }
-  } catch (err) {
-    console.error('Error loading user profile:', err);
+  } catch (error) {
+    console.error('Error loading user profile:', error);
   }
 }
 

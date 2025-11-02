@@ -1,0 +1,112 @@
+.welcome-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%);
+  text-align: center;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.welcome-page h1 {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.5px;
+}
+
+.welcome-page p {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin-bottom: 2.5rem;
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Primary Button */
+.welcome-actions button {
+  min-width: 160px;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius);
+  border: none;
+  background-color: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 10px rgba(0, 122, 255, 0.25);
+}
+
+.welcome-actions button:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.welcome-actions button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.2);
+}
+
+/* Secondary (outline) button for guest mode */
+.welcome-actions #guestBtn {
+  background: transparent;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  box-shadow: none;
+}
+
+.welcome-actions #guestBtn:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(0, 122, 255, 0.2);
+}
+
+/* Soft fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Optional dark mode */
+@media (prefers-color-scheme: dark) {
+  .welcome-page {
+    background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
+  }
+
+  .welcome-page h1 {
+    color: #fff;
+  }
+
+  .welcome-page p {
+    color: #aaa;
+  }
+
+  .welcome-actions #guestBtn {
+    border-color: #fff;
+    color: #fff;
+  }
+
+  .welcome-actions #guestBtn:hover {
+    background: #fff;
+    color: #111;
+  }
+}

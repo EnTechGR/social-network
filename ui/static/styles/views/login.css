@@ -1,0 +1,158 @@
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%);
+  animation: fadeIn 0.4s ease-out;
+  padding: 1rem;
+}
+
+.login-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2rem 2.5rem;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.login-card h1 {
+  font-size: 1.9rem;
+  color: #ddd;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+/* Input fields */
+.login-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Submit button */
+.login-form button[type="submit"] {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  background-color: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.login-form button[type="submit"]:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.login-form button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* OAuth buttons */
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.oauth-buttons button {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.oauth-buttons button:hover {
+  background: #f1f1f1;
+  transform: translateY(-1px);
+}
+
+.oauth-buttons button:active {
+  transform: translateY(0);
+}
+
+/* Register link */
+.login-footer {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.login-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .login-page {
+    background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
+  }
+
+  .login-card {
+    background: #1e1e1e;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .login-form input {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #f1f1f1;
+  }
+
+  .login-form input:focus {
+    border-color: var(--accent);
+  }
+
+  .oauth-buttons button {
+    background: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+  }
+
+  .oauth-buttons button:hover {
+    background: #333;
+  }
+}

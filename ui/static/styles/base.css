@@ -1,0 +1,22 @@
+/* Base reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background-color: #fafafa;
+  color: #222;
+}
+
+:root {
+  --accent: #007aff;
+  --accent-hover: #005fcb;
+  --bg: #ffffff;
+  --text: #1e1e1e;
+  --muted: #888;
+  --radius: 10px;
+}

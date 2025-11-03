@@ -2,20 +2,31 @@ const API_BASE = "http://localhost:8080/forum/api";
 
 let currentUser = null;
 let csrfToken = null;
+let sessionChecked = false; // ✅ track if verifySession has run at least once
 
 export async function verifySession() {
-  const res = await fetch(`${API_BASE}/session/verify`, {
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(`${API_BASE}/session/verify`, {
+      credentials: "include",
+    });
 
-  if (res.ok) {
+    if (!res.ok) {
+      currentUser = null;
+      csrfToken = null;
+      sessionChecked = true;
+      return null;
+    }
+
     const data = await res.json();
-    currentUser = data.user;
-    csrfToken = data.csrf_token;
+    currentUser = data.user || null;
+    csrfToken = data.csrf_token || null;
+    sessionChecked = true;
     return currentUser;
-  } else {
+  } catch (err) {
+    console.error("Error verifying session:", err);
     currentUser = null;
     csrfToken = null;
+    sessionChecked = true;
     return null;
   }
 }
@@ -26,4 +37,14 @@ export function getCSRF() {
 
 export function getUser() {
   return currentUser;
+}
+
+export function isAuthenticated() {
+  return !!currentUser;
+}
+
+// ✅ Optional helper: returns a promise that resolves once session has been checked
+export async function ensureSessionChecked() {
+  if (sessionChecked) return;
+  await verifySession();
 }

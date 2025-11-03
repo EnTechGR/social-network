@@ -40,7 +40,7 @@
   padding: 0.85rem 1.6rem;
   border-radius: var(--radius, 8px);
   border: none;
-  background-color: #5b4b8a;
+  background-color: var(--accent);
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
@@ -50,7 +50,7 @@
 }
 
 .welcome-actions button:hover {
-  background-color: #6e5bb0;
+  background-color: var(--accent-hover);
   box-shadow: 0 4px 12px rgba(91, 75, 138, 0.35);
   transform: translateY(-2px);
 }
@@ -63,13 +63,13 @@
 /* Guest (outline) button */
 .welcome-actions #guestBtn {
   background: transparent;
-  color: #5b4b8a;
-  border: 2px solid #5b4b8a;
+  color: var(--accent);
+  border: 2px solid var(--accent);
   box-shadow: none;
 }
 
 .welcome-actions #guestBtn:hover {
-  background: #5b4b8a;
+  background: var(--accent-hover);
   color: #fff;
   box-shadow: 0 3px 8px rgba(91, 75, 138, 0.25);
 }

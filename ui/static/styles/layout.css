@@ -1,13 +1,135 @@
-.container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 1.5rem;
+/* ========== APP LAYOUT ========== */
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fff 0%, #f8f9fb 100%);
+  color: var(--text);
 }
 
-.centered {
+/* HEADER */
+.app-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.app-header .logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.5px;
+}
+
+.header-actions button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  margin-left: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.header-actions button:hover {
+  opacity: 0.8;
+}
+
+/* BODY LAYOUT */
+.app-body {
+  display: grid;
+  grid-template-columns: 250px 1fr 250px;
+  flex: 1;
+  height: 100%;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list li {
+  margin-bottom: 0.5rem;
+}
+
+.category-list a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.category-list a:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* User-only section */
+.user-menu h3 {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.user-menu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.user-menu a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  display: block;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.user-menu a:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* RIGHT PANEL */
+.right-panel {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-left: 1px solid #e0e0e0;
+}
+
+.chat-placeholder {
+  height: 100%;
+  display: flex;
   justify-content: center;
-  height: 100vh;
+  align-items: center;
+  color: #888;
+  font-size: 0.95rem;
 }

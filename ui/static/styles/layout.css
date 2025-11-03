@@ -1,64 +1,87 @@
-/* ========== APP LAYOUT ========== */
+/* ===============================
+   BOOKTALK APP LAYOUT
+   =============================== */
+
 .layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff 0%, #f8f9fb 100%);
+  background: var(--bg);
   color: var(--text);
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--accent);
   color: #fff;
-  padding: 0.75rem 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-heading);
 }
 
 .app-header .logo {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  cursor: pointer;
   letter-spacing: -0.5px;
+  cursor: pointer;
+  transition: opacity 0.25s ease;
+}
+
+.app-header .logo:hover {
+  opacity: 0.9;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .header-actions button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: #fff;
-  font-size: 1rem;
-  margin-left: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background 0.25s ease, transform 0.2s ease;
 }
 
 .header-actions button:hover {
-  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
 }
 
-/* BODY LAYOUT */
+/* ===== BODY GRID ===== */
 .app-body {
   display: grid;
-  grid-template-columns: 250px 1fr 250px;
+  grid-template-columns: 240px 1fr 280px;
   flex: 1;
   height: 100%;
+  background: var(--bg);
 }
 
-/* SIDEBAR */
+/* ===== SIDEBAR ===== */
 .sidebar {
-  background: #f3f4f6;
-  padding: 1rem;
-  border-right: 1px solid #e0e0e0;
+  background: var(--bg-alt);
+  padding: 1.25rem 1rem;
+  border-right: 1px solid var(--border);
+  box-shadow: inset -1px 0 0 var(--border);
   overflow-y: auto;
+  font-family: var(--font-body);
 }
 
 .sidebar h2 {
   font-size: 1.1rem;
-  margin-bottom: 0.75rem;
+  font-weight: 600;
   color: var(--accent);
+  margin-bottom: 0.75rem;
+  font-family: var(--font-heading);
 }
 
 .category-list {
@@ -68,7 +91,7 @@
 }
 
 .category-list li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .category-list a {
@@ -78,7 +101,7 @@
   display: block;
   padding: 0.4rem 0.6rem;
   border-radius: var(--radius);
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: var(--transition);
 }
 
 .category-list a:hover {
@@ -86,11 +109,18 @@
   color: var(--accent);
 }
 
-/* User-only section */
+/* ===== USER MENU ===== */
+.user-menu {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
 .user-menu h3 {
-  margin-top: 1.5rem;
   font-size: 1rem;
+  font-weight: 600;
   color: var(--accent);
+  margin-bottom: 0.5rem;
 }
 
 .user-menu ul {
@@ -99,12 +129,13 @@
 }
 
 .user-menu a {
-  color: var(--text-muted);
+  display: block;
+  color: var(--muted);
   text-decoration: none;
   font-size: 0.95rem;
-  display: block;
-  padding: 0.3rem 0.5rem;
-  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
 }
 
 .user-menu a:hover {
@@ -112,17 +143,20 @@
   color: var(--accent);
 }
 
-/* MAIN CONTENT */
+/* ===== MAIN CONTENT ===== */
 .main-content {
-  padding: 1.5rem;
+  padding: 2rem;
   overflow-y: auto;
+  background: var(--bg);
+  animation: fadeIn 0.4s ease;
 }
 
-/* RIGHT PANEL */
+/* ===== RIGHT PANEL (Chat placeholder) ===== */
 .right-panel {
-  background: #f3f4f6;
+  background: var(--bg-alt);
   padding: 1rem;
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid var(--border);
+  box-shadow: inset 1px 0 0 var(--border);
 }
 
 .chat-placeholder {
@@ -130,6 +164,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #888;
+  color: var(--muted);
   font-size: 0.95rem;
+  font-style: italic;
 }

@@ -3,9 +3,10 @@ import { getCSRF } from "../session.js";
 
 export function renderLogin(app) {
   app.innerHTML = `
-    <section class="login-page">
+    <section class="login-page fade-in">
       <div class="login-card">
-        <h1>Login</h1>
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to continue your BookTalk journey.</p>
 
         <form id="loginForm" class="login-form">
           <input type="email" id="email" placeholder="Email" required />

@@ -5,18 +5,18 @@ import { navigateTo } from "../router.js";
 const API_FEED = "http://localhost:8080/forum/api/feed";
 
 export function renderUserFeed(app) {
-  // Render the shared app shell
+  // Render the shared layout shell (header + sidebar + chat)
   renderLayout(app, {
-    isUser: true, // enables logout, notifications, and user menu
+    isUser: true,
     mainContent: `
-      <div class="feed-page">
+      <div class="feed-page fade-in">
         <div class="feed-toolbar">
-          <h2>Feed</h2>
-          <button id="createPostBtn" class="btn-accent">+ Create Post</button>
+          <h2>Latest Posts</h2>
+          <button id="createPostBtn" class="btn-accent">+ New Post</button>
         </div>
 
         <div id="forumContainer" class="forum-container">
-          <div class="loader">Loading feed...</div>
+          <div class="loader">Loading your personalized feed...</div>
         </div>
       </div>
     `,
@@ -25,12 +25,14 @@ export function renderUserFeed(app) {
   const forumContainer = document.getElementById("forumContainer");
   const createPostBtn = document.getElementById("createPostBtn");
 
-  // Navigate to post creation page
-  createPostBtn.addEventListener("click", () => {
-    navigateTo("/user/posts/create");
-  });
+  /* ========== CREATE POST ========== */
+  if (createPostBtn) {
+    createPostBtn.addEventListener("click", () => {
+      navigateTo("/user/posts/create");
+    });
+  }
 
-  // ✅ Fetch and render feed posts
+  /* ========== LOAD FEED ========== */
   async function loadFeed() {
     try {
       const resp = await fetch(API_FEED, { credentials: "include" });
@@ -42,14 +44,24 @@ export function renderUserFeed(app) {
       );
 
       if (!posts.length) {
-        forumContainer.innerHTML = `<p class="empty-feed">No posts available yet.</p>`;
+        forumContainer.innerHTML = `
+          <p class="empty-feed">No posts yet. Be the first to share something!</p>
+        `;
         return;
       }
 
       renderPosts(forumContainer, posts, "/user");
     } catch (err) {
       console.error("Error loading user feed:", err);
-      forumContainer.innerHTML = `<p class="error-message">⚠️ Unable to load feed. Please try again later.</p>`;
+      forumContainer.innerHTML = `
+        <div class="error-message">
+          <p>⚠️ Unable to load your feed. Please check your connection.</p>
+          <button id="retryFeed" class="retry-btn">Retry</button>
+        </div>
+      `;
+
+      // Allow retry without page reload
+      document.getElementById("retryFeed")?.addEventListener("click", loadFeed);
     }
   }
 

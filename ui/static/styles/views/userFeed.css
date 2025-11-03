@@ -59,3 +59,45 @@
   color: #d9534f;
 }
 
+.feed-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.feed-toolbar h2 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.btn-accent {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.btn-accent:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+.empty-feed {
+  color: var(--muted);
+  text-align: center;
+  font-style: italic;
+  margin-top: 2rem;
+}
+
+

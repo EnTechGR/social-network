@@ -8,7 +8,7 @@ export function renderGuestFeed(app) {
   renderLayout(app, {
     isUser: false,
     mainContent: `
-      <div class="feed-page">
+      <div class="feed-page fade-in">
         <div id="forumContainer" class="forum-container">
           <div class="loader">Loading feed...</div>
         </div>
@@ -18,7 +18,6 @@ export function renderGuestFeed(app) {
 
   const forumContainer = document.getElementById("forumContainer");
 
-  // ✅ Fetch and render feed posts
   async function loadFeed() {
     try {
       const resp = await fetch(API_FEED, { credentials: "include" });
@@ -37,7 +36,15 @@ export function renderGuestFeed(app) {
       renderPosts(forumContainer, posts, "/guest");
     } catch (err) {
       console.error("Error loading feed:", err);
-      forumContainer.innerHTML = `<p class="error-message">⚠️ Unable to load feed. Please try again later.</p>`;
+      forumContainer.innerHTML = `
+        <div class="error-message">
+          <p>⚠️ Unable to load the feed. Please check your connection.</p>
+          <button id="retryFeed" class="retry-btn">Retry</button>
+        </div>
+      `;
+      document
+        .getElementById("retryFeed")
+        ?.addEventListener("click", () => loadFeed());
     }
   }
 

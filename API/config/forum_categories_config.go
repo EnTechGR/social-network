@@ -1,14 +1,12 @@
 // Define the categories to add
 package config
 
-import ()
-
 var Categories = []string{
-	"General",
-	"Software Development",
-	"Hobbies",
-	"Random",
-	"Pets",
-	"Travel",
-	"EMVALOTIS",
+	"Drama",
+	"Fantasy & Sci-Fi",
+	"Mystery & Thriller",
+	"Romance",
+	"Horror",
+	"Non-Fiction",
+	"Young Adult & Kids",
 }

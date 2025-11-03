@@ -8,11 +8,15 @@ import { renderUserFeed } from "./views/userFeed.js";
 // import { renderProfile } from "./views/profile.js";
 // import { renderNotifications } from "./views/notifications.js";
 
+let isNavigating = false;
+
 export async function router() {
-  const path = window.location.pathname;
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const app = document.getElementById("app");
 
-  // Always check session before deciding where to go
+  // Show loading state
+  app.innerHTML = `<div class="loader">Loading...</div>`;
+
   await verifySession();
   const loggedIn = isAuthenticated();
 
@@ -64,8 +68,10 @@ export async function router() {
   }
 }
 
-// Programmatic navigation
-export function navigateTo(path) {
+export async function navigateTo(path) {
+  if (isNavigating) return;
+  isNavigating = true;
   history.pushState({}, "", path);
-  router();
+  await router();
+  isNavigating = false;
 }

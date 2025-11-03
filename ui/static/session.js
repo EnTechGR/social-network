@@ -24,8 +24,7 @@ export async function verifySession() {
     return currentUser;
   } catch (err) {
     console.error("Error verifying session:", err);
-    currentUser = null;
-    csrfToken = null;
+    clearSession();
     sessionChecked = true;
     return null;
   }
@@ -41,6 +40,12 @@ export function getUser() {
 
 export function isAuthenticated() {
   return !!currentUser;
+}
+
+export function clearSession() {
+  currentUser = null;
+  csrfToken = null;
+  sessionChecked = false;
 }
 
 // ✅ Optional helper: returns a promise that resolves once session has been checked

@@ -12,6 +12,18 @@ html, body {
   color: #222;
 }
 
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.1rem;
+  color: var(--muted, #666);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+
 :root {
   --accent: #c47dec;
   --accent-hover: #612579;

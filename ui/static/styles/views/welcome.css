@@ -5,27 +5,28 @@
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%);
+  background: linear-gradient(180deg, #faf8f6 0%, #f3efe9 100%);
   text-align: center;
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .welcome-page h1 {
   font-size: 2.75rem;
   font-weight: 700;
-  color: var(--text);
+  color: #2b2b2b;
   margin-bottom: 0.75rem;
   letter-spacing: -0.5px;
 }
 
 .welcome-page p {
-  font-size: 1.1rem;
-  color: var(--muted);
+  font-size: 1.15rem;
+  color: #555;
   margin-bottom: 2.5rem;
   max-width: 520px;
   line-height: 1.6;
 }
 
+/* Buttons section */
 .welcome-actions {
   display: flex;
   flex-wrap: wrap;
@@ -33,48 +34,51 @@
   gap: 1rem;
 }
 
-/* Primary Button */
+/* Primary buttons */
 .welcome-actions button {
   min-width: 160px;
   padding: 0.85rem 1.6rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius, 8px);
   border: none;
-  background-color: var(--accent);
+  background-color: #5b4b8a;
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.2px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 3px 10px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 3px 10px rgba(91, 75, 138, 0.25);
 }
 
 .welcome-actions button:hover {
-  background-color: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+  background-color: #6e5bb0;
+  box-shadow: 0 4px 12px rgba(91, 75, 138, 0.35);
   transform: translateY(-2px);
 }
 
 .welcome-actions button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 2px 6px rgba(91, 75, 138, 0.2);
 }
 
-/* Secondary (outline) button for guest mode */
+/* Guest (outline) button */
 .welcome-actions #guestBtn {
   background: transparent;
-  color: var(--accent);
-  border: 2px solid var(--accent);
+  color: #5b4b8a;
+  border: 2px solid #5b4b8a;
   box-shadow: none;
 }
 
 .welcome-actions #guestBtn:hover {
-  background: var(--accent);
+  background: #5b4b8a;
   color: #fff;
-  box-shadow: 0 3px 8px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 3px 8px rgba(91, 75, 138, 0.25);
 }
 
 /* Soft fade-in animation */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -1,14 +1,20 @@
 import { renderLayout } from "./components/layout.js";
 import { renderPosts, mergePostsFromCategories } from "./components/posts.js";
+import { navigateTo } from "../router.js";
 
 const API_FEED = "http://localhost:8080/forum/api/feed";
 
-export function renderGuestFeed(app) {
+export function renderUserFeed(app) {
   // Render the shared app shell
   renderLayout(app, {
-    isUser: false,
+    isUser: true, // enables logout, notifications, and user menu
     mainContent: `
       <div class="feed-page">
+        <div class="feed-toolbar">
+          <h2>Feed</h2>
+          <button id="createPostBtn" class="btn-accent">+ Create Post</button>
+        </div>
+
         <div id="forumContainer" class="forum-container">
           <div class="loader">Loading feed...</div>
         </div>
@@ -17,6 +23,12 @@ export function renderGuestFeed(app) {
   });
 
   const forumContainer = document.getElementById("forumContainer");
+  const createPostBtn = document.getElementById("createPostBtn");
+
+  // Navigate to post creation page
+  createPostBtn.addEventListener("click", () => {
+    navigateTo("/user/posts/create");
+  });
 
   // ✅ Fetch and render feed posts
   async function loadFeed() {
@@ -34,9 +46,9 @@ export function renderGuestFeed(app) {
         return;
       }
 
-      renderPosts(forumContainer, posts, "/guest");
+      renderPosts(forumContainer, posts, "/user");
     } catch (err) {
-      console.error("Error loading feed:", err);
+      console.error("Error loading user feed:", err);
       forumContainer.innerHTML = `<p class="error-message">⚠️ Unable to load feed. Please try again later.</p>`;
     }
   }

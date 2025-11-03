@@ -3,18 +3,29 @@ import { getCSRF } from "../session.js";
 
 export function renderRegister(app) {
   app.innerHTML = `
-    <h2>Register</h2>
-    <form id="registerForm">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-      <button type="submit">Register</button>
-    </form>
-    <p id="message"></p>
-    <button id="googleRegisterBtn">Register with Google</button>
-    <button id="githubRegisterBtn">Register with GitHub</button>
-    <p>Already have an account? <a href="/login" id="toLogin">Login</a></p>
+    <section class="register-page">
+      <div class="register-card">
+        <h1>Create Account</h1>
+
+        <form id="registerForm" class="register-form">
+          <input type="text" id="username" placeholder="Username" required />
+          <input type="email" id="email" placeholder="Email" required />
+          <input type="password" id="password" placeholder="Password" required />
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+          <button type="submit">Register</button>
+          <p id="message" class="message"></p>
+        </form>
+
+        <div class="oauth-buttons">
+          <button id="googleRegisterBtn">Register with Google</button>
+          <button id="githubRegisterBtn">Register with GitHub</button>
+        </div>
+
+        <div class="register-footer">
+          <p>Already have an account? <a href="#" id="loginLink">Login</a></p>
+        </div>
+      </div>
+    </section>
   `;
 
   const form = document.getElementById("registerForm");
@@ -43,7 +54,7 @@ export function renderRegister(app) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": getCSRF(),
+          ...(getCSRF() && { "X-CSRF-Token": getCSRF() }),
         },
         credentials: "include",
         body: JSON.stringify({ username, email, password }),
@@ -54,11 +65,7 @@ export function renderRegister(app) {
       if (res.ok) {
         showMessage("Registration successful!", true);
         form.reset();
-
-        // SPA navigation
-        setTimeout(() => {
-          navigateTo("/user/feed");
-        }, 500);
+        setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
         showMessage(data.message || "Registration failed!");
       }
@@ -68,7 +75,6 @@ export function renderRegister(app) {
     }
   });
 
-  // OAuth login buttons
   document.getElementById("googleRegisterBtn").addEventListener("click", () => {
     window.location.href = "http://localhost:8080/auth/google/login";
   });
@@ -77,8 +83,7 @@ export function renderRegister(app) {
     window.location.href = "http://localhost:8080/auth/github/login";
   });
 
-  // SPA navigation to login page
-  document.getElementById("toLogin").addEventListener("click", (e) => {
+  document.getElementById("loginLink").addEventListener("click", (e) => {
     e.preventDefault();
     navigateTo("/login");
   });

@@ -11,6 +11,7 @@ export function renderLogin(app) {
           <input type="email" id="email" placeholder="Email" required />
           <input type="password" id="password" placeholder="Password" required />
           <button type="submit">Login</button>
+          <p id="message" class="message"></p>
         </form>
 
         <div class="oauth-buttons">
@@ -44,7 +45,7 @@ export function renderLogin(app) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": getCSRF(), // Include CSRF token for security
+          ...(getCSRF() && { "X-CSRF-Token": getCSRF() }),
         },
         credentials: "include",
         body: JSON.stringify({ email, password }),
@@ -54,13 +55,8 @@ export function renderLogin(app) {
 
       if (res.ok) {
         showMessage(data.message || "Login successful!", "green");
-
-        form.reset(); // Clear fields
-
-        // SPA navigation instead of full page reload
-        setTimeout(() => {
-          navigateTo("/user/feed");
-        }, 500);
+        form.reset();
+        setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
         showMessage(data.message || "Login failed!", "red");
       }
@@ -70,17 +66,15 @@ export function renderLogin(app) {
     }
   });
 
-  // OAuth login buttons
-  document.getElementById("googleRegisterBtn").addEventListener("click", () => {
+  document.getElementById("googleLoginBtn").addEventListener("click", () => {
     window.location.href = "http://localhost:8080/auth/google/login";
   });
 
-  document.getElementById("githubRegisterBtn").addEventListener("click", () => {
+  document.getElementById("githubLoginBtn").addEventListener("click", () => {
     window.location.href = "http://localhost:8080/auth/github/login";
   });
 
-  // SPA navigation to register page
-  document.getElementById("toRegister").addEventListener("click", (e) => {
+  document.getElementById("registerLink").addEventListener("click", (e) => {
     e.preventDefault();
     navigateTo("/register");
   });

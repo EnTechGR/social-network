@@ -1,5 +1,11 @@
-/* Base reset */
-* {
+/* ============================
+   BookTalk Base Styles
+   ============================ */
+
+/* 🔹 Reset & Basics */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -7,28 +13,112 @@
 
 html, body {
   height: 100%;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background-color: #fafafa;
-  color: #222;
+  font-family: "Open Sans", "Inter", system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* 🔹 Theme Variables */
+:root {
+  /* Cozy, bookish tones */
+  --bg: #faf9f7;
+  --bg-alt: #f4f2ee;
+  --text: #2a2a2a;
+  --muted: #6b645b;
+
+  --accent: #5b4b8a;
+  --accent-hover: #483977;
+  --accent-light: #c5bbdf;
+
+  --border: #e3dfda;
+  --radius: 10px;
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  --font-heading: "Merriweather", serif;
+  --font-body: "Open Sans", "Inter", sans-serif;
+
+  --transition: all 0.25s ease;
+}
+
+/* 🔹 Global Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* 🔹 Inputs */
+input, textarea, select {
+  font-family: var(--font-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  background: var(--bg-alt);
+  color: var(--text);
+  transition: var(--transition);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+  outline: none;
+}
+
+/* 🔹 Buttons */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  font-family: var(--font-body);
+}
+
+/* 🔹 Loader */
 .loader {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
   font-size: 1.1rem;
-  color: var(--muted, #666);
+  color: var(--muted);
   font-weight: 500;
   letter-spacing: 0.5px;
+  background: var(--bg);
 }
 
-
-:root {
-  --accent: #c47dec;
-  --accent-hover: #612579;
-  --bg: #ffffff;
-  --text: #1e1e1e;
-  --muted: #888;
-  --radius: 10px;
+/* 🔹 Utilities */
+.text-center {
+  text-align: center;
 }
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* 🔹 Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

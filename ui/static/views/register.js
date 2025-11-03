@@ -3,9 +3,10 @@ import { getCSRF } from "../session.js";
 
 export function renderRegister(app) {
   app.innerHTML = `
-    <section class="register-page">
+    <section class="register-page fade-in">
       <div class="register-card">
-        <h1>Create Account</h1>
+        <h1>Join BookTalk</h1>
+        <p class="subtitle">Create an account to start sharing your thoughts.</p>
 
         <form id="registerForm" class="register-form">
           <input type="text" id="username" placeholder="Username" required />

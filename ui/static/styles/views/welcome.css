@@ -85,28 +85,3 @@
     transform: translateY(0);
   }
 }
-
-/* Optional dark mode */
-@media (prefers-color-scheme: dark) {
-  .welcome-page {
-    background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
-  }
-
-  .welcome-page h1 {
-    color: #fff;
-  }
-
-  .welcome-page p {
-    color: #aaa;
-  }
-
-  .welcome-actions #guestBtn {
-    border-color: #fff;
-    color: #fff;
-  }
-
-  .welcome-actions #guestBtn:hover {
-    background: #fff;
-    color: #111;
-  }
-}

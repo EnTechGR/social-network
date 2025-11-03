@@ -1,4 +1,4 @@
-.login-page {
+.register-page {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,28 +8,25 @@
   padding: 1rem;
 }
 
-.login-card {
+.register-card {
   background: var(--bg);
-  border: 1px solid #c47dec;
   border-radius: var(--radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   padding: 2rem 2.5rem;
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   text-align: center;
-  transition: all 0.3s ease;
 }
 
-.login-card h1 {
+.register-card h1 {
   font-size: 1.9rem;
-  color: var(--text);
+  color: #222;
   margin-bottom: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
-/* Input fields */
-.login-form input {
+.register-form input {
   width: 100%;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -39,14 +36,13 @@
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-.login-form input:focus {
+.register-form input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
-/* Submit button */
-.login-form button[type="submit"] {
+.register-form button[type="submit"] {
   width: 100%;
   padding: 0.8rem;
   border-radius: var(--radius);
@@ -59,16 +55,25 @@
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.login-form button[type="submit"]:hover {
+.register-form button[type="submit"]:hover {
   background-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
-.login-form button[type="submit"]:active {
+.register-form button[type="submit"]:active {
   transform: translateY(0);
 }
 
-/* OAuth buttons */
+.message {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-height: 1.2rem;
+}
+.message:empty {
+  display: none;
+}
+
 .oauth-buttons {
   display: flex;
   flex-direction: column;
@@ -93,39 +98,22 @@
   transform: translateY(-1px);
 }
 
-.oauth-buttons button:active {
-  transform: translateY(0);
-}
-
-/* Register link */
-.login-footer {
+.register-footer {
   margin-top: 1.25rem;
   font-size: 0.9rem;
   color: var(--muted);
 }
 
-.login-footer a {
+.register-footer a {
   color: var(--accent);
   text-decoration: none;
   font-weight: 500;
 }
 
-.login-footer a:hover {
+.register-footer a:hover {
   text-decoration: underline;
 }
 
-.message {
-  margin-top: 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  min-height: 1.2rem;
-}
-.message:empty {
-  display: none;
-}
-
-
-/* Fade animation */
 @keyframes fadeIn {
   from {
     opacity: 0;

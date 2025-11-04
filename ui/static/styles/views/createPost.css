@@ -1,0 +1,195 @@
+/* ===========================
+   CREATE POST — Bookish Style
+   =========================== */
+
+.create-post-page {
+  max-width: 750px;
+  margin: 2rem auto;
+  padding: 2.5rem 2rem;
+  background: #fdfcf9;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  font-family: "Merriweather", serif;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.create-post-page h2 {
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.5rem;
+}
+
+/* ===========================
+   Form Fields
+   =========================== */
+
+.create-post-form label {
+  display: block;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+  color: var(--text);
+}
+
+.create-post-form input[type="text"],
+.create-post-form textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #dcd4c5;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fffefc;
+  color: var(--text);
+  font-family: "Merriweather", serif;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.create-post-form input:focus,
+.create-post-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(115, 140, 122, 0.2);
+}
+
+.create-post-form textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* ===========================
+   Counters and Categories
+   =========================== */
+
+.count {
+  float: right;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.categories {
+  margin-top: 1.5rem;
+}
+
+.categories h3 {
+  font-family: "Merriweather", serif;
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.checkbox-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.checkbox-item {
+  font-family: "Open Sans", sans-serif;
+  background: #fffefc;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #dcd4c5;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  border-color: var(--accent);
+  background: #f7f8f2;
+}
+
+/* ===========================
+   Image Upload
+   =========================== */
+
+.image-upload {
+  margin-top: 1.5rem;
+}
+
+.image-upload label {
+  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+}
+
+.image-upload input {
+  margin-top: 0.5rem;
+}
+
+.image-upload img {
+  display: block;
+  max-width: 240px;
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 2px solid #eae5d7;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.image-upload .error {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #b94a48;
+}
+
+/* ===========================
+   Submit Button
+   =========================== */
+
+.create-post-form .btn-accent {
+  display: inline-block;
+  margin-top: 1.5rem;
+  background-color: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.9rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.15s ease;
+}
+
+.create-post-form .btn-accent:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+/* ===========================
+   Feedback messages
+   =========================== */
+
+.message {
+  margin-top: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.message.error {
+  color: #b94a48;
+}
+
+.message.success {
+  color: #4a8f6d;
+}
+
+/* ===========================
+   Animation
+   =========================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

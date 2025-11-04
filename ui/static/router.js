@@ -3,6 +3,7 @@ import { renderLogin } from "./views/login.js";
 import { renderRegister } from "./views/register.js";
 import { renderWelcome } from "./views/welcome.js";
 import { renderUserFeed } from "./views/userFeed.js";
+import { renderCreatePost } from "./views/createPost.js";
 // import { renderPost } from "./views/post.js";
 // import { renderProfile } from "./views/profile.js";
 // import { renderNotifications } from "./views/notifications.js";
@@ -20,7 +21,6 @@ export async function router() {
 
   switch (true) {
     case path === "/":
-      // If already logged in, send straight to the feed
       if (loggedIn) return navigateTo("/user/feed");
       renderWelcome(app);
       break;
@@ -35,10 +35,16 @@ export async function router() {
       renderRegister(app);
       break;
 
-    // Primary app route (requires auth)
+    // Main feed (requires auth)
     case path === "/user/feed":
       if (!loggedIn) return navigateTo("/login");
       renderUserFeed(app);
+      break;
+
+    // Create post page (requires auth)
+    case path === "/user/posts/create":
+      if (!loggedIn) return navigateTo("/login");
+      renderCreatePost(app);
       break;
 
     // Protected user-only routes

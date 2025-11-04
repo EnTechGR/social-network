@@ -1,45 +1,42 @@
 import { getCSRF, verifySession } from "../session.js";
 import { navigateTo } from "../router.js";
-import { renderLayout } from "../views/components/layout.js";
 
 const API_BASE = "http://localhost:8080/forum/api";
 
-export function renderCreatePost(app) {
-  // Render within the main app layout
-  renderLayout(app, {
-    mainContent: `
-      <section class="create-post-page fade-in">
-        <h2>Create New Post</h2>
+export function renderCreatePost(main) {
+  // Render ONLY the main content
+  main.innerHTML = `
+    <section class="create-post-page fade-in">
+      <h2>Create New Post</h2>
 
-        <form id="createPostForm" class="create-post-form">
+      <form id="createPostForm" class="create-post-form">
           <label>
-            Title <span id="titleCount" class="count">0 / 200</span>
-            <input type="text" id="titleInput" maxlength="200" required />
-          </label>
+          Title <span id="titleCount" class="count">0 / 200</span>
+          <input type="text" id="titleInput" maxlength="200" required />
+        </label>
 
           <label>
-            Content <span id="bodyCount" class="count">0 / 2000</span>
+          Content <span id="bodyCount" class="count">0 / 2000</span>
             <textarea id="bodyInput" maxlength="2000" required></textarea>
-          </label>
+        </label>
 
-          <div class="categories">
-            <h3>Select Categories</h3>
-            <div id="categoryList" class="checkbox-list"></div>
-          </div>
+        <div class="categories">
+          <h3>Select Categories</h3>
+            <div id="categoryList" class="category-tags"></div>
+        </div>
 
-          <div class="image-upload">
-            <label>Attach Image (optional)</label>
-            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif" />
-            <img id="imagePreview" class="hidden" alt="Preview" />
-            <p id="imageError" class="error"></p>
-          </div>
+        <div class="image-upload">
+          <label>Attach Image (optional)</label>
+          <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif" />
+          <img id="imagePreview" class="hidden" alt="Preview" />
+          <p id="imageError" class="error"></p>
+        </div>
 
-          <button type="submit" class="btn-accent">Publish Post</button>
-          <p id="formMessage" class="message"></p>
-        </form>
-      </section>
-    `,
-  });
+        <button type="submit" class="btn-accent">Publish Post</button>
+        <p id="formMessage" class="message"></p>
+      </form>
+    </section>
+  `;
 
   const form = document.getElementById("createPostForm");
   const titleInput = document.getElementById("titleInput");
@@ -52,7 +49,7 @@ export function renderCreatePost(app) {
   const imageError = document.getElementById("imageError");
   const message = document.getElementById("formMessage");
 
-  // Character counters
+  // ✅ Character counters
   titleInput.addEventListener("input", () => {
     titleCount.textContent = `${titleInput.value.length} / 200`;
   });
@@ -60,7 +57,7 @@ export function renderCreatePost(app) {
     bodyCount.textContent = `${bodyInput.value.length} / 2000`;
   });
 
-  // Image preview + validation
+  // ✅ Image preview + validation
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     if (!file) {
@@ -90,25 +87,25 @@ export function renderCreatePost(app) {
     reader.readAsDataURL(file);
   });
 
-  // Load categories dynamically (with toggle behavior)
+  // ✅ Load categories as interactive tags
   async function loadCategories() {
     try {
       const res = await fetch(`${API_BASE}/categories`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to load categories");
+
       const categories = await res.json();
       const container = document.createElement("div");
       container.classList.add("category-tags");
 
       categories.forEach((cat) => {
-        const tag = document.createElement("div");
+        const tag = document.createElement("button");
+        tag.type = "button";
         tag.textContent = cat.name;
         tag.className = "category-tag";
         tag.dataset.id = cat.id;
-        tag.addEventListener("click", () => {
-          tag.classList.toggle("active");
-        });
+        tag.addEventListener("click", () => tag.classList.toggle("active"));
         container.appendChild(tag);
       });
 
@@ -122,7 +119,7 @@ export function renderCreatePost(app) {
 
   loadCategories();
 
-  // Handle form submission
+  // ✅ Handle form submission
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     message.textContent = "";
@@ -141,7 +138,6 @@ export function renderCreatePost(app) {
       return;
     }
 
-    // Ensure CSRF token
     await verifySession();
     const csrfToken = getCSRF();
     if (!csrfToken) {
@@ -150,7 +146,6 @@ export function renderCreatePost(app) {
       return navigateTo("/login");
     }
 
-    // Submit post
     try {
       const res = await fetch(`${API_BASE}/posts/create`, {
         method: "POST",
@@ -175,21 +170,16 @@ export function renderCreatePost(app) {
         formData.append("post_id", newPost.id);
         formData.append("image", imageInput.files[0]);
 
-        const imgRes = await fetch(`${API_BASE}/images/upload`, {
+        await fetch(`${API_BASE}/images/upload`, {
           method: "POST",
           credentials: "include",
-          headers: {
-            "X-CSRF-Token": csrfToken,
-          },
+          headers: { "X-CSRF-Token": csrfToken },
           body: formData,
-        });
-
-        if (!imgRes.ok) console.warn("Image upload failed");
+        }).catch(() => console.warn("Image upload failed"));
       }
 
       message.textContent = "Post created successfully!";
       message.classList.add("success");
-
       setTimeout(() => navigateTo("/user/feed"), 800);
     } catch (err) {
       console.error("Error submitting post:", err);

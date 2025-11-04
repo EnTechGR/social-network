@@ -1,9 +1,9 @@
-/* ===============================
+/* ==========================================
    CREATE POST — Modern Bookish UI
-   =============================== */
+   ========================================== */
 
 .create-post-page {
-  max-width: 800px;
+  max-width: 820px;
   margin: 3rem auto;
   padding: 3rem 2.5rem;
   background: #fdfcf9;
@@ -11,20 +11,21 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
   font-family: "Merriweather", serif;
   animation: fadeIn 0.5s ease-out;
+  color: var(--text);
 }
 
 .create-post-page h2 {
   font-family: "Merriweather", serif;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 2.1rem;
   text-align: center;
   color: var(--text);
-  margin-bottom: 2rem;
+  margin-bottom: 2.2rem;
 }
 
-/* ===============================
+/* ==========================================
    INPUTS & TEXTAREAS
-   =============================== */
+   ========================================== */
 
 .create-post-form {
   display: flex;
@@ -36,48 +37,39 @@
   display: block;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
   font-family: "Open Sans", sans-serif;
+  line-height: 1.4;
 }
 
-.create-post-form input[type="text"] {
-  font-size: 1.2rem;
-  font-weight: 600;
-  padding: 0.9rem 1rem;
-  border: none;
-  border-bottom: 2px solid #ccc;
-  background: transparent;
-  transition: border-color 0.3s ease;
-}
-
-.create-post-form input[type="text"]:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
+.create-post-form input[type="text"],
 .create-post-form textarea {
   width: 100%;
-  min-height: 260px;
-  padding: 1rem 1.2rem;
   font-size: 1.05rem;
-  line-height: 1.7;
-  border: 1px solid #ddd;
+  padding: 0.9rem 1rem;
+  border: 1px solid #dcd7c9;
   border-radius: 10px;
   background: #fffefc;
   font-family: "Merriweather", serif;
-  resize: vertical;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+.create-post-form input[type="text"]:focus,
 .create-post-form textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(115, 140, 122, 0.15);
 }
 
-/* ===============================
+.create-post-form textarea {
+  min-height: 260px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+/* ==========================================
    CATEGORY TAGS
-   =============================== */
+   ========================================== */
 
 .categories {
   margin-top: 0.5rem;
@@ -97,31 +89,35 @@
 }
 
 .category-tag {
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 1.1rem;
   border-radius: 999px;
-  border: 1px solid #dcd4c5;
-  background: #faf8f3;
+  border: 1px solid var(--accent);
+  background: #e9f0ea;
   cursor: pointer;
   font-family: "Open Sans", sans-serif;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+  user-select: none;
+  color: var(--text);
 }
 
 .category-tag:hover {
-  border-color: var(--accent);
   background: var(--accent-light);
+  color: var(--text);
 }
 
 .category-tag.active {
   background: var(--accent);
-  color: #fff;
+  color: #f9fdf9; /* ✅ soft off-white for better contrast on sage green */
   border-color: var(--accent);
   box-shadow: 0 2px 6px rgba(115, 140, 122, 0.25);
+  font-weight: 600;
 }
 
-/* ===============================
+
+/* ==========================================
    IMAGE UPLOAD
-   =============================== */
+   ========================================== */
 
 .image-upload {
   display: flex;
@@ -129,8 +125,14 @@
   gap: 0.8rem;
 }
 
+.image-upload input[type="file"] {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.95rem;
+  color: #444;
+}
+
 .image-upload img {
-  max-width: 240px;
+  max-width: 260px;
   margin-top: 0.5rem;
   border-radius: 10px;
   border: 2px solid #eae5d7;
@@ -142,9 +144,9 @@
   color: #b94a48;
 }
 
-/* ===============================
+/* ==========================================
    BUTTON
-   =============================== */
+   ========================================== */
 
 .create-post-form .btn-accent {
   align-self: center;
@@ -152,7 +154,7 @@
   padding: 1rem 2.2rem;
   background-color: var(--accent);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   border: none;
   border-radius: 10px;
@@ -166,9 +168,9 @@
   transform: translateY(-2px);
 }
 
-/* ===============================
+/* ==========================================
    FEEDBACK MESSAGES
-   =============================== */
+   ========================================== */
 
 .message {
   text-align: center;
@@ -184,9 +186,9 @@
   color: #4a8f6d;
 }
 
-/* ===============================
+/* ==========================================
    FADE-IN ANIMATION
-   =============================== */
+   ========================================== */
 
 @keyframes fadeIn {
   from {
@@ -199,3 +201,26 @@
   }
 }
 
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 768px) {
+  .create-post-page {
+    padding: 2rem 1.25rem;
+    margin: 2rem 1rem;
+  }
+
+  .create-post-page h2 {
+    font-size: 1.7rem;
+  }
+
+  .category-tags {
+    gap: 0.4rem;
+  }
+
+  .category-tag {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.9rem;
+  }
+}

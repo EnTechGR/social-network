@@ -8,6 +8,7 @@ import (
 	"forum/utils"
 )
 
+// Create creates a new user with all required fields
 func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, error) {
 	if exists, err := r.isEmailTaken(reg.Email); err != nil {
 		return nil, err
@@ -30,9 +31,10 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 	userID := utils.GenerateUUID()
 	createdAt := time.Now()
 
+	// ✅ UPDATED: Added first_name, last_name, age, gender to INSERT
 	_, err = tx.Exec(
-		"INSERT INTO user (user_id, username, email, created_at) VALUES (?, ?, ?, ?)",
-		userID, reg.Username, reg.Email, createdAt,
+		"INSERT INTO user (user_id, username, email, first_name, last_name, age, gender, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		userID, reg.Username, reg.Email, reg.FirstName, reg.LastName, reg.Age, reg.Gender, createdAt,
 	)
 	if err != nil {
 		return nil, err
@@ -55,14 +57,20 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 		return nil, err
 	}
 
+	// ✅ UPDATED: Return user with all new fields
 	return &models.User{
 		ID:        userID,
 		Username:  reg.Username,
 		Email:     reg.Email,
+		FirstName: reg.FirstName,
+		LastName:  reg.LastName,
+		Age:       reg.Age,
+		Gender:    reg.Gender,
 		CreatedAt: createdAt,
 	}, nil
 }
 
+// CreateOAuthUser creates a new user via OAuth with all required fields
 func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, providerUserID, avatarURL, accessToken, refreshToken string, tokenExpiresAt time.Time) (*models.User, error) {
 	if exists, err := r.isEmailTaken(reg.Email); err != nil {
 		return nil, err
@@ -85,8 +93,9 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 	userID := utils.GenerateUUID()
 	createdAt := time.Now()
 
-	_, err = tx.Exec(`INSERT INTO user (user_id, username, email, created_at) VALUES (?, ?, ?, ?)`,
-		userID, reg.Username, reg.Email, createdAt,
+	// ✅ UPDATED: Added first_name, last_name, age, gender to INSERT
+	_, err = tx.Exec(`INSERT INTO user (user_id, username, email, first_name, last_name, age, gender, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, reg.Username, reg.Email, reg.FirstName, reg.LastName, reg.Age, reg.Gender, createdAt,
 	)
 	if err != nil {
 		return nil, err
@@ -112,10 +121,15 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 		return nil, err
 	}
 
+	// ✅ UPDATED: Return user with all new fields
 	return &models.User{
 		ID:        userID,
 		Username:  reg.Username,
 		Email:     reg.Email,
+		FirstName: reg.FirstName,
+		LastName:  reg.LastName,
+		Age:       reg.Age,
+		Gender:    reg.Gender,
 		CreatedAt: createdAt,
 	}, nil
 }
@@ -131,7 +145,6 @@ func (r *UserRepository) isUsernameTaken(username string) (bool, error) {
 	err := r.DB.QueryRow("SELECT COUNT(*) FROM user WHERE username = ?", username).Scan(&count)
 	return count > 0, err
 }
-
 
 func (r *UserRepository) IsProviderLinked(userID, provider string) (bool, error) {
 	var count int
@@ -167,4 +180,3 @@ func (r *UserRepository) LinkOAuthProvider(userID, provider, providerUserID, acc
 	)
 	return err
 }
-

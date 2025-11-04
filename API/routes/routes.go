@@ -38,8 +38,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
 	authMiddleware := middleware.NewAuthMiddleware(sessionRepo, userRepo)
-	// Corrected: CSRF is a method on AuthMiddleware, not a standalone function
-	// csrfMiddleware is now directly authMiddleware.CSRF
 	corsMiddleware := middleware.NewCORSMiddleware("http://localhost:8081")
 
 	// Create router
@@ -77,9 +75,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	protected := func(h http.Handler) http.Handler {
 		// Ensure CSRF middleware is active for protected routes
 		return corsMiddleware.Handler(authMiddleware.RequireAuth(authMiddleware.CSRF(h)))
-		// Temporarily for testing — remove authMiddleware.CSRF(h) if you want to bypass CSRF,
-		// but remember to re-enable it for security.
-		// return corsMiddleware.Handler(authMiddleware.RequireAuth(h))
 	}
 
 	// Protected user routes

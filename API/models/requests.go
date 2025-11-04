@@ -1,19 +1,5 @@
 package models
 
-// UserRegistration is used for registration requests
-type UserRegistration struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-}
-
-
-// UserLogin is used for login requests
-type UserLogin struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
 // OAuthLoginRequest represents OAuth login initiation
 type OAuthLoginRequest struct {
 	Provider    string `json:"provider" binding:"required"`

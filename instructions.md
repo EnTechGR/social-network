@@ -25,21 +25,6 @@ curl -X POST http://localhost:8080/forum/api/session/logout \
   -b cookies.txt
 
 
-## Front
-
-fetch("http://localhost:8080/forum/api/session/login", {
-    method: "POST",
-    credentials: "include", // IMPORTANT
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-        email: "user@example.com",
-        password: "supersecret"
-    })
-})
-
-
 
  ## Create a Post
 

@@ -29,7 +29,7 @@ func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionR
 	}
 }
 
-// Register handles user registration
+// Register handles user registration with all required fields
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST requests
 	if r.Method != http.MethodPost {
@@ -45,17 +45,22 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trim and normalize inputs
 	reg.Username = strings.TrimSpace(reg.Username)
 	reg.Email = strings.TrimSpace(strings.ToLower(reg.Email))
 	reg.Password = strings.TrimSpace(reg.Password)
+	reg.FirstName = strings.TrimSpace(reg.FirstName)   // ✅ ADDED
+	reg.LastName = strings.TrimSpace(reg.LastName)     // ✅ ADDED
+	reg.Gender = strings.TrimSpace(strings.ToLower(reg.Gender)) // ✅ ADDED
 
-	// Validate request
-	if reg.Username == "" || reg.Email == "" || reg.Password == "" {
-		utils.ErrorResponse(w, "Username, email, and password are required", http.StatusBadRequest)
+	// ✅ UPDATED: Validate ALL required fields
+	if reg.Username == "" || reg.Email == "" || reg.Password == "" ||
+		reg.FirstName == "" || reg.LastName == "" || reg.Age == 0 || reg.Gender == "" {
+		utils.ErrorResponse(w, "All fields are required: username, email, password, first_name, last_name, age, gender", http.StatusBadRequest)
 		return
 	}
 
-	// Username: 3–50 chars, letters/numbers/underscores only
+	// Username: 3-50 chars, letters/numbers/underscores only
 	if !utils.UsernameRegex.MatchString(reg.Username) {
 		utils.ErrorResponse(w, "Username must be 3-50 characters, letters/numbers/underscores only", http.StatusBadRequest)
 		return
@@ -75,6 +80,36 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ✅ ADDED: Validate First Name (1-100 characters)
+	if len(reg.FirstName) < 1 || len(reg.FirstName) > 100 {
+		utils.ErrorResponse(w, "First name must be between 1 and 100 characters", http.StatusBadRequest)
+		return
+	}
+
+	// ✅ ADDED: Validate Last Name (1-100 characters)
+	if len(reg.LastName) < 1 || len(reg.LastName) > 100 {
+		utils.ErrorResponse(w, "Last name must be between 1 and 100 characters", http.StatusBadRequest)
+		return
+	}
+
+	// ✅ ADDED: Validate Age (13-120)
+	if reg.Age < 13 || reg.Age > 120 {
+		utils.ErrorResponse(w, "Age must be between 13 and 120", http.StatusBadRequest)
+		return
+	}
+
+	// ✅ ADDED: Validate Gender (must be one of the accepted values)
+	validGenders := map[string]bool{
+		"male":              true,
+		"female":            true,
+		"other":             true,
+		"prefer_not_to_say": true,
+	}
+	if !validGenders[reg.Gender] {
+		utils.ErrorResponse(w, "Gender must be one of: male, female, other, prefer_not_to_say", http.StatusBadRequest)
+		return
+	}
+
 	// Create user
 	user, err := h.UserRepo.Create(reg)
 	if err != nil {
@@ -84,6 +119,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		case repository.ErrUsernameTaken:
 			utils.ErrorResponse(w, "Username is already taken", http.StatusConflict)
 		default:
+			log.Printf("Failed to create user: %v", err)
 			utils.ErrorResponse(w, "Internal server error", http.StatusInternalServerError)
 		}
 		return
@@ -92,22 +128,24 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Create session after successful registration
 	session, err := h.createUserSession(w, r, user)
 	if err != nil {
+		log.Printf("Failed to create session: %v", err)
 		utils.ErrorResponse(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
 
+	// ✅ CHANGED: Return 201 Created status for successful registration
 	utils.JSONResponse(w, models.LoginResponse{
 		User:      *user,
 		SessionID: session.SessionID,
 		CSRFToken: session.CSRFToken,
-	}, http.StatusOK)
+	}, http.StatusCreated)
 }
 
-// Login handles user login
+// Login handles user login with username OR email
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST requests
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -115,23 +153,29 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var login models.UserLogin
 	err := json.NewDecoder(r.Body).Decode(&login)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Validate request
-	if login.Email == "" || login.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
+	// ✅ UPDATED: Trim the login field (now accepts username OR email)
+	login.Login = strings.TrimSpace(login.Login)
+	login.Password = strings.TrimSpace(login.Password)
+
+	// ✅ UPDATED: Validate request (now checks login instead of email)
+	if login.Login == "" || login.Password == "" {
+		utils.ErrorResponse(w, "Username/email and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Authenticate user
+	// Authenticate user (now supports both username and email)
 	user, err := h.UserRepo.Authenticate(login)
 	if err != nil {
 		if err == repository.ErrInvalidCredentials {
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			// ✅ UPDATED: Generic error message for security
+			utils.ErrorResponse(w, "Invalid username/email or password", http.StatusUnauthorized)
 		} else {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			log.Printf("Authentication error: %v", err)
+			utils.ErrorResponse(w, "Internal server error", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -139,6 +183,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Create session after successful authentication
 	session, err := h.createUserSession(w, r, user)
 	if err != nil {
+		log.Printf("Failed to create session: %v", err)
 		utils.ErrorResponse(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
@@ -150,7 +195,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// Logout handles user logout
 // Logout handles user logout
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -194,21 +238,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Secure:   false, // true in production
 		SameSite: http.SameSiteLaxMode,
 	})
-	
-	// Clear the additional frontend CSRF cookie if set
-    // http.SetCookie(w, &http.Cookie{
-    //     Name:     "csrf_token_frontend",
-    //     Value:    "",
-    //     Path:     "/",
-    //     MaxAge:   -1,
-    //     HttpOnly: false,
-    //     Secure:   false,
-    //     SameSite: http.SameSiteLaxMode,
-    // })
 
 	w.WriteHeader(http.StatusOK)
 }
-
 
 // VerifySession handles session verification
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
@@ -247,7 +279,6 @@ func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// createUserSession is a helper method to create a session and set cookie
 // createUserSession creates a session and sets the session cookie
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
 	csrfToken := utils.GenerateCSRFToken()

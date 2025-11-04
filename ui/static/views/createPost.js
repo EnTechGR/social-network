@@ -90,7 +90,7 @@ export function renderCreatePost(app) {
     reader.readAsDataURL(file);
   });
 
-  // Load categories dynamically
+  // Load categories dynamically (with toggle behavior)
   async function loadCategories() {
     try {
       const res = await fetch(`${API_BASE}/categories`, {
@@ -98,16 +98,22 @@ export function renderCreatePost(app) {
       });
       if (!res.ok) throw new Error("Failed to load categories");
       const categories = await res.json();
-      categoryList.innerHTML = "";
+      const container = document.createElement("div");
+      container.classList.add("category-tags");
 
       categories.forEach((cat) => {
-        const label = document.createElement("label");
-        label.classList.add("checkbox-item");
-        label.innerHTML = `
-          <input type="checkbox" value="${cat.id}" /> ${cat.name}
-        `;
-        categoryList.appendChild(label);
+        const tag = document.createElement("div");
+        tag.textContent = cat.name;
+        tag.className = "category-tag";
+        tag.dataset.id = cat.id;
+        tag.addEventListener("click", () => {
+          tag.classList.toggle("active");
+        });
+        container.appendChild(tag);
       });
+
+      categoryList.innerHTML = "";
+      categoryList.appendChild(container);
     } catch (err) {
       console.error("Error loading categories:", err);
       categoryList.innerHTML = `<p class="error">Unable to load categories.</p>`;
@@ -125,8 +131,8 @@ export function renderCreatePost(app) {
     const title = titleInput.value.trim();
     const content = bodyInput.value.trim();
     const categoryIds = Array.from(
-      categoryList.querySelectorAll("input[type=checkbox]:checked")
-    ).map((cb) => parseInt(cb.value));
+      document.querySelectorAll(".category-tag.active")
+    ).map((tag) => parseInt(tag.dataset.id));
 
     if (!title || !content || categoryIds.length === 0) {
       message.textContent =

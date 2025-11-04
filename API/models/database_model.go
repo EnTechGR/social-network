@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 8 // version 8 adds is_visible column to notifications
+	CURRENT_DB_VERSION = 9 // version 8 adds is_visible column to notifications
 	INITIAL_VERSION    = 1
 )
 
@@ -98,6 +98,20 @@ func GetMigrations() []Migration {
 			Description: "Add is_visible to notifications",
 			SQL: []string{
 				"ALTER TABLE notifications ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1;",
+			},
+		},
+		{
+			Version:     9,
+			Description: "Add user profile fields (first_name, last_name, age, gender)",
+			SQL: []string{
+				"ALTER TABLE user ADD COLUMN first_name TEXT;",
+				"ALTER TABLE user ADD COLUMN last_name TEXT;",
+				"ALTER TABLE user ADD COLUMN age INTEGER;",
+				"ALTER TABLE user ADD COLUMN gender TEXT;",
+				"UPDATE user SET first_name = 'Unknown' WHERE first_name IS NULL;",
+				"UPDATE user SET last_name = 'User' WHERE last_name IS NULL;",
+				"UPDATE user SET age = 18 WHERE age IS NULL;",
+				"UPDATE user SET gender = 'prefer_not_to_say' WHERE gender IS NULL;",
 			},
 		},
 		// Add future migrations here
@@ -378,6 +392,50 @@ func runMigrations(db *sql.DB) error {
 			if exists && len(sqlStmts) > 0 {
 				sqlStmts = sqlStmts[1:]
 			}
+		} else if m.Version == 9 {
+			// ✅ ADD THIS NEW BLOCK
+			// Check each column and skip ALTER if it exists
+			sqlStmts = []string{}
+
+			exists, err := columnExists(db, "user", "first_name")
+			if err != nil {
+				return fmt.Errorf("failed to check user table: %v", err)
+			}
+			if !exists {
+				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN first_name TEXT;")
+			}
+
+			exists, err = columnExists(db, "user", "last_name")
+			if err != nil {
+				return fmt.Errorf("failed to check user table: %v", err)
+			}
+			if !exists {
+				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN last_name TEXT;")
+			}
+
+			exists, err = columnExists(db, "user", "age")
+			if err != nil {
+				return fmt.Errorf("failed to check user table: %v", err)
+			}
+			if !exists {
+				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN age INTEGER;")
+			}
+
+			exists, err = columnExists(db, "user", "gender")
+			if err != nil {
+				return fmt.Errorf("failed to check user table: %v", err)
+			}
+			if !exists {
+				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN gender TEXT;")
+			}
+
+			// Always run UPDATE statements to ensure existing users have values
+			sqlStmts = append(sqlStmts,
+				"UPDATE user SET first_name = 'Unknown' WHERE first_name IS NULL;",
+				"UPDATE user SET last_name = 'User' WHERE last_name IS NULL;",
+				"UPDATE user SET age = 18 WHERE age IS NULL;",
+				"UPDATE user SET gender = 'prefer_not_to_say' WHERE gender IS NULL;",
+			)
 		}
 
 		tx, err := db.Begin()

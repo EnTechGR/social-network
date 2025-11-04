@@ -12,6 +12,10 @@ const CreateUserTable = `CREATE TABLE IF NOT EXISTS user (
             user_id TEXT PRIMARY KEY,
             username TEXT NOT NULL UNIQUE CHECK (LENGTH(username) <= 50),
             email TEXT NOT NULL UNIQUE CHECK (LENGTH(email) <= 100),
+            first_name TEXT NOT NULL CHECK (LENGTH(first_name) <= 100),
+            last_name TEXT NOT NULL CHECK (LENGTH(last_name) <= 100),
+            age INTEGER NOT NULL CHECK (age >= 13 AND age <= 120),
+            gender TEXT NOT NULL CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say')),
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );`
 
@@ -115,10 +119,6 @@ const CreateOAuthTable = `CREATE TABLE IF NOT EXISTS oauth_accounts (
     token_expires_at TIMESTAMP,                   -- When the access token expires
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
-    -- Composite unique constraint to prevent duplicate provider accounts
     UNIQUE(provider, provider_user_id),
-    
-    -- Foreign key to link with existing user
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );`

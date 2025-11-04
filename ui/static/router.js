@@ -1,5 +1,5 @@
 import { verifySession, isAuthenticated } from "./session.js";
-import { initLayout } from "./components/layout.js";
+import { initLayout } from "./views/components/layout.js";
 import { renderLogin } from "./views/login.js";
 import { renderRegister } from "./views/register.js";
 import { renderWelcome } from "./views/welcome.js";

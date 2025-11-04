@@ -1,15 +1,19 @@
+// /static/components/initLayout.js
 import { initCategoryDropdown } from "./categories.js";
 import { navigateTo } from "../../router.js";
 import { clearSession } from "../../session.js";
 
-export function renderLayout(app, { isUser = true, mainContent = "" }) {
+export function initLayout() {
+  const app = document.getElementById("app");
+
+  // Render the base shell (only once)
   app.innerHTML = `
-    <div class="layout fade-in">
+    <div class="layout">
       <header class="app-header">
-        <h1 class="logo" id="homeBtn">📚 BookTalk</h1>
+        <h1 class="logo" id="homeBtn">BookTalk</h1>
         <div class="header-actions">
-          <button id="notificationsBtn" title="Notifications">🔔</button>
-          <button id="logoutBtn" title="Logout">Logout</button>
+          <button id="notificationsBtn">🔔</button>
+          <button id="logoutBtn">Logout</button>
         </div>
       </header>
 
@@ -17,6 +21,7 @@ export function renderLayout(app, { isUser = true, mainContent = "" }) {
         <aside class="sidebar">
           <h2>Categories</h2>
           <ul id="category-list" class="category-list"></ul>
+
           <div class="user-menu">
             <h3>Your Space</h3>
             <ul>
@@ -27,8 +32,8 @@ export function renderLayout(app, { isUser = true, mainContent = "" }) {
           </div>
         </aside>
 
-        <main class="main-content" id="mainContent">
-          ${mainContent}
+        <main id="mainContent" class="main-content">
+          <div class="loader">Loading...</div>
         </main>
 
         <aside class="right-panel">
@@ -40,29 +45,24 @@ export function renderLayout(app, { isUser = true, mainContent = "" }) {
     </div>
   `;
 
-  document.getElementById("homeBtn")?.addEventListener("click", () => {
-    navigateTo("/user/feed");
-  });
-
-  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-    try {
-      await fetch("http://localhost:8080/forum/api/session/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      clearSession();
-      navigateTo("/");
-    }
-  });
-
-  // Categories: basePath now always /user
+  // Sidebar categories
   const catDropdown = initCategoryDropdown({
-    toggleSelector: null,
     dropdownId: "category-list",
     basePath: "/user",
   });
   catDropdown.loadCategories();
+
+  // Header actions
+  document.getElementById("homeBtn").addEventListener("click", () => {
+    navigateTo("/user/feed");
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await fetch("http://localhost:8080/forum/api/session/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    clearSession();
+    navigateTo("/login");
+  });
 }

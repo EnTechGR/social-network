@@ -1,4 +1,5 @@
 import { verifySession, isAuthenticated } from "./session.js";
+import { initLayout } from "./components/layout.js";
 import { renderLogin } from "./views/login.js";
 import { renderRegister } from "./views/register.js";
 import { renderWelcome } from "./views/welcome.js";
@@ -8,43 +9,50 @@ import { renderCreatePost } from "./views/createPost.js";
 // import { renderProfile } from "./views/profile.js";
 // import { renderNotifications } from "./views/notifications.js";
 
-let isNavigating = false;
+let layoutInitialized = false;
 
 export async function router() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const app = document.getElementById("app");
-
-  app.innerHTML = `<div class="loader">Loading...</div>`;
+  const main = document.getElementById("mainContent");
 
   await verifySession();
   const loggedIn = isAuthenticated();
 
+  // Initialize layout only once (for logged-in users)
+  if (loggedIn && !layoutInitialized) {
+    initLayout();
+    layoutInitialized = true;
+  }
+
+  // Determine where to render
+  const target = loggedIn ? document.getElementById("mainContent") : app;
+  if (target) target.innerHTML = `<div class="loader">Loading...</div>`;
+
   switch (true) {
     case path === "/":
       if (loggedIn) return navigateTo("/user/feed");
-      renderWelcome(app);
+      renderWelcome(target);
       break;
 
     case path === "/login":
       if (loggedIn) return navigateTo("/user/feed");
-      renderLogin(app);
+      renderLogin(target);
       break;
 
     case path === "/register":
       if (loggedIn) return navigateTo("/user/feed");
-      renderRegister(app);
+      renderRegister(target);
       break;
 
-    // Main feed (requires auth)
     case path === "/user/feed":
       if (!loggedIn) return navigateTo("/login");
-      renderUserFeed(app);
+      renderUserFeed(target);
       break;
 
-    // Create post page (requires auth)
     case path === "/user/posts/create":
       if (!loggedIn) return navigateTo("/login");
-      renderCreatePost(app);
+      renderCreatePost(target);
       break;
 
     // Protected user-only routes
@@ -59,14 +67,11 @@ export async function router() {
       break;
 
     default:
-      app.innerHTML = `<h1>404 - Page Not Found</h1>`;
+      target.innerHTML = `<h1>404 - Page Not Found</h1>`;
   }
 }
 
 export async function navigateTo(path) {
-  if (isNavigating) return;
-  isNavigating = true;
   history.pushState({}, "", path);
   await router();
-  isNavigating = false;
 }

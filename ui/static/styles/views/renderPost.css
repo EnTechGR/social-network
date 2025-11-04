@@ -1,0 +1,97 @@
+.post-card-detail {
+  background: #fdfcf9;
+  padding: 2rem;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  margin: 2rem auto;
+  max-width: 800px;
+  font-family: "Merriweather", serif;
+}
+
+.post-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+.post-meta {
+  color: #777;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-content {
+  white-space: pre-line;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-image {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.post-reactions,
+.comment-reactions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.like-btn, .dislike-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--accent);
+  font-weight: 600;
+  transition: transform 0.1s ease;
+}
+
+.like-btn:hover, .dislike-btn:hover {
+  transform: scale(1.1);
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-family: "Open Sans", sans-serif;
+}
+
+.comment-form button {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.comment {
+  background: #fffefc;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.comment-header {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.comment-message.error { color: #b94a48; }
+.comment-message.success { color: #4a8f6d; }

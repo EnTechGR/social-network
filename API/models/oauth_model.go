@@ -36,3 +36,10 @@ type OAuthUserInfo struct {
 	Username  string `json:"username,omitempty"`
 	AvatarURL string `json:"avatar_url,omitempty"`
 }
+
+// OAuthLoginResponse is the response for OAuth login initiation
+type OAuthLoginResponse struct {
+	AuthURL   string `json:"auth_url"`
+	State     string `json:"state"`
+	Provider  string `json:"provider"`
+}

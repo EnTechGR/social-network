@@ -7,10 +7,10 @@ type User struct {
 	ID        string    `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	FirstName string    `json:"first_name"`  // ✅ Already present
-	LastName  string    `json:"last_name"`   // ✅ Already present
-	Age       int       `json:"age"`         // ✅ Already present
-	Gender    string    `json:"gender"`      // ✅ Already present
+	FirstName string    `json:"first_name"` // ✅ Already present
+	LastName  string    `json:"last_name"`  // ✅ Already present
+	Age       int       `json:"age"`        // ✅ Already present
+	Gender    string    `json:"gender"`     // ✅ Already present
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -19,16 +19,15 @@ type UserRegistration struct {
 	Username  string `json:"username" binding:"required"`
 	Email     string `json:"email" binding:"required,email"`
 	Password  string `json:"password" binding:"required,min=8"`
-	FirstName string `json:"first_name" binding:"required"` // ✅ ADD THIS
-	LastName  string `json:"last_name" binding:"required"`  // ✅ ADD THIS
+	FirstName string `json:"first_name" binding:"required"`         // ✅ ADD THIS
+	LastName  string `json:"last_name" binding:"required"`          // ✅ ADD THIS
 	Age       int    `json:"age" binding:"required,min=13,max=120"` // ✅ ADD THIS
-	Gender    string `json:"gender" binding:"required"` // ✅ ADD THIS
+	Gender    string `json:"gender" binding:"required"`             // ✅ ADD THIS
 }
-
 
 // UserLogin is used for login requests
 type UserLogin struct {
-	Login    string `json:"login" binding:"required"`    // ✅ CHANGE: Was "Email", now "Login" (accepts username OR email)
+	Login    string `json:"login" binding:"required"` // ✅ CHANGE: Was "Email", now "Login" (accepts username OR email)
 	Password string `json:"password" binding:"required"`
 }
 
@@ -50,11 +49,4 @@ type LoginResponse struct {
 type UserAuth struct {
 	UserID       string `json:"-"`
 	PasswordHash string `json:"-"`
-}
-
-// OAuthLoginResponse is the response for OAuth login initiation
-type OAuthLoginResponse struct {
-	AuthURL   string `json:"auth_url"`
-	State     string `json:"state"`
-	Provider  string `json:"provider"`
 }

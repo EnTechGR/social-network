@@ -7,6 +7,7 @@ import (
 	"forum/handlers"
 	"forum/middleware"
 	"forum/repository"
+	"forum/repository/message"
 	"forum/repository/session"
 	"forum/repository/user"
 )
@@ -21,6 +22,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	reactionRepo := repository.NewReactionRepository(db)
 	imageRepo := repository.NewImageRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
+	messageRepo := message.NewMessageRepository(db) // ✅ ADD THIS
 
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo)
@@ -34,6 +36,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo)
+	messageHandler := handlers.NewMessageHandler(messageRepo) // ✅ ADD THIS
 
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
@@ -98,6 +101,16 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/forum/api/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
 	mux.Handle("/forum/api/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification))) // DELETE /forum/api/notifications/delete/{id}
 	mux.Handle("/forum/api/session/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
+
+	// ✅ ADD MESSAGE ROUTES - Protected routes for messaging
+	mux.Handle("/forum/api/messages/send", protected(http.HandlerFunc(messageHandler.SendMessage)))                     // POST - Send a new message
+	mux.Handle("/forum/api/messages/conversation", protected(http.HandlerFunc(messageHandler.GetConversation)))         // GET - Get conversation with a user
+	mux.Handle("/forum/api/messages/conversations", protected(http.HandlerFunc(messageHandler.GetConversations)))       // GET - Get all conversations
+	mux.Handle("/forum/api/messages/users", protected(http.HandlerFunc(messageHandler.GetAllUsers)))                    // GET - Get all users for chat
+	mux.Handle("/forum/api/messages/users-for-chat", protected(http.HandlerFunc(messageHandler.GetUsersForChat)))       // GET - Get users to start new chats
+	mux.Handle("/forum/api/messages/unread-count", protected(http.HandlerFunc(messageHandler.GetUnreadCount)))          // GET - Get total unread count
+	mux.Handle("/forum/api/messages/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))                // PUT/POST - Mark message as read
+	mux.Handle("/forum/api/messages/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))                // DELETE - Delete a message
 
 	return authMiddleware.Authenticate(mux)
 

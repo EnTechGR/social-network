@@ -46,6 +46,12 @@ type LoginResponse struct {
 	CSRFToken string `json:"csrf_token"`
 }
 
+// UserAuth contains user authentication information
+type UserAuth struct {
+	UserID       string `json:"-"`
+	PasswordHash string `json:"-"`
+}
+
 // OAuthLoginResponse is the response for OAuth login initiation
 type OAuthLoginResponse struct {
 	AuthURL   string `json:"auth_url"`

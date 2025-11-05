@@ -25,7 +25,55 @@
   background: var(--accent);
   color: #fff;
   padding: 0.75rem 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+}
+
+
+
+/* Main top “page” layer */
+.app-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 7px;
+  background: linear-gradient(
+    to bottom,
+    #fdfcf9 0%,
+    #f7f5f0 70%,
+    #ece8df 100%
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  /* border-radius: 0 0 8px 8px; */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.6);
+  z-index: -1;
+}
+
+/* Extra “page layers” below — faint but defined ridges */
+.app-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -14px;
+  height: 15px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #faf3e5 0px,
+      #f4f2ed 3px,
+      #edeae3 4px,
+      #f9f7f3 7px
+    );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  /* border-radius: 0 0 10px 10px; */
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.6);
+  z-index: -2;
 }
 
 .app-header .logo {

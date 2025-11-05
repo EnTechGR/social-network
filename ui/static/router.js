@@ -6,6 +6,7 @@ import { renderWelcome } from "./views/welcome.js";
 import { renderUserFeed } from "./views/userFeed.js";
 import { renderCreatePost } from "./views/createPost.js";
 import { renderPost } from "./views/renderPost.js";
+import { renderCategoryPage } from "./views/renderCategoryPage.js";
 // import { renderProfile } from "./views/profile.js";
 // import { renderNotifications } from "./views/notifications.js";
 
@@ -59,6 +60,12 @@ export async function router() {
       if (!loggedIn) return navigateTo("/login");
       const postId = path.split("/").pop();
       renderPost(target, postId);
+      break;
+
+    case path.startsWith("/user/category/"):
+      if (!loggedIn) return navigateTo("/login");
+      const categoryId = path.split("/").pop();
+      renderCategoryPage(target, categoryId);
       break;
 
     // // Protected user-only routes

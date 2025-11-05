@@ -138,3 +138,113 @@
 .my-reactions-page {
   animation: fadeIn 0.4s ease-out;
 }
+
+/* ===============================
+   MY COMMENTS — Bookish Chapter Style
+   =============================== */
+
+.my-comments-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
+
+/* Header identical to category and others */
+.my-comments-header {
+  position: relative;
+  text-align: center;
+  margin: 2rem auto 2.5rem;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(240, 233, 212, 0.85)),
+    url("/static/assets/textures/old-book-page.png");
+  background-size: cover, 400px 400px;
+  background-blend-mode: multiply;
+  border: 1px solid rgba(210, 195, 170, 0.55);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.08),
+    inset 0 0 12px rgba(0, 0, 0, 0.04);
+  font-family: "Merriweather", serif;
+  color: var(--text);
+  overflow: hidden;
+  filter: contrast(105%) brightness(98%);
+}
+
+/* Page-edge shadows */
+.my-comments-header::before,
+.my-comments-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
+}
+.my-comments-header::before {
+  top: 0;
+  opacity: 0.2;
+}
+.my-comments-header::after {
+  bottom: 0;
+  opacity: 0.1;
+}
+
+/* Title */
+.my-comments-title {
+  font-size: 2.2rem;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.8rem;
+  text-shadow: 0 1px 0 #fff, 0 0 3px rgba(180, 160, 120, 0.25);
+}
+
+/* Decorative divider */
+.my-comments-title::after {
+  content: "";
+  display: block;
+  width: 140px;
+  height: 2px;
+  margin: 1rem auto 1.2rem;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(204, 160, 90, 0.7),
+    transparent
+  );
+  border-radius: 2px;
+}
+
+/* Description */
+.my-comments-description {
+  font-family: "Merriweather", serif;
+  font-style: italic;
+  color: #6d6d6d;
+  font-size: 1.05rem;
+  max-width: 700px;
+  margin: 0 auto 1.8rem;
+  line-height: 1.6;
+}
+
+/* Grid */
+.my-comments-page .forum-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.8rem;
+  padding: 1.5rem;
+}
+
+/* States */
+.empty-feed,
+.error-message {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+  font-style: italic;
+  margin-top: 2rem;
+}
+
+.error-message {
+  color: #b94a48;
+}

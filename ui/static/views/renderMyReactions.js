@@ -1,5 +1,4 @@
 import { renderPosts } from "../views/components/posts.js";
-import { navigateTo } from "../router.js";
 
 export async function renderMyReactions(main) {
   // Render page structure

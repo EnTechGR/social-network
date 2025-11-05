@@ -1,0 +1,33 @@
+.my-posts-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.94), rgba(253, 252, 249, 0.85)),
+    url("/static/assets/textures/light-paper-fibers.png");
+  background-size: cover, 300px 300px;
+  background-blend-mode: multiply;
+  border: 1px solid rgba(210, 195, 170, 0.45);
+  border-radius: 12px;
+  padding: 1.4rem 1.8rem;
+  margin-bottom: 1.8rem;
+  box-shadow:
+    0 6px 15px rgba(0, 0, 0, 0.08),
+    inset 0 0 6px rgba(0, 0, 0, 0.03);
+}
+
+.page-header h2 {
+  font-family: "Merriweather", serif;
+  font-size: 1.7rem;
+  color: var(--accent);
+}
+
+.page-header .btn-accent {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+}

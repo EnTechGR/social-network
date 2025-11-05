@@ -136,7 +136,7 @@
     0 10px 25px rgba(0, 0, 0, 0.1),
     inset 0 0 12px rgba(0, 0, 0, 0.05);
   background:
-    radial-gradient(circle at top left, rgba(255, 253, 247, 0.92), rgba(250, 247, 238, 0.82)),
+    radial-gradient(circle at top left, rgba(255, 253, 247, 0.92), rgba(241, 229, 193, 0.82)),
     url("/static/assets/textures/old-book-page.png");
   background-size: cover, 300px 300px;
   background-blend-mode: multiply;

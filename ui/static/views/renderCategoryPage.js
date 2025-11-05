@@ -8,7 +8,6 @@ export async function renderCategoryPage(main, categoryId) {
     <section class="category-page fade-in">
       <div class="category-header">
         <h2 class="category-title">Loading category...</h2>
-        <p class="category-description"></p>
         <div class="category-toolbar">
           <select id="sortSelect" class="sort-select">
             <option value="newest">Newest</option>
@@ -25,7 +24,6 @@ export async function renderCategoryPage(main, categoryId) {
   `;
 
   const titleEl = main.querySelector(".category-title");
-  const descEl = main.querySelector(".category-description");
   const postsContainer = main.querySelector("#categoryPosts");
   const sortSelect = main.querySelector("#sortSelect");
   const createPostBtn = main.querySelector("#createPostBtn");
@@ -48,7 +46,6 @@ export async function renderCategoryPage(main, categoryId) {
     const feedData = await feedResp.json();
 
     titleEl.textContent = category.name || `Category ${categoryId}`;
-    descEl.textContent = category.description || "";
 
     // Merge reactions/comments using feed data
     const allPosts = mergePostsFromCategories(feedData.categories || []);

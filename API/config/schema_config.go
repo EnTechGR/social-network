@@ -122,3 +122,16 @@ const CreateOAuthTable = `CREATE TABLE IF NOT EXISTS oauth_accounts (
     UNIQUE(provider, provider_user_id),
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );`
+
+// CreateMessagesTable stores private messages between users
+const CreateMessagesTable = `CREATE TABLE IF NOT EXISTS messages (
+    message_id TEXT PRIMARY KEY,
+    sender_id TEXT NOT NULL,
+    receiver_id TEXT NOT NULL,
+    content TEXT NOT NULL CHECK (LENGTH(content) <= 1000),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN NOT NULL DEFAULT 0,
+    FOREIGN KEY (sender_id) REFERENCES user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES user(user_id) ON DELETE CASCADE,
+    CHECK (sender_id != receiver_id)
+);`

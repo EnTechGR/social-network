@@ -20,3 +20,16 @@ const CreateOAuthIndexes = `
 		CREATE INDEX IF NOT EXISTS idx_oauth_user_id 
 		ON oauth_accounts(user_id);
 		`
+
+		// Message indexes for efficient queries
+const IdxMessagesSenderID = `CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);`
+const IdxMessagesReceiverID = `CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);`
+const IdxMessagesCreatedAt = `CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC);`
+
+// Composite index for conversation queries (sender + receiver + created_at)
+const IdxMessagesConversation = `CREATE INDEX IF NOT EXISTS idx_messages_conversation 
+    ON messages(sender_id, receiver_id, created_at DESC);`
+
+// Index for unread messages queries
+const IdxMessagesUnread = `CREATE INDEX IF NOT EXISTS idx_messages_unread 
+    ON messages(receiver_id, is_read, created_at DESC);`

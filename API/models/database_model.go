@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 9 // version 8 adds is_visible column to notifications
+	CURRENT_DB_VERSION = 10 // version 10 adds is_visible column to notifications
 	INITIAL_VERSION    = 1
 )
 
@@ -112,6 +112,18 @@ func GetMigrations() []Migration {
 				"UPDATE user SET last_name = 'User' WHERE last_name IS NULL;",
 				"UPDATE user SET age = 18 WHERE age IS NULL;",
 				"UPDATE user SET gender = 'prefer_not_to_say' WHERE gender IS NULL;",
+			},
+		},
+		{
+			Version:     10,
+			Description: "Add private messages table and indexes",
+			SQL: []string{
+				config.CreateMessagesTable,
+				config.IdxMessagesSenderID,
+				config.IdxMessagesReceiverID,
+				config.IdxMessagesCreatedAt,
+				config.IdxMessagesConversation,
+				config.IdxMessagesUnread,
 			},
 		},
 		// Add future migrations here
@@ -482,6 +494,7 @@ func createTables(db *sql.DB) error {
 		config.CreateImagesTable,
 		config.CreatePostCategoriesTable,
 		config.CreateOAuthTable,
+		config.CreateMessagesTable,
 		// Add OAuth state table for new installations
 		`CREATE TABLE IF NOT EXISTS oauth_states (
 			state TEXT PRIMARY KEY,
@@ -520,6 +533,11 @@ func createIndexes(db *sql.DB) error {
 		config.IdxImagesPostID,
 		config.IdxNotificationsUserID,
 		config.IdxNotificationsFromUserID,
+		config.IdxMessagesSenderID,
+		config.IdxMessagesReceiverID,
+		config.IdxMessagesCreatedAt,
+		config.IdxMessagesConversation,
+		config.IdxMessagesUnread,
 		// OAuth indexes
 		`CREATE INDEX IF NOT EXISTS idx_oauth_provider_user ON oauth_accounts(provider, provider_user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_oauth_user_id ON oauth_accounts(user_id)`,

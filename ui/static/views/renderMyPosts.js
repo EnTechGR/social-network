@@ -5,20 +5,18 @@ const API_BASE = "http://localhost:8080/forum/api";
 export function renderMyPosts(main) {
   main.innerHTML = `
     <section class="my-posts-page fade-in">
-      <div class="page-header">
-        <h2>Your Posts</h2>
-        <button id="newPostBtn" class="btn-accent">+ New Post</button>
-      </div>
-      <div id="myPostsContainer" class="forum-container">
-        <div class="loader">Loading your posts...</div>
-      </div>
+    <header class="my-posts-header">
+        <h1 class="my-posts-title">My Posts</h1>
+        <p class="my-posts-description">
+        A collection of your writings and reflections shared with BookTalk.
+        </p>
+    </header>
+
+    <div id="myPostsContainer" class="forum-container"></div>
     </section>
   `;
 
   const container = document.getElementById("myPostsContainer");
-  const newPostBtn = document.getElementById("newPostBtn");
-
-  newPostBtn.addEventListener("click", () => navigateTo("/user/create-post"));
 
   loadMyPosts();
 

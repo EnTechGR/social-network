@@ -8,6 +8,7 @@ import { renderCreatePost } from "./views/createPost.js";
 import { renderPost } from "./views/renderPost.js";
 import { renderCategoryPage } from "./views/renderCategoryPage.js";
 import { renderMyPosts } from "./views/renderMyPosts.js";
+import { renderMyReactions } from "./views/renderMyReactions.js";
 // import { renderProfile } from "./views/profile.js";
 // import { renderNotifications } from "./views/notifications.js";
 
@@ -72,6 +73,11 @@ export async function router() {
     case path === "/user/my-activity/my-posts":
       if (!loggedIn) return navigateTo("/login");
       renderMyPosts(target);
+      break;
+
+    case path === "/user/my-activity/my-reactions":
+      if (!loggedIn) return navigateTo("/login");
+      renderMyReactions(target);
       break;
 
     // // Protected user-only routes

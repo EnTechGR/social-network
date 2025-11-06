@@ -10,7 +10,7 @@ import { renderCategoryPage } from "./views/renderCategoryPage.js";
 import { renderMyPosts } from "./views/renderMyPosts.js";
 import { renderMyReactions } from "./views/renderMyReactions.js";
 import { renderMyComments } from "./views/renderMyComments.js";
-// import { renderProfile } from "./views/profile.js";
+import { renderEditPost } from "./views/editPost.js";
 // import { renderNotifications } from "./views/notifications.js";
 
 let layoutInitialized = false;
@@ -86,16 +86,11 @@ export async function router() {
       renderMyComments(target);
       break;
 
-    // // Protected user-only routes
-    // case path.startsWith("/user/post/"):
-    // case path === "/user/profile":
-    // case path === "/user/notifications":
-    //   if (!loggedIn) return navigateTo("/login");
-    //   // if (path.startsWith("/user/post/")) renderPost(app, path.split("/")[3]);
-    //   // else if (path === "/user/profile") renderProfile(app);
-    //   // else renderNotifications(app);
-    //   app.innerHTML = `<h1>Coming soon</h1>`;
-    //   break;
+    case path.startsWith("/user/my-activity/my-posts/edit/post/"):
+      if (!loggedIn) return navigateTo("/login");
+      const editPostId = path.split("/").pop();
+      renderEditPost(target, editPostId);
+      break;
 
     default:
       target.innerHTML = `<h1>404 - Page Not Found</h1>`;

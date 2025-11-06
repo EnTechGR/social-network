@@ -10,6 +10,7 @@ import (
 	"forum/repository/message"
 	"forum/repository/session"
 	"forum/repository/user"
+	"forum/websocket"
 )
 
 func SetupRoutes(db *sql.DB) http.Handler {
@@ -22,7 +23,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	reactionRepo := repository.NewReactionRepository(db)
 	imageRepo := repository.NewImageRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
-	messageRepo := message.NewMessageRepository(db) // ✅ ADD THIS
+	messageRepo := message.NewMessageRepository(db)
+
+	// ✅ Create and start WebSocket hub
+	hub := websocket.NewHub()
+	go hub.Run()
 
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo)
@@ -36,7 +41,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo)
-	messageHandler := handlers.NewMessageHandler(messageRepo) // ✅ ADD THIS
+	messageHandler := handlers.NewMessageHandler(messageRepo, hub) // ✅ Pass hub to handler
 
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
@@ -74,6 +79,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/forum/api/session/logout", corsMiddleware.Handler(http.HandlerFunc(authHandler.Logout)))
 	mux.Handle("/forum/api/session/verify", corsMiddleware.Handler(http.HandlerFunc(authHandler.VerifySession)))
 
+	// ✅ WebSocket endpoint (requires authentication, no CSRF needed for WebSocket upgrade)
+	mux.Handle("/ws", corsMiddleware.Handler(authMiddleware.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		websocket.HandleWebSocket(hub, w, r)
+	}))))
+
 	// Protected routes with CSRF
 	protected := func(h http.Handler) http.Handler {
 		// Ensure CSRF middleware is active for protected routes
@@ -82,36 +92,35 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Protected user routes
 	mux.Handle("/forum/api/posts/create", protected(http.HandlerFunc(postHandler.CreatePost)))
-	mux.Handle("/forum/api/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost)))            // DELETE /forum/api/posts/delete/{id}
-	mux.Handle("/forum/api/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle)))     // PUT /forum/api/posts/edit-title/{id}
-	mux.Handle("/forum/api/posts/edit-content/", protected(http.HandlerFunc(postHandler.EditPostContent))) // PUT /forum/api/posts/edit-content/{id}
+	mux.Handle("/forum/api/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost)))
+	mux.Handle("/forum/api/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle)))
+	mux.Handle("/forum/api/posts/edit-content/", protected(http.HandlerFunc(postHandler.EditPostContent)))
 	mux.Handle("/forum/api/user/posts", protected(http.HandlerFunc(myPostsHandler.GetMyPosts)))
 	mux.Handle("/forum/api/user/liked", protected(http.HandlerFunc(likedPostsHandler.GetLikedPosts)))
 	mux.Handle("/forum/api/user/disliked", protected(http.HandlerFunc(likedPostsHandler.GetDislikedPosts)))
 	mux.Handle("/forum/api/comments/create", protected(http.HandlerFunc(commentHandler.CreateComment)))
-	mux.Handle("/forum/api/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment)))     // PUT /forum/api/comments/edit/{id}
-	mux.Handle("/forum/api/comments/delete/", protected(http.HandlerFunc(commentHandler.DeleteComment))) // DELETE /forum/api/comments/delete/{id}
+	mux.Handle("/forum/api/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment)))
+	mux.Handle("/forum/api/comments/delete/", protected(http.HandlerFunc(commentHandler.DeleteComment)))
 	mux.Handle("/forum/api/react", protected(http.HandlerFunc(reactionHandler.CreateReact)))
 	mux.Handle("/forum/api/images/upload", protected(http.HandlerFunc(imageHandler.Upload)))
 	mux.Handle("/forum/api/user/commented", protected(http.HandlerFunc(myPostsHandler.GetCommentedPosts)))
-	mux.Handle("/forum/api/images/delete/", protected(http.HandlerFunc(imageHandler.DeleteImagesByPost))) // DELETE /forum/api/images/delete/{post_id}
+	mux.Handle("/forum/api/images/delete/", protected(http.HandlerFunc(imageHandler.DeleteImagesByPost)))
 
 	// Additional protected routes for user management
 	mux.Handle("/forum/api/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))
 	mux.Handle("/forum/api/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
-	mux.Handle("/forum/api/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification))) // DELETE /forum/api/notifications/delete/{id}
+	mux.Handle("/forum/api/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification)))
 	mux.Handle("/forum/api/session/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
 
-	// ✅ ADD MESSAGE ROUTES - Protected routes for messaging
-	mux.Handle("/forum/api/messages/send", protected(http.HandlerFunc(messageHandler.SendMessage)))                     // POST - Send a new message
-	mux.Handle("/forum/api/messages/conversation", protected(http.HandlerFunc(messageHandler.GetConversation)))         // GET - Get conversation with a user
-	mux.Handle("/forum/api/messages/conversations", protected(http.HandlerFunc(messageHandler.GetConversations)))       // GET - Get all conversations
-	mux.Handle("/forum/api/messages/users", protected(http.HandlerFunc(messageHandler.GetAllUsers)))                    // GET - Get all users for chat
-	mux.Handle("/forum/api/messages/users-for-chat", protected(http.HandlerFunc(messageHandler.GetUsersForChat)))       // GET - Get users to start new chats
-	mux.Handle("/forum/api/messages/unread-count", protected(http.HandlerFunc(messageHandler.GetUnreadCount)))          // GET - Get total unread count
-	mux.Handle("/forum/api/messages/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))                // PUT/POST - Mark message as read
-	mux.Handle("/forum/api/messages/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))                // DELETE - Delete a message
+	// Protected message routes
+	mux.Handle("/forum/api/messages/send", protected(http.HandlerFunc(messageHandler.SendMessage)))
+	mux.Handle("/forum/api/messages/conversation", protected(http.HandlerFunc(messageHandler.GetConversation)))
+	mux.Handle("/forum/api/messages/conversations", protected(http.HandlerFunc(messageHandler.GetConversations)))
+	mux.Handle("/forum/api/messages/users", protected(http.HandlerFunc(messageHandler.GetAllUsers)))
+	mux.Handle("/forum/api/messages/users-for-chat", protected(http.HandlerFunc(messageHandler.GetUsersForChat)))
+	mux.Handle("/forum/api/messages/unread-count", protected(http.HandlerFunc(messageHandler.GetUnreadCount)))
+	mux.Handle("/forum/api/messages/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))
+	mux.Handle("/forum/api/messages/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))
 
 	return authMiddleware.Authenticate(mux)
-
 }

@@ -11,17 +11,20 @@ import (
 	"forum/models"
 	"forum/repository/message"
 	"forum/utils"
+	"forum/websocket"
 )
 
 // MessageHandler handles message-related requests
 type MessageHandler struct {
 	MessageRepo *message.MessageRepository
+	Hub         *websocket.Hub // ✅ ADD WebSocket Hub
 }
 
 // NewMessageHandler creates a new MessageHandler
-func NewMessageHandler(messageRepo *message.MessageRepository) *MessageHandler {
+func NewMessageHandler(messageRepo *message.MessageRepository, hub *websocket.Hub) *MessageHandler {
 	return &MessageHandler{
 		MessageRepo: messageRepo,
+		Hub:         hub,
 	}
 }
 
@@ -77,7 +80,19 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Broadcast message via WebSocket to the receiver
+	// ✅ Broadcast message via WebSocket to the receiver
+	if h.Hub != nil {
+		chatData := websocket.ChatMessageData{
+			MessageID:  msg.MessageID,
+			SenderID:   msg.SenderID,
+			SenderName: user.Username,
+			ReceiverID: msg.ReceiverID,
+			Content:    msg.Content,
+			CreatedAt:  msg.CreatedAt,
+			IsRead:     msg.IsRead,
+		}
+		h.Hub.SendChatMessage(req.ReceiverID, chatData)
+	}
 
 	utils.JSONResponse(w, map[string]interface{}{
 		"message": msg,
@@ -180,10 +195,11 @@ func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// TODO: Set online status from WebSocket manager
-	// For now, all users appear offline
-	for i := range conversations {
-		conversations[i].IsOnline = false
+	// ✅ Set online status from WebSocket manager
+	if h.Hub != nil {
+		for i := range conversations {
+			conversations[i].IsOnline = h.Hub.IsUserOnline(conversations[i].UserID)
+		}
 	}
 
 	utils.JSONResponse(w, models.ConversationsResponse{
@@ -260,7 +276,6 @@ func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get message ID from URL path
-	// Expected format: /forum/api/messages/mark-read/{message_id}
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 2 {
 		utils.ErrorResponse(w, "Message ID is required", http.StatusBadRequest)
@@ -307,7 +322,6 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get message ID from URL path
-	// Expected format: /forum/api/messages/delete/{message_id}
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 2 {
 		utils.ErrorResponse(w, "Message ID is required", http.StatusBadRequest)
@@ -320,8 +334,16 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get message to find receiver ID before deletion
+	msg, err := h.MessageRepo.GetByID(messageID)
+	if err != nil {
+		log.Printf("Failed to get message: %v", err)
+		utils.ErrorResponse(w, "Message not found", http.StatusNotFound)
+		return
+	}
+
 	// Delete message
-	err := h.MessageRepo.Delete(messageID, user.ID)
+	err = h.MessageRepo.Delete(messageID, user.ID)
 	if err != nil {
 		log.Printf("Failed to delete message: %v", err)
 		if strings.Contains(err.Error(), "unauthorized") {
@@ -334,7 +356,10 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Notify receiver via WebSocket that message was deleted
+	// ✅ Notify receiver via WebSocket that message was deleted
+	if h.Hub != nil {
+		h.Hub.SendMessageDeleteNotification(msg.ReceiverID, messageID, user.ID)
+	}
 
 	utils.JSONResponse(w, map[string]interface{}{
 		"success": true,
@@ -375,9 +400,24 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// TODO: Add online status from WebSocket manager
+	// ✅ Add online status from WebSocket manager
+	type UserWithOnlineStatus struct {
+		models.User
+		IsOnline bool `json:"is_online"`
+	}
+
+	usersWithStatus := make([]UserWithOnlineStatus, len(users))
+	for i, u := range users {
+		usersWithStatus[i] = UserWithOnlineStatus{
+			User:     u,
+			IsOnline: false,
+		}
+		if h.Hub != nil {
+			usersWithStatus[i].IsOnline = h.Hub.IsUserOnline(u.ID)
+		}
+	}
 
 	utils.JSONResponse(w, map[string]interface{}{
-		"users": users,
+		"users": usersWithStatus,
 	}, http.StatusOK)
 }

@@ -22,7 +22,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--accent);
+  background: linear-gradient(to bottom, var(--accent-hover),  var(--accent));
   color: #fff;
   padding: 0.75rem 1.5rem;
   overflow: visible;
@@ -81,6 +81,7 @@
   font-weight: 700;
   cursor: pointer;
   letter-spacing: -0.5px;
+  color: white;
 }
 
 .header-actions button {

@@ -58,7 +58,7 @@ export function renderPosts(container, posts, basePath = "/user") {
 
     const footer = document.createElement("div");
     footer.className = "post-footer";
-    footer.textContent = `👍 ${likes} | 👎 ${dislikes} | 💬 ${commentCount}`;
+    footer.textContent = `▲ ${likes} | ▼ ${dislikes} | 💬 ${commentCount}`;
     wrapper.appendChild(footer);
 
     // Categories

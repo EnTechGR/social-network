@@ -130,6 +130,12 @@ func router(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.ServeFile(w, r, "./static/templates/user/user_edit.html")
+	case "/messages": // ✅ ADD MESSAGING ROUTE
+		if ok, _ := checkSession(r); !ok {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+		http.ServeFile(w, r, "./static/templates/messaging.html")
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		http.ServeFile(w, r, "./static/templates/error.html")

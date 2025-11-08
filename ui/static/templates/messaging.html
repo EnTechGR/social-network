@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum - Messages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        .auth-box h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .auth-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .auth-box button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .auth-box button:hover {
+            background: #5568d3;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .auth-toggle a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .success-message {
+            color: #27ae60;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: none;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+        }
+
+        /* Sidebar - Conversations List */
+        .sidebar {
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #667eea;
+            color: white;
+        }
+
+        .sidebar-header h3 {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header .user-info {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: #f8f8f8;
+        }
+
+        .conversation-item.active {
+            background: #e8eaf6;
+        }
+
+        .conversation-item .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .conversation-item .online-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-right: 8px;
+        }
+
+        .conversation-item .online-indicator.online {
+            background: #4caf50;
+        }
+
+        .conversation-item .last-message {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-item .unread-badge {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .conversation-item .timestamp {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header .user-name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .chat-header .online-status {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .chat-header .online-status.online {
+            color: #4caf50;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .messages-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-bubble {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            color: #333;
+        }
+
+        .message-info {
+            font-size: 11px;
+            margin-top: 5px;
+            color: #999;
+        }
+
+        .message.sent .message-info {
+            text-align: right;
+        }
+
+        .loading-more {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Message Input */
+        .message-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .message-input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input-form input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        .message-input-form button {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .message-input-form button:hover {
+            background: #5568d3;
+        }
+
+        .no-conversation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #999;
+            font-size: 18px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* ✅ ADD THESE: Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex; /* Show when active */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+        }
+
+        .users-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .user-item:hover {
+            background: #f8f8f8;
+        }
+
+        .user-item .online-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-right: 12px;
+        }
+
+        .user-item .online-indicator.online {
+            background: #4caf50;
+        }
+
+        .user-item .user-details {
+            flex: 1;
+        }
+
+        .user-item .user-name {
+            font-weight: 600;
+        }
+
+        .user-item .user-email {
+            font-size: 13px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Container -->
+    <div id="authContainer" class="auth-container">
+        <div class="auth-box">
+            <h2 id="authTitle">Login</h2>
+            <div id="authMessage" class="error-message" style="display: none;"></div>
+            
+            <form id="authForm">
+                <div id="registerFields" style="display: none;">
+                    <input type="text" id="username" placeholder="Username" required>
+                    <input type="text" id="firstName" placeholder="First Name" required>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
+                    <input type="number" id="age" placeholder="Age" min="13" max="120" required>
+                    <select id="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+                
+                <input type="text" id="loginField" placeholder="Username or Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                
+                <button type="submit" id="authSubmit">Login</button>
+            </form>
+            
+            <div class="auth-toggle">
+                <span id="toggleText">Don't have an account?</span>
+                <a id="toggleLink">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chatContainer" class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Messages</h3>
+                <div class="user-info" id="currentUserInfo"></div>
+                <button class="new-chat-btn" id="newChatBtn">+ New Chat</button>
+            </div>
+            <div class="conversations-list" id="conversationsList">
+                <!-- Conversations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header" id="chatHeader" style="display: none;">
+                <div>
+                    <div class="user-name" id="selectedUserName"></div>
+                    <div class="online-status" id="selectedUserStatus"></div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+
+            <div class="no-conversation" id="noConversation">
+                Select a conversation to start messaging
+            </div>
+
+            <div id="chatContent" style="display: none; flex: 1; display: flex; flex-direction: column;">
+                <div class="messages-container" id="messagesContainer">
+                    <div class="messages-wrapper" id="messagesWrapper">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="message-input-container">
+                    <form class="message-input-form" id="messageForm">
+                        <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>
+                        <button type="submit">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/messaging.js"></script>
+    <div id="newChatModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Start a New Chat</h2>
+            <p>Select a user to start a conversation with.</p>
+            <div class="users-list" id="usersList">
+                </div>
+        </div>
+    </div>
+</body>
+</html>

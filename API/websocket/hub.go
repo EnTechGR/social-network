@@ -53,8 +53,7 @@ func (h *Hub) Run() {
 
 // registerClient adds a client to the hub
 func (h *Hub) registerClient(client *Client) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	h.mu.Lock() // Lock for writing
 
 	// If user already has a connection, close the old one
 	if existingClient, exists := h.Clients[client.UserID]; exists {
@@ -65,6 +64,8 @@ func (h *Hub) registerClient(client *Client) {
 	h.Clients[client.UserID] = client
 	log.Printf("User %s connected. Total clients: %d", client.UserID, len(h.Clients))
 
+	h.mu.Unlock() // ✅ Unlock *before* broadcasting to prevent deadlock
+
 	// Broadcast online status to all clients
 	h.broadcastOnlineStatus(client.UserID, client.Username, true)
 
@@ -74,16 +75,19 @@ func (h *Hub) registerClient(client *Client) {
 
 // unregisterClient removes a client from the hub
 func (h *Hub) unregisterClient(client *Client) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	h.mu.Lock() // Lock for writing
 
 	if _, exists := h.Clients[client.UserID]; exists {
 		delete(h.Clients, client.UserID)
 		close(client.Send)
 		log.Printf("User %s disconnected. Total clients: %d", client.UserID, len(h.Clients))
 
+		h.mu.Unlock() // ✅ Unlock *before* broadcasting
+
 		// Broadcast offline status to all clients
 		h.broadcastOnlineStatus(client.UserID, client.Username, false)
+	} else {
+		h.mu.Unlock() // ✅ Unlock if client wasn't found
 	}
 }
 

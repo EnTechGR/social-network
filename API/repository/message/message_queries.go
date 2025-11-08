@@ -116,42 +116,45 @@ func (r *MessageRepository) GetTotalUnreadCount(userID string) (int, error) {
 // GetConversations retrieves all conversations for a user
 // Ordered by last message time (most recent first)
 func (r *MessageRepository) GetConversations(userID string) ([]models.Conversation, error) {
+	// ✅ FIXED: Use a subquery to get the other_user_id first, then join to get details
 	rows, err := r.DB.Query(`
-		SELECT DISTINCT
-			CASE 
-				WHEN m.sender_id = ? THEN m.receiver_id
-				ELSE m.sender_id
-			END AS other_user_id,
+		WITH user_conversations AS (
+			SELECT DISTINCT
+				CASE 
+					WHEN m.sender_id = ? THEN m.receiver_id
+					ELSE m.sender_id
+				END AS other_user_id
+			FROM messages m
+			WHERE m.sender_id = ? OR m.receiver_id = ?
+		)
+		SELECT 
+			uc.other_user_id,
 			u.username,
 			(
 				SELECT content
 				FROM messages m2
-				WHERE (m2.sender_id = ? AND m2.receiver_id = other_user_id)
-				   OR (m2.sender_id = other_user_id AND m2.receiver_id = ?)
+				WHERE (m2.sender_id = ? AND m2.receiver_id = uc.other_user_id)
+				   OR (m2.sender_id = uc.other_user_id AND m2.receiver_id = ?)
 				ORDER BY m2.created_at DESC
 				LIMIT 1
 			) AS last_message,
 			(
 				SELECT created_at
 				FROM messages m2
-				WHERE (m2.sender_id = ? AND m2.receiver_id = other_user_id)
-				   OR (m2.sender_id = other_user_id AND m2.receiver_id = ?)
+				WHERE (m2.sender_id = ? AND m2.receiver_id = uc.other_user_id)
+				   OR (m2.sender_id = uc.other_user_id AND m2.receiver_id = ?)
 				ORDER BY m2.created_at DESC
 				LIMIT 1
 			) AS last_message_time,
 			(
 				SELECT COUNT(*)
 				FROM messages m3
-				WHERE m3.receiver_id = ? AND m3.sender_id = other_user_id AND m3.is_read = 0
+				WHERE m3.receiver_id = ? AND m3.sender_id = uc.other_user_id AND m3.is_read = 0
 			) AS unread_count
-		FROM messages m
-		JOIN user u ON u.user_id = CASE 
-			WHEN m.sender_id = ? THEN m.receiver_id
-			ELSE m.sender_id
-		END
-		WHERE m.sender_id = ? OR m.receiver_id = ?
+		FROM user_conversations uc
+		JOIN user u ON u.user_id = uc.other_user_id
 		ORDER BY last_message_time DESC
-	`, userID, userID, userID, userID, userID, userID, userID, userID, userID)
+	`, userID, userID, userID, userID, userID, userID, userID, userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get conversations: %v", err)
@@ -278,6 +281,10 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating users: %v", err)
+	}
+	fmt.Println("Users retrieved from DB:")
+	for _, u := range users {
+		fmt.Printf("%+v\n", u)
 	}
 
 	return users, nil

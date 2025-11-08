@@ -229,8 +229,37 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ✅ Add online status from WebSocket manager
+	type UserWithOnlineStatus struct {
+		ID        string `json:"id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Age       int    `json:"age"`
+		Gender    string `json:"gender"`
+		IsOnline  bool   `json:"is_online"`
+	}
+
+	usersWithStatus := make([]UserWithOnlineStatus, len(users))
+	for i, u := range users {
+		usersWithStatus[i] = UserWithOnlineStatus{
+			ID:        u.ID,
+			Username:  u.Username,
+			Email:     u.Email,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			Age:       u.Age,
+			Gender:    u.Gender,
+			IsOnline:  false,
+		}
+		if h.Hub != nil {
+			usersWithStatus[i].IsOnline = h.Hub.IsUserOnline(u.ID)
+		}
+	}
+
 	utils.JSONResponse(w, map[string]interface{}{
-		"users": users,
+		"users": usersWithStatus,
 	}, http.StatusOK)
 }
 
@@ -400,17 +429,29 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// ✅ Add online status from WebSocket manager
+	// ✅ FIX: Use the same struct as in GetAllUsers for consistent JSON
 	type UserWithOnlineStatus struct {
-		models.User
-		IsOnline bool `json:"is_online"`
+		ID        string `json:"id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Age       int    `json:"age"`
+		Gender    string `json:"gender"`
+		IsOnline  bool   `json:"is_online"`
 	}
 
 	usersWithStatus := make([]UserWithOnlineStatus, len(users))
 	for i, u := range users {
 		usersWithStatus[i] = UserWithOnlineStatus{
-			User:     u,
-			IsOnline: false,
+			ID:        u.ID,
+			Username:  u.Username,
+			Email:     u.Email,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			Age:       u.Age,
+			Gender:    u.Gender,
+			IsOnline:  false, // Default
 		}
 		if h.Hub != nil {
 			usersWithStatus[i].IsOnline = h.Hub.IsUserOnline(u.ID)

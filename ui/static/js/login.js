@@ -1,10 +1,10 @@
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const emailInput = document.getElementById("email"); // Get the email input element
-  const passwordInput = document.getElementById("password"); // Get the password input element
+  const emailInput = document.getElementById("email"); // This can be username or email now
+  const passwordInput = document.getElementById("password");
 
-  const email = emailInput.value.trim();
+  const login = emailInput.value.trim(); // Changed from 'email' to 'login'
   const password = passwordInput.value;
   const message = document.getElementById("message");
 
@@ -15,13 +15,13 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         "Content-Type": "application/json",
       },
       credentials: "include", // IMPORTANT to send and receive cookies
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ login, password }), // Changed to use 'login' instead of 'email'
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      message.textContent = data.message;
+      message.textContent = "Login successful!";
       message.style.color = "green";
 
       // Clear the form fields after successful submission
@@ -33,12 +33,13 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         window.location.href = "/user/feed"; // Redirect to user page
       }, 1000);
     } else {
-      message.textContent = data.message || "Login failed!";
+      message.textContent = data.error || "Login failed!";
       message.style.color = "red";
     }
   } catch (error) {
     message.textContent = "Error connecting to server.";
     message.style.color = "red";
+    console.error("Login error:", error);
   }
 });
 

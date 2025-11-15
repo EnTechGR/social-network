@@ -11,8 +11,40 @@ export function renderRegister(app) {
         <form id="registerForm" class="register-form">
           <input type="text" id="username" placeholder="Username" required />
           <input type="email" id="email" placeholder="Email" required />
-          <input type="password" id="password" placeholder="Password" required />
-          <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+
+          <input type="text" id="firstName" placeholder="First name" required />
+          <input type="text" id="lastName" placeholder="Last name" required />
+
+          <input
+            type="number"
+            id="age"
+            placeholder="Age"
+            min="13"
+            max="120"
+            required
+          />
+
+          <select id="gender" required>
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </select>
+
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
+          <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirm Password"
+            required
+          />
+
           <button type="submit">Register</button>
           <p id="message" class="message"></p>
         </form>
@@ -42,11 +74,37 @@ export function renderRegister(app) {
 
     const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    const ageValue = document.getElementById("age").value.trim();
+    const gender = document.getElementById("gender").value;
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
 
+    // Basic client-side checks to mirror backend rules
     if (password !== confirmPassword) {
       showMessage("Passwords do not match!");
+      return;
+    }
+
+    const age = parseInt(ageValue, 10);
+    if (Number.isNaN(age) || age < 13 || age > 120) {
+      showMessage("Age must be between 13 and 120");
+      return;
+    }
+
+    const allowedGenders = ["male", "female", "other", "prefer_not_to_say"];
+    if (!allowedGenders.includes(gender)) {
+      showMessage(
+        "Gender must be one of: male, female, other, prefer_not_to_say"
+      );
+      return;
+    }
+
+    if (!username || !email || !firstName || !lastName || !gender) {
+      showMessage(
+        "All fields are required: username, email, password, first_name, last_name, age, gender"
+      );
       return;
     }
 
@@ -58,17 +116,37 @@ export function renderRegister(app) {
           ...(getCSRF() && { "X-CSRF-Token": getCSRF() }),
         },
         credentials: "include",
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          age,
+          gender,
+        }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        // ignore JSON parse errors; we'll fallback to generic messages
+      }
 
       if (res.ok) {
+        // Backend is expected to return: { user, session_id, csrf_token }
+        // Cookies/session should be set via `credentials: "include"`.
         showMessage("Registration successful!", true);
         form.reset();
         setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
-        showMessage(data.message || "Registration failed!");
+        // Backend test spec uses { "error": "..." }
+        const errorMsg =
+          data.error ||
+          data.message ||
+          "Registration failed! Please check your details and try again.";
+        showMessage(errorMsg);
       }
     } catch (err) {
       console.error(err);

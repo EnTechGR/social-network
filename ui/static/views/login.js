@@ -9,8 +9,18 @@ export function renderLogin(app) {
         <p class="subtitle">Sign in to continue your BookTalk journey.</p>
 
         <form id="loginForm" class="login-form">
-          <input type="email" id="email" placeholder="Email" required />
-          <input type="password" id="password" placeholder="Password" required />
+          <input
+            type="text"
+            id="login"
+            placeholder="Email or username"
+            required
+          />
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
           <button type="submit">Login</button>
           <p id="message" class="message"></p>
         </form>
@@ -38,7 +48,7 @@ export function renderLogin(app) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById("email").value.trim();
+    const login = document.getElementById("login").value.trim(); // email or username
     const password = document.getElementById("password").value;
 
     try {
@@ -49,17 +59,24 @@ export function renderLogin(app) {
           ...(getCSRF() && { "X-CSRF-Token": getCSRF() }),
         },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ login, password }), // use 'login' per backend spec
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        // ignore JSON parse errors
+      }
 
       if (res.ok) {
-        showMessage(data.message || "Login successful!", "green");
+        showMessage("Login successful!", "green");
         form.reset();
         setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
-        showMessage(data.message || "Login failed!", "red");
+        // backend returns { "error": "Invalid username/email or password" }
+        const errorMsg = data.error || data.message || "Login failed!";
+        showMessage(errorMsg, "red");
       }
     } catch (err) {
       console.error(err);

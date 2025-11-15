@@ -5,7 +5,7 @@ const API_BASE = "http://localhost:8080/forum/api";
 export function initCategoryDropdown({
   toggleSelector,
   dropdownId,
-  basePath = "/guest",
+  basePath = "/user",
 }) {
   const dropdownToggle = document.querySelector(toggleSelector);
   const dropdownContent = document.getElementById(dropdownId);

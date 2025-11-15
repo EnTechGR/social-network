@@ -1,0 +1,322 @@
+/* ============================================
+   EDIT POST PAGE — BOOKISH LOOK (Option A)
+   ============================================ */
+
+.edit-post-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 2rem 3rem;
+  font-family: "Merriweather", serif;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* --------------------------------------------
+   BOOKISH HEADER (same style as category pages)
+--------------------------------------------- */
+.edit-post-header {
+  text-align: center;
+  margin: 2rem 0 2.5rem;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(240, 233, 212, 0.85)),
+    url("/static/assets/textures/old-book-page.png");
+  background-size: cover, 400px 400px;
+  background-blend-mode: multiply;
+  border: 1px solid rgba(210, 195, 170, 0.55);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.08),
+    inset 0 0 12px rgba(0, 0, 0, 0.04);
+}
+
+.edit-post-title {
+  font-size: 2.2rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.edit-post-desc {
+  font-size: 1.1rem;
+  font-style: italic;
+  color: #6d6d6d;
+}
+
+/* --------------------------------------------
+   POST CARD (same look as single post view)
+--------------------------------------------- */
+.post {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), rgba(253, 252, 249, 0.90)),
+    url("/static/assets/textures/light-paper-fibers.png");
+  background-size: cover, 280px 280px;
+  background-blend-mode: multiply;
+  border: 1px solid rgba(210, 195, 170, 0.5);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.07),
+    inset 0 0 10px rgba(0, 0, 0, 0.03);
+  margin-bottom: 2rem;
+}
+
+/* Title + meta -------------------------------------------------- */
+.post-title,
+.deleted-title {
+  font-size: 1.8rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.deleted-title {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.post-meta {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+/* Image ---------------------------------------------------------- */
+.post-image {
+  width: 100%;
+  border-radius: 10px;
+  margin: 1rem 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Content -------------------------------------------------------- */
+.post-content-card {
+  background: #fffdf9;
+  padding: 1.2rem 1.4rem;
+  border-radius: 10px;
+  border: 1px solid rgba(210,195,170,0.4);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.04);
+  margin-bottom: 1.5rem;
+}
+
+.deleted-content {
+  opacity: 0.65;
+  font-style: italic;
+}
+
+/* Reactions row ---------------------------------------------- */
+.post-reactions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 1.4rem;
+}
+
+.like-btn,
+.dislike-btn {
+  border: 1px solid rgba(210, 195, 170, 0.6);
+  background: #fffefc;
+  color: #333;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: not-allowed; /* editing mode disables reactions */
+}
+
+.comment-count {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* Categories ---------------------------------------------------- */
+.post-categories {
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.post-category-link {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.Posted-on-text {
+  color: #666;
+}
+
+/* Edit buttons -------------------------------------------------- */
+.edit-btn,
+.delete-btn,
+.save-comment-btn,
+.cancel-comment-btn,
+.edit-comment-btn,
+.delete-comment-btn {
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.edit-btn {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.edit-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.delete-btn,
+.delete-comment-btn {
+  background: #b94a48;
+  color: #fff;
+}
+
+.delete-btn:hover,
+.delete-comment-btn:hover {
+  background: #a63f3d;
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------
+   COMMENT STYLING
+--------------------------------------------- */
+.comments-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(210,195,170,0.5);
+}
+
+.comments-section h3 {
+  font-size: 1.4rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+/* Comment item */
+.comment {
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  background: #fffdf9;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(210,195,170,0.4);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.03);
+}
+
+.comment strong {
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.comment-content {
+  margin: 0.4rem 0 0.6rem;
+  white-space: pre-wrap;
+}
+
+.comment-reactions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
+/* --------------------------------------------
+   COMMENT FORM
+--------------------------------------------- */
+.comment-form-container {
+  margin-top: 1rem;
+}
+
+.comment-textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(210,195,170,0.6);
+  background: #fffefc;
+  font-size: 1rem;
+  font-family: "Open Sans", sans-serif;
+}
+
+.submit-comment-btn {
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.3rem;
+  cursor: pointer;
+}
+
+.submit-comment-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* Character count & errors */
+.comment-char-count {
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  opacity: 0.8;
+}
+
+.comment-error-msg {
+  color: #b94a48;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.comment-error-msg.visible {
+  display: block;
+}
+
+/* --------------------------------------------
+   IMAGE UPLOAD BOX
+--------------------------------------------- */
+.image-upload-interface {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fffdf9;
+  border: 1px solid rgba(210,195,170,0.45);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.03);
+}
+
+.add-image-btn,
+.cancel-image-btn,
+.upload-btn {
+  background: var(--accent-light);
+  color: var(--accent);
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.upload-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.upload-btn:hover {
+  background: var(--accent-hover);
+}
+
+.image-preview {
+  margin-top: 0.8rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* --------------------------------------------
+   Fade animation
+--------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

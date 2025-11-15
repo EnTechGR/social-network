@@ -9,7 +9,6 @@ export function renderWelcome(app) {
       <div class="welcome-actions">
         <button id="loginBtn">Login</button>
         <button id="registerBtn">Register</button>
-        <button id="guestBtn">Browse as Guest</button>
       </div>
     </section>
   `;
@@ -21,9 +20,5 @@ export function renderWelcome(app) {
 
   document.getElementById("registerBtn").addEventListener("click", () => {
     navigateTo("/register");
-  });
-
-  document.getElementById("guestBtn").addEventListener("click", () => {
-    navigateTo("/guest/feed");
   });
 }

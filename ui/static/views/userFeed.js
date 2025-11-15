@@ -1,36 +1,30 @@
-import { renderLayout } from "./components/layout.js";
 import { renderPosts, mergePostsFromCategories } from "./components/posts.js";
 import { navigateTo } from "../router.js";
 
 const API_FEED = "http://localhost:8080/forum/api/feed";
 
-export function renderUserFeed(app) {
-  // Render the shared layout shell (header + sidebar + chat)
-  renderLayout(app, {
-    isUser: true,
-    mainContent: `
-      <div class="feed-page fade-in">
-        <div class="feed-toolbar">
-          <h2>Latest Posts</h2>
-          <button id="createPostBtn" class="btn-accent">+ New Post</button>
-        </div>
-
-        <div id="forumContainer" class="forum-container">
-          <div class="loader">Loading your personalized feed...</div>
-        </div>
+export function renderUserFeed(main) {
+  // Render only the inner content — not the full layout
+  main.innerHTML = `
+    <div class="feed-page fade-in">
+      <div class="feed-toolbar">
+        <h2>Latest Posts</h2>
+        <button id="createPostBtn" class="btn-accent">+ New Post</button>
       </div>
-    `,
-  });
+
+      <div id="forumContainer" class="forum-container">
+        <div class="loader">Loading your personalized feed...</div>
+      </div>
+    </div>
+  `;
 
   const forumContainer = document.getElementById("forumContainer");
   const createPostBtn = document.getElementById("createPostBtn");
 
-  /* ========== CREATE POST ========== */
-  if (createPostBtn) {
-    createPostBtn.addEventListener("click", () => {
-      navigateTo("/user/posts/create");
-    });
-  }
+  /* ========== CREATE POST BUTTON ========== */
+  createPostBtn.addEventListener("click", () => {
+    navigateTo("/user/posts/create");
+  });
 
   /* ========== LOAD FEED ========== */
   async function loadFeed() {
@@ -45,7 +39,9 @@ export function renderUserFeed(app) {
 
       if (!posts.length) {
         forumContainer.innerHTML = `
-          <p class="empty-feed">No posts yet. Be the first to share something!</p>
+          <p class="empty-feed">
+            No posts yet. Be the first to share something!
+          </p>
         `;
         return;
       }
@@ -59,8 +55,6 @@ export function renderUserFeed(app) {
           <button id="retryFeed" class="retry-btn">Retry</button>
         </div>
       `;
-
-      // Allow retry without page reload
       document.getElementById("retryFeed")?.addEventListener("click", loadFeed);
     }
   }

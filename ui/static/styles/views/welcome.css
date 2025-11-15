@@ -5,7 +5,11 @@
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(180deg, #faf8f6 0%, #f3efe9 100%);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(238, 228, 198, 0.85)),
+    url("/static/assets/textures/old-book-page.png");
+  background-size: cover, 400px 400px;
+  background-blend-mode: multiply;
   text-align: center;
   animation: fadeIn 0.5s ease-out;
 }

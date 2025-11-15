@@ -1,0 +1,170 @@
+/* ===============================
+   BOOKTALK APP LAYOUT
+   =============================== */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER ===== */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-heading);
+}
+
+.app-header .logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  transition: opacity 0.25s ease;
+}
+
+.app-header .logo:hover {
+  opacity: 0.9;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-actions button {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.header-actions button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* ===== BODY GRID ===== */
+.app-body {
+  display: grid;
+  grid-template-columns: 240px 1fr 280px;
+  flex: 1;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: var(--bg-alt);
+  padding: 1.25rem 1rem;
+  border-right: 1px solid var(--border);
+  box-shadow: inset -1px 0 0 var(--border);
+  overflow-y: auto;
+  font-family: var(--font-body);
+}
+
+.sidebar h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  font-family: var(--font-heading);
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list li {
+  margin-bottom: 0.4rem;
+}
+
+.category-list a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.category-list a:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* ===== USER MENU ===== */
+.user-menu {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.user-menu h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.user-menu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.user-menu a {
+  display: block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.user-menu a:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  padding: 2rem;
+  overflow-y: auto;
+  background: var(--bg);
+  animation: fadeIn 0.4s ease;
+}
+
+/* ===== RIGHT PANEL (Chat placeholder) ===== */
+.right-panel {
+  background: var(--bg-alt);
+  padding: 1rem;
+  border-left: 1px solid var(--border);
+  box-shadow: inset 1px 0 0 var(--border);
+}
+
+.chat-placeholder {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-style: italic;
+}

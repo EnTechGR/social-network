@@ -1,0 +1,103 @@
+/* Feed container inherits from layout.css */
+.feed-page {
+  padding: 1.5rem;
+}
+
+/* Toolbar above posts */
+.feed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.feed-toolbar h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* "Create Post" button */
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.1s ease;
+  box-shadow: 0 3px 10px rgba(0, 122, 255, 0.25);
+}
+
+.btn-accent:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+/* Posts layout */
+.forum-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.loader,
+.empty-feed,
+.error-message {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 3rem 1rem;
+}
+
+.error-message {
+  color: #d9534f;
+}
+
+.feed-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.feed-toolbar h2 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.btn-accent {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.btn-accent:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+.empty-feed {
+  color: var(--muted);
+  text-align: center;
+  font-style: italic;
+  margin-top: 2rem;
+}
+
+

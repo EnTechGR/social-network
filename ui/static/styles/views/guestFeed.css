@@ -1,0 +1,39 @@
+.feed-page {
+  padding: 1.5rem;
+}
+
+.forum-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.loader,
+.empty-feed,
+.error-message {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 3rem 1rem;
+}
+
+.error-message {
+  color: #d9534f;
+}
+
+.retry-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.retry-btn:hover {
+  background: var(--accent-hover);
+}
+

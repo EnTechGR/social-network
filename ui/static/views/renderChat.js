@@ -4,7 +4,7 @@ import { getCSRF, ensureSessionChecked, getUser } from "../session.js";
 
 const API_BASE = "http://localhost:8080/forum/api";
 
-export async function renderChat(main, { userId, username }) {
+export async function renderChat(main, { userId, username, isOnline = false }) {
   // Make sure session & CSRF are loaded
   await ensureSessionChecked();
   const currentUser = getUser();
@@ -28,7 +28,6 @@ export async function renderChat(main, { userId, username }) {
           </h2>
           <span id="chatPartnerStatus" class="online-status">Offline</span>
         </div>
-        <button id="chatBackBtn" class="btn-secondary">← Back</button>
       </div>
 
       <div id="chatThreadContainer" class="chat-thread-container">
@@ -53,17 +52,14 @@ export async function renderChat(main, { userId, username }) {
   const messagesWrapper = document.getElementById("messagesWrapper");
   const messageForm = document.getElementById("messageForm");
   const messageInput = document.getElementById("messageInput");
-  const backBtn = document.getElementById("chatBackBtn");
   const statusEl = document.getElementById("chatPartnerStatus");
   const partnerNameEl = document.getElementById("chatPartnerName");
 
-  // Ensure partner name is always up to date if we re-open
   partnerNameEl.textContent = username;
 
-  // Simple back behavior – you can swap to navigateTo("/user/feed") if you prefer
-  backBtn.addEventListener("click", () => {
-    window.history.back();
-  });
+  // set initial status based on what sidebar knows
+  statusEl.textContent = isOnline ? "Online" : "Offline";
+  statusEl.className = isOnline ? "online-status online" : "online-status";
 
   // ====== Local state for pagination ======
   let offset = 0;
@@ -115,6 +111,12 @@ export async function renderChat(main, { userId, username }) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
+  function appendMessage(msg, doScroll = true) {
+    const el = createMessageElement(msg, currentUser.id);
+    messagesWrapper.appendChild(el);
+    if (doScroll) scrollToBottom();
+  }
+
   // ====== Load messages ======
 
   async function loadMessages(initial = true) {
@@ -140,9 +142,7 @@ export async function renderChat(main, { userId, username }) {
 
       if (initial) {
         messagesWrapper.innerHTML = "";
-        messages.forEach((m) =>
-          messagesWrapper.appendChild(createMessageElement(m, currentUser.id))
-        );
+        messages.forEach((m) => appendMessage(m, false));
         scrollToBottom();
       } else {
         // prepend older messages while preserving scroll position
@@ -208,10 +208,8 @@ export async function renderChat(main, { userId, username }) {
         ...data.message,
         sender_name: currentUser.username,
       };
-      const el = createMessageElement(msg, currentUser.id);
-      messagesWrapper.appendChild(el);
+      appendMessage(msg, true);
       messageInput.value = "";
-      scrollToBottom();
     } catch (err) {
       console.error("Send message error:", err);
       alert("Failed to send message");
@@ -228,7 +226,20 @@ export async function renderChat(main, { userId, username }) {
     statusEl.className = isOnline ? "online-status online" : "online-status";
   };
 
-  // ====== Initial load ======
+  // Receive WebSocket messages from sidebar
+  window.receiveChatMessage = (msg) => {
+    // Only messages from the active user
+    if (String(msg.sender_id) !== String(userId)) return;
+    appendMessage(msg, true);
+  };
 
+  // Clean up hooks when leaving this chat
+  backBtn.addEventListener("click", () => {
+    window.receiveChatMessage = null;
+    // optional: window.updateChatPartnerStatus = null;
+    window.history.back();
+  });
+
+  // ====== Initial load ======
   await loadMessages(true);
 }

@@ -110,23 +110,27 @@ export function initLiveChatSidebar() {
     item.className = "conversation-item";
     item.dataset.userId = String(conv.user_id);
 
-    const isOnline = onlineUsers.has(String(conv.user_id));
+    // Initial online state for sidebar dot
+    const isOnline = conv.is_online || onlineUsers.has(String(conv.user_id));
 
     item.innerHTML = `
-      <div class="conversation-top">
-        <span class="online-indicator ${isOnline ? "online" : ""}"></span>
-        <span class="conversation-username">${conv.username}</span>
-      </div>
-      <div class="last-message">${conv.last_message || "No messages yet"}</div>
-      <div class="timestamp">${formatTime(
-        new Date(conv.last_message_time)
-      )}</div>
-    `;
+    <div class="conversation-top">
+      <span class="online-indicator ${isOnline ? "online" : ""}"></span>
+      <span class="conversation-username">${conv.username}</span>
+    </div>
+    <div class="last-message">${conv.last_message || "No messages yet"}</div>
+    <div class="timestamp">${formatTime(new Date(conv.last_message_time))}</div>
+  `;
 
+    // When you click, re-check online state and pass it into renderChat
     item.addEventListener("click", () => {
+      const isOnlineNow =
+        conv.is_online || onlineUsers.has(String(conv.user_id));
+
       renderChat(main, {
         userId: conv.user_id,
         username: conv.username,
+        isOnline: isOnlineNow,
       });
     });
 
@@ -197,17 +201,20 @@ export function initLiveChatSidebar() {
     item.dataset.userId = String(user.id);
 
     item.innerHTML = `
-      <div class="online-indicator ${isOnline ? "online" : ""}"></div>
-      <div class="user-details">
-        <div class="user-name">${user.username}</div>
-        <div class="user-email">${user.email}</div>
-      </div>
-    `;
+    <div class="online-indicator ${isOnline ? "online" : ""}"></div>
+    <div class="user-details">
+      <div class="user-name">${user.username}</div>
+      <div class="user-email">${user.email}</div>
+    </div>
+  `;
 
     item.addEventListener("click", () => {
+      const isOnlineNow = onlineUsers.has(String(user.id));
+
       renderChat(main, {
         userId: user.id,
         username: user.username,
+        isOnline: isOnlineNow,
       });
     });
 
@@ -281,12 +288,8 @@ export function initLiveChatSidebar() {
       new Date(data.created_at)
     );
 
-    // notify the currently open chat (renderChat) if it cares about online state
-    if (window.updateChatPartnerStatus) {
-      window.updateChatPartnerStatus(
-        data.sender_id,
-        onlineUsers.has(String(data.sender_id))
-      );
+    if (window.receiveChatMessage) {
+      window.receiveChatMessage(data);
     }
   }
 

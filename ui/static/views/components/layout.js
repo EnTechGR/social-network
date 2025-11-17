@@ -67,6 +67,11 @@ export function initLayout() {
     navigateTo("/user/feed");
   });
 
+  document.getElementById("notificationsBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    navigateTo("/user/notifications");
+  });
+
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await fetch("http://localhost:8080/forum/api/session/logout", {
       method: "POST",

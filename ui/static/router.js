@@ -12,7 +12,7 @@ import { renderMyReactions } from "./views/renderMyReactions.js";
 import { renderMyComments } from "./views/renderMyComments.js";
 import { renderEditPost } from "./views/editPost.js";
 import { renderChat } from "./views/renderChat.js";
-// import { renderNotifications } from "./views/notifications.js";
+import { renderNotifications } from "./views/notifications.js";
 
 let layoutInitialized = false;
 
@@ -97,6 +97,11 @@ export async function router() {
       if (!loggedIn) return navigateTo("/login");
       const chatUserId = path.split("/").pop();
       renderChat(target, chatUserId);
+      break;
+
+    case path === "/user/notifications":
+      if (!loggedIn) return navigateTo("/login");
+      renderNotifications(target);
       break;
 
     default:

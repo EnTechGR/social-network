@@ -11,6 +11,7 @@ import { renderMyPosts } from "./views/renderMyPosts.js";
 import { renderMyReactions } from "./views/renderMyReactions.js";
 import { renderMyComments } from "./views/renderMyComments.js";
 import { renderEditPost } from "./views/editPost.js";
+import { renderChat } from "./views/renderChat.js";
 // import { renderNotifications } from "./views/notifications.js";
 
 let layoutInitialized = false;
@@ -90,6 +91,12 @@ export async function router() {
       if (!loggedIn) return navigateTo("/login");
       const editPostId = path.split("/").pop();
       renderEditPost(target, editPostId);
+      break;
+
+    case path.startsWith("/user/chat/"):
+      if (!loggedIn) return navigateTo("/login");
+      const chatUserId = path.split("/").pop();
+      renderChat(target, chatUserId);
       break;
 
     default:

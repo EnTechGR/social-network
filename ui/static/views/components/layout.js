@@ -2,6 +2,7 @@
 import { initCategoryDropdown } from "./categories.js";
 import { navigateTo } from "../../router.js";
 import { clearSession } from "../../session.js";
+import { initLiveChatSidebar } from "../components/liveChatSidebar.js";
 
 export function initLayout() {
   const app = document.getElementById("app");
@@ -37,8 +38,17 @@ export function initLayout() {
         </main>
 
         <aside class="right-panel">
-          <div class="chat-placeholder">
-            <p>💬 Live Chat (Coming Soon)</p>
+          <div id="chatSidebar" class="chat-sidebar">
+            <h3>Live Chat</h3>
+            <div id="currentUserInfo" class="current-user-info">
+              Chat: Loading...
+            </div>
+
+            <h4>Conversations</h4>
+            <div id="conversationsList" class="conversations-list"></div>
+
+            <h4>Users</h4>
+            <div id="usersList" class="chat-users-list"></div>
           </div>
         </aside>
       </div>
@@ -65,4 +75,7 @@ export function initLayout() {
     clearSession();
     navigateTo("/login");
   });
+
+  // 🔥 Initialize chat sidebar after layout is in the DOM
+  initLiveChatSidebar();
 }

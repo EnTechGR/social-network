@@ -56,7 +56,10 @@ async function fetchReactionPosts(type) {
       credentials: "include",
     });
     if (!resp.ok) throw new Error(`Failed to load ${type} posts`);
-    return await resp.json();
+    const data = await resp.json();
+
+    // 🔒 Always return an array
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error(`Error fetching ${type} posts:`, err);
     return [];

@@ -1,5 +1,5 @@
 import { navigateTo } from "../router.js";
-import { getCSRF } from "../session.js";
+import { getCSRF, verifySession } from "../session.js";
 
 export function renderRegister(app) {
   app.innerHTML = `
@@ -81,7 +81,6 @@ export function renderRegister(app) {
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
 
-    // Basic client-side checks to mirror backend rules
     if (password !== confirmPassword) {
       showMessage("Passwords do not match!");
       return;
@@ -131,17 +130,17 @@ export function renderRegister(app) {
       try {
         data = await res.json();
       } catch {
-        // ignore JSON parse errors; we'll fallback to generic messages
+        // ignore JSON parse errors
       }
 
       if (res.ok) {
-        // Backend is expected to return: { user, session_id, csrf_token }
-        // Cookies/session should be set via `credentials: "include"`.
+        // ✅ Ensure SPA state matches backend session *after* registration
+        await verifySession();
+
         showMessage("Registration successful!", true);
         form.reset();
         setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
-        // Backend test spec uses { "error": "..." }
         const errorMsg =
           data.error ||
           data.message ||

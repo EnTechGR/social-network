@@ -1,5 +1,5 @@
 import { navigateTo } from "../router.js";
-import { getCSRF } from "../session.js";
+import { getCSRF, verifySession } from "../session.js";
 
 export function renderLogin(app) {
   app.innerHTML = `
@@ -56,10 +56,11 @@ export function renderLogin(app) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // often not needed for login, but leaving it in case your backend uses it
           ...(getCSRF() && { "X-CSRF-Token": getCSRF() }),
         },
         credentials: "include",
-        body: JSON.stringify({ login, password }), // use 'login' per backend spec
+        body: JSON.stringify({ login, password }), // ✅ matches backend tests
       });
 
       let data = {};
@@ -70,12 +71,19 @@ export function renderLogin(app) {
       }
 
       if (res.ok) {
+        // ✅ Let verifySession talk to /session/verify and fill currentUser + csrfToken
+        await verifySession();
+
         showMessage("Login successful!", "green");
         form.reset();
         setTimeout(() => navigateTo("/user/feed"), 500);
       } else {
-        // backend returns { "error": "Invalid username/email or password" }
-        const errorMsg = data.error || data.message || "Login failed!";
+        const errorMsg =
+          data.error ||
+          data.message ||
+          (res.status === 401
+            ? "Invalid username/email or password"
+            : "Login failed!");
         showMessage(errorMsg, "red");
       }
     } catch (err) {

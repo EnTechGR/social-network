@@ -2,7 +2,10 @@
 import { initCategoryDropdown } from "./categories.js";
 import { navigateTo } from "../../router.js";
 import { clearSession } from "../../session.js";
-import { initLiveChatSidebar } from "../components/liveChatSidebar.js";
+import {
+  initLiveChatSidebar,
+  disconnectLiveChatSidebar,
+} from "../components/liveChatSidebar.js";
 
 export function initLayout() {
   const app = document.getElementById("app");
@@ -51,14 +54,12 @@ export function initLayout() {
     </div>
   `;
 
-  // Sidebar categories
   const catDropdown = initCategoryDropdown({
     dropdownId: "category-list",
     basePath: "/user",
   });
   catDropdown.loadCategories();
 
-  // Header actions
   document.getElementById("homeBtn").addEventListener("click", () => {
     navigateTo("/user/feed");
   });
@@ -69,6 +70,7 @@ export function initLayout() {
   });
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
+    disconnectLiveChatSidebar();
     await fetch("http://localhost:8080/forum/api/session/logout", {
       method: "POST",
       credentials: "include",
@@ -77,6 +79,5 @@ export function initLayout() {
     navigateTo("/login");
   });
 
-  // 🔥 Initialize chat sidebar after layout is in the DOM
   initLiveChatSidebar();
 }

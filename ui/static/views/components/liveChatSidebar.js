@@ -4,31 +4,32 @@ import { renderChat } from "../renderChat.js";
 const API_BASE = "http://localhost:8080";
 const WS_URL = "ws://localhost:8080/ws";
 
+let ws = null;
+let shouldReconnect = false;
+let cleanupRegistered = false; // avoid double-binding unload
+
 export function initLiveChatSidebar() {
   const usersList = document.getElementById("usersList");
   const currentUserInfo = document.getElementById("currentUserInfo");
   const main = document.getElementById("mainContent");
 
-  // If layout hasn’t rendered yet, bail safely
   if (!usersList || !currentUserInfo || !main) {
     console.warn("[chat] Sidebar elements not found, skipping init");
     return;
   }
 
   let currentUser = null;
-  let ws = null;
 
-  const onlineUsers = new Set(); // string user IDs that are online
-  const conversationsMeta = new Map(); // userId -> { last_message_time, last_message, ... }
-  const unreadCounts = new Map(); // userId -> unread count
-  let lastUsers = []; // last users list from API
-  let activeChatUserId = null; // which user’s chat is currently open in main
+  const onlineUsers = new Set();
+  const conversationsMeta = new Map();
+  const unreadCounts = new Map();
+  let lastUsers = [];
+  let activeChatUserId = null;
 
   // ========= Utility =========
   function formatTime(date) {
     const now = new Date();
     const diff = now - date;
-
     if (diff < 60000) return "Just now";
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
@@ -51,6 +52,7 @@ export function initLiveChatSidebar() {
       currentUser = data.user;
       currentUserInfo.textContent = `${currentUser.username}`;
 
+      shouldReconnect = true;
       await initializeChatSidebar();
     } catch (err) {
       console.error("[chat] Session check failed:", err);
@@ -61,9 +63,20 @@ export function initLiveChatSidebar() {
   async function initializeChatSidebar() {
     await Promise.all([loadConversations(), loadAllUsers()]);
     connectWebSocket();
+
+    // ensure WS is closed when the tab is closed/reloaded
+    if (!cleanupRegistered) {
+      window.addEventListener("beforeunload", () => {
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+      });
+      cleanupRegistered = true;
+    }
   }
 
-  // ========= Conversations metadata (for sorting & recency) =========
+  // ========= Conversations metadata =========
   async function loadConversations() {
     try {
       const resp = await fetch(`${API_BASE}/forum/api/messages/conversations`, {
@@ -94,13 +107,12 @@ export function initLiveChatSidebar() {
       last_message_time: timestamp.toISOString(),
     });
 
-    // resort users with new recency info
     if (lastUsers.length) {
       renderUsersList(lastUsers);
     }
   }
 
-  // ========= Users list (Online / Offline sections) =========
+  // ========= Users list =========
   async function loadAllUsers() {
     try {
       const resp = await fetch(
@@ -116,9 +128,6 @@ export function initLiveChatSidebar() {
     }
   }
 
-  // Sort within a section:
-  // 1) Users with conversations → by last_message_time desc
-  // 2) Users without conversations → alphabetical by username
   function sortUsersForSection(users) {
     return users.slice().sort((a, b) => {
       const convA = conversationsMeta.get(String(a.id));
@@ -129,7 +138,6 @@ export function initLiveChatSidebar() {
         const tB = new Date(convB.last_message_time);
         if (tA > tB) return -1;
         if (tA < tB) return 1;
-        // tie → fall through to alpha
       }
 
       if (convA && !convB) return -1;
@@ -154,7 +162,6 @@ export function initLiveChatSidebar() {
     const sortedOnline = sortUsersForSection(onlineList);
     const sortedOffline = sortUsersForSection(offlineList);
 
-    // ONLINE SECTION
     if (sortedOnline.length > 0) {
       const header = document.createElement("div");
       header.className = "chat-section-header";
@@ -162,12 +169,10 @@ export function initLiveChatSidebar() {
       usersList.appendChild(header);
 
       sortedOnline.forEach((user) => {
-        const item = createUserListItem(user);
-        usersList.appendChild(item);
+        usersList.appendChild(createUserListItem(user));
       });
     }
 
-    // OFFLINE SECTION
     if (sortedOffline.length > 0) {
       const header = document.createElement("div");
       header.className = "chat-section-header";
@@ -175,8 +180,7 @@ export function initLiveChatSidebar() {
       usersList.appendChild(header);
 
       sortedOffline.forEach((user) => {
-        const item = createUserListItem(user);
-        usersList.appendChild(item);
+        usersList.appendChild(createUserListItem(user));
       });
     }
   }
@@ -207,7 +211,6 @@ export function initLiveChatSidebar() {
     item.addEventListener("click", () => {
       const isOnlineNow = onlineUsers.has(String(user.id));
 
-      // When opening the chat, clear unread count for this user
       activeChatUserId = user.id;
       unreadCounts.delete(String(user.id));
       if (lastUsers.length) {
@@ -252,8 +255,11 @@ export function initLiveChatSidebar() {
     };
 
     ws.onclose = () => {
-      console.log("[chat] WebSocket closed, reconnecting...");
-      setTimeout(connectWebSocket, 3000);
+      console.log("[chat] WebSocket closed");
+      // if user is still logged in, we auto-reconnect
+      if (shouldReconnect) {
+        setTimeout(connectWebSocket, 3000);
+      }
     };
   }
 
@@ -276,14 +282,12 @@ export function initLiveChatSidebar() {
   function handleIncomingMessage(data) {
     const senderId = String(data.sender_id);
 
-    // Update recency meta
     updateConversationLastMessage(
       senderId,
       data.content,
       new Date(data.created_at)
     );
 
-    // If this chat is NOT currently open, bump unread count and rerender
     if (!activeChatUserId || String(activeChatUserId) !== senderId) {
       const prev = unreadCounts.get(senderId) || 0;
       unreadCounts.set(senderId, prev + 1);
@@ -292,7 +296,6 @@ export function initLiveChatSidebar() {
       }
     }
 
-    // Feed the open chat thread in main, if it cares
     if (window.receiveChatMessage) {
       window.receiveChatMessage(data);
     }
@@ -306,12 +309,10 @@ export function initLiveChatSidebar() {
 
     refreshOnlineIndicators();
 
-    // Rebuild users list so Online / Offline sections update correctly
     if (lastUsers.length) {
       renderUsersList(lastUsers);
     }
 
-    // Also update open chat header
     if (window.updateChatPartnerStatus) {
       window.updateChatPartnerStatus(id, data.is_online);
     }
@@ -325,7 +326,6 @@ export function initLiveChatSidebar() {
 
     refreshOnlineIndicators();
 
-    // Rebuild sections with the latest presence
     if (lastUsers.length) {
       renderUsersList(lastUsers);
     }
@@ -333,4 +333,20 @@ export function initLiveChatSidebar() {
 
   // kick off
   checkSession();
+}
+
+/**
+ * Called on logout to stop presence + chat for this tab.
+ */
+export function disconnectLiveChatSidebar() {
+  try {
+    shouldReconnect = false; // ❌ stop any future reconnects
+    if (ws) {
+      console.log("[chat] Closing WebSocket on logout");
+      ws.close();
+      ws = null;
+    }
+  } catch (err) {
+    console.error("[chat] Error closing WebSocket:", err);
+  }
 }

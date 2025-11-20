@@ -111,8 +111,8 @@
   margin: 1rem 0 1.4rem;
 }
 
-.like-btn,
-.dislike-btn {
+.edit-post-page .like-btn,
+.edit-post-page .dislike-btn {
   border: 1px solid rgba(210, 195, 170, 0.6);
   background: #fffefc;
   color: #333;

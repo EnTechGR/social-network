@@ -64,8 +64,8 @@
 }
 
 .like-btn, .dislike-btn {
-  background: none;
-  border: none;
+  background: #fffefc;
+  border: 1px solid var(--accent);
   cursor: pointer;
   font-size: 1rem;
   color: var(--accent);
@@ -74,6 +74,7 @@
 }
 
 .like-btn:hover, .dislike-btn:hover {
+  color:#fff;
   transform: scale(1.1);
 }
 

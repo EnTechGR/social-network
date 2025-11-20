@@ -14,25 +14,29 @@ import { renderEditPost } from "./views/editPost.js";
 import { renderChat } from "./views/renderChat.js";
 import { renderNotifications } from "./views/notifications.js";
 
-let layoutInitialized = false;
+// ❌ no more layoutInitialized
 
 export async function router() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const app = document.getElementById("app");
-  const main = document.getElementById("mainContent");
 
   await verifySession();
   const loggedIn = isAuthenticated();
 
-  // Initialize layout only once (for logged-in users)
-  if (loggedIn && !layoutInitialized) {
-    initLayout();
-    layoutInitialized = true;
+  // ✅ If user is logged in, make sure layout exists in the DOM
+  if (loggedIn && !document.getElementById("mainContent")) {
+    initLayout(); // sync, safe to call multiple times if DOM got wiped
   }
 
-  // Determine where to render
+  // ✅ Decide where to render
   const target = loggedIn ? document.getElementById("mainContent") : app;
-  if (target) target.innerHTML = `<div class="loader">Loading...</div>`;
+
+  if (!target) {
+    console.error("router: target container not found");
+    return;
+  }
+
+  target.innerHTML = `<div class="loader">Loading...</div>`;
 
   switch (true) {
     case path === "/":
@@ -62,14 +66,18 @@ export async function router() {
 
     case path.startsWith("/user/post/"):
       if (!loggedIn) return navigateTo("/login");
-      const postId = path.split("/").pop();
-      renderPost(target, postId);
+      {
+        const postId = path.split("/").pop();
+        renderPost(target, postId);
+      }
       break;
 
     case path.startsWith("/user/category/"):
       if (!loggedIn) return navigateTo("/login");
-      const categoryId = path.split("/").pop();
-      renderCategoryPage(target, categoryId);
+      {
+        const categoryId = path.split("/").pop();
+        renderCategoryPage(target, categoryId);
+      }
       break;
 
     case path === "/user/my-activity/my-posts":
@@ -89,14 +97,18 @@ export async function router() {
 
     case path.startsWith("/user/my-activity/my-posts/edit/post/"):
       if (!loggedIn) return navigateTo("/login");
-      const editPostId = path.split("/").pop();
-      renderEditPost(target, editPostId);
+      {
+        const editPostId = path.split("/").pop();
+        renderEditPost(target, editPostId);
+      }
       break;
 
     case path.startsWith("/user/chat/"):
       if (!loggedIn) return navigateTo("/login");
-      const chatUserId = path.split("/").pop();
-      renderChat(target, chatUserId);
+      {
+        const chatUserId = path.split("/").pop();
+        renderChat(target, chatUserId);
+      }
       break;
 
     case path === "/user/notifications":

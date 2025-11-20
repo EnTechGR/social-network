@@ -1,6 +1,6 @@
 import { navigateTo } from "../../router.js";
 
-export function renderPosts(container, posts, basePath = "/user") {
+export function renderPosts(container, posts, basePathOrOptions = "/user") {
   container.innerHTML = "";
 
   if (!posts || posts.length === 0) {
@@ -8,14 +8,24 @@ export function renderPosts(container, posts, basePath = "/user") {
     return;
   }
 
+  // Support old signature: renderPosts(container, posts, "/user")
+  // And new one: renderPosts(container, posts, { postBasePath, categoryBasePath })
+  const defaultBasePath =
+    typeof basePathOrOptions === "string" ? basePathOrOptions : "/user";
+  const options =
+    typeof basePathOrOptions === "object" ? basePathOrOptions : {};
+
+  const postBasePath = options.postBasePath ?? defaultBasePath;
+  const categoryBasePath = options.categoryBasePath ?? defaultBasePath;
+
   posts.forEach((post) => {
     const wrapper = document.createElement("div");
     wrapper.className = "post-card clickable-post";
     wrapper.style.cursor = "pointer";
 
-    // Navigate to post page
+    // Navigate to post page (or edit page, depending on base path)
     wrapper.addEventListener("click", () => {
-      navigateTo(`${basePath}/post/${post.id}`);
+      navigateTo(`${postBasePath}/post/${post.id}`);
     });
 
     // Thumbnail (optional)
@@ -68,13 +78,13 @@ export function renderPosts(container, posts, basePath = "/user") {
 
       post.categories.forEach((cat, idx) => {
         const catLink = document.createElement("a");
-        catLink.href = `${basePath}/category/${cat.id}`;
+        catLink.href = `${categoryBasePath}/category/${cat.id}`;
         catLink.textContent = cat.name;
         catLink.className = "post-category-link";
         catLink.addEventListener("click", (e) => {
           e.stopPropagation();
           e.preventDefault();
-          navigateTo(`${basePath}/category/${cat.id}`);
+          navigateTo(`${categoryBasePath}/category/${cat.id}`);
         });
 
         catContainer.appendChild(catLink);

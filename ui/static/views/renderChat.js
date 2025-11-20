@@ -233,13 +233,6 @@ export async function renderChat(main, { userId, username, isOnline = false }) {
     appendMessage(msg, true);
   };
 
-  // Clean up hooks when leaving this chat
-  backBtn.addEventListener("click", () => {
-    window.receiveChatMessage = null;
-    // optional: window.updateChatPartnerStatus = null;
-    window.history.back();
-  });
-
   // ====== Initial load ======
   await loadMessages(true);
 }

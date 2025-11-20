@@ -68,6 +68,32 @@ export async function renderChat(main, { userId, username, isOnline = false }) {
 
   // ====== Helpers ======
 
+  // Simple throttle helper to avoid spamming scroll handler
+  function throttle(fn, wait) {
+    let lastTime = 0;
+    let timeoutId = null;
+
+    return function (...args) {
+      const now = Date.now();
+      const remaining = wait - (now - lastTime);
+
+      if (remaining <= 0) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        lastTime = now;
+        fn.apply(this, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(() => {
+          lastTime = Date.now();
+          timeoutId = null;
+          fn.apply(this, args);
+        }, remaining);
+      }
+    };
+  }
+
   function formatDateTime(date) {
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
@@ -138,9 +164,10 @@ export async function renderChat(main, { userId, username, isOnline = false }) {
 
       const data = await resp.json();
       hasMore = data.has_more;
-      const messages = (data.messages || []).reverse(); // oldest first
+      const messages = (data.messages || []).reverse(); // oldest first within this batch
 
       if (initial) {
+        // First load: show only the last 10 (backend should return newest slice)
         messagesWrapper.innerHTML = "";
         messages.forEach((m) => appendMessage(m, false));
         scrollToBottom();
@@ -163,12 +190,15 @@ export async function renderChat(main, { userId, username, isOnline = false }) {
     }
   }
 
-  // Infinite scroll up to load older messages
-  messagesContainer.addEventListener("scroll", () => {
+  // ====== Infinite scroll (throttled) ======
+  const handleScroll = throttle(() => {
     if (messagesContainer.scrollTop === 0 && hasMore && !isLoading) {
+      // Load exactly 10 older messages (limit=10) per trigger
       loadMessages(false);
     }
-  });
+  }, 250); // 250ms throttle; adjust if you want
+
+  messagesContainer.addEventListener("scroll", handleScroll);
 
   // ====== Send message (with CSRF) ======
 

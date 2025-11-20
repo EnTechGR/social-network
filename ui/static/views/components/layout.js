@@ -7,7 +7,6 @@ import { initLiveChatSidebar } from "../components/liveChatSidebar.js";
 export function initLayout() {
   const app = document.getElementById("app");
 
-  // Render the base shell (only once)
   app.innerHTML = `
     <div class="layout">
       <header class="app-header">
@@ -41,11 +40,8 @@ export function initLayout() {
           <div id="chatSidebar" class="chat-sidebar">
             <h3>Live Chat</h3>
             <div id="currentUserInfo" class="current-user-info">
-              Chat: Loading...
+              Loading...
             </div>
-
-            <h4>Conversations</h4>
-            <div id="conversationsList" class="conversations-list"></div>
 
             <h4>Users</h4>
             <div id="usersList" class="chat-users-list"></div>

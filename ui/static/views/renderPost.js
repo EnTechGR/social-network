@@ -212,27 +212,53 @@ export function renderPost(main, postId) {
   function createComment(c) {
     const el = document.createElement("div");
     el.className = "comment";
+
+    // Convert to Date objects safely
+    const createdDate = new Date(c.created_at);
+    const updatedDate = c.updated_at ? new Date(c.updated_at) : createdDate;
+
+    // Extract timestamps
+    const createdMs = createdDate.getTime();
+    const updatedMs = updatedDate.getTime();
+
+    // If any timestamp is invalid, avoid "Invalid Date"
+    const safeDate = isFinite(updatedMs) ? updatedDate : createdDate;
+
+    // Determine if edited:
+    // Only if backend actually includes updated_at
+    // AND both dates valid
+    // AND difference is significant (> 1 second)
+    const isEdited =
+      c.updated_at &&
+      isFinite(createdMs) &&
+      isFinite(updatedMs) &&
+      Math.abs(updatedMs - createdMs) > 1000;
+
+    // Build header HTML
     const header = document.createElement("div");
     header.className = "comment-header";
     header.innerHTML = `<strong>${
       c.username || "Anonymous"
-    }</strong> • ${new Date(c.updated_at || c.created_at).toLocaleString()}${
-      c.updated_at !== c.created_at ? " (Edited)" : ""
-    }`;
+    }</strong> • ${safeDate.toLocaleString()}${isEdited ? " (Edited)" : ""}`;
 
     const body = document.createElement("p");
     body.textContent = c.content || "This comment was deleted.";
     body.className = "comment-body";
 
+    // Reaction buttons
     const reacts = document.createElement("div");
     reacts.className = "comment-reactions";
     const likes = c.reactions?.filter((r) => r.reaction_type === 1).length || 0;
     const dislikes =
       c.reactions?.filter((r) => r.reaction_type === 2).length || 0;
+
     const likeBtn = document.createElement("button");
+    likeBtn.type = "button";
     likeBtn.className = "like-btn";
     likeBtn.textContent = `▲ ${likes}`;
+
     const dislikeBtn = document.createElement("button");
+    dislikeBtn.type = "button";
     dislikeBtn.className = "dislike-btn";
     dislikeBtn.textContent = `▼ ${dislikes}`;
 
@@ -245,6 +271,7 @@ export function renderPost(main, postId) {
 
     reacts.append(likeBtn, dislikeBtn);
     el.append(header, body, reacts);
+
     return el;
   }
 

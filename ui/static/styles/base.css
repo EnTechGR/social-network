@@ -71,6 +71,7 @@ input, textarea, select {
   background: var(--bg-alt);
   color: var(--text);
   transition: var(--transition);
+  margin-bottom: 0.8rem;
 }
 
 input:focus, textarea:focus, select:focus {

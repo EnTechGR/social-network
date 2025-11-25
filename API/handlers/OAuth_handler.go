@@ -21,18 +21,18 @@ import (
 )
 
 var (
-	GoogleClientID     string
+	GoogleClientID  string
 	GoogleClientSecret string
-	GoogleRedirectURL  string
+	GoogleRedirectURL string
 
-	GitHubClientID     string
+	GitHubClientID  string
 	GitHubClientSecret string
-	GitHubRedirectURL  string // e.g., "http://localhost:8080/auth/github/callback"
+	GitHubRedirectURL string // e.g., "http://localhost:8080/auth/github/callback"
 )
 
 // OAuthHandler handles OAuth authentication
 type OAuthHandler struct {
-	UserRepo    *user.UserRepository
+	UserRepo *user.UserRepository
 	SessionRepo *session.SessionRepository
 	AuthHandler *AuthHandler
 }
@@ -40,7 +40,7 @@ type OAuthHandler struct {
 // NewOAuthHandler creates a new OAuthHandler
 func NewOAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository, authHandler *AuthHandler) *OAuthHandler {
 	return &OAuthHandler{
-		UserRepo:    userRepo,
+		UserRepo: userRepo,
 		SessionRepo: sessionRepo,
 		AuthHandler: authHandler,
 	}
@@ -52,16 +52,21 @@ func (h *OAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Store state in session for verification
 	http.SetCookie(w, &http.Cookie{
-		Name:     "oauth_state",
-		Value:    state,
-		Path:     "/",
-		MaxAge:   300, // 5 minutes
+		Name:  "oauth_state",
+		Value: state,
+		Path:  "/",
+		MaxAge: 300, // 5 minutes
 		HttpOnly: true,
-		Secure:   false, // true in production
+		Secure:  false, // true in production
 		SameSite: http.SameSiteLaxMode,
 	})
 	GoogleClientID = os.Getenv("GOOGLE_CLIENT_ID")
 	GoogleRedirectURL = os.Getenv("GOOGLE_REDIRECT_URL")
+
+	// --- DEBUG LINE ADDED ---
+	log.Printf("DEBUG: GoogleRedirectURL read from env: %s", GoogleRedirectURL)
+	// ------------------------
+
 	authURL := fmt.Sprintf(
 		"https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=email+profile&state=%s&access_type=offline&prompt=consent",
 		GoogleClientID,
@@ -89,7 +94,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// This now returns accessToken, refreshToken, and expiresIn
 	tokenResp, err := h.exchangeGoogleCode(code)
 	if err != nil {
-		log.Printf("Failed to exchange Google code: %v", err)
+		log.Printf("OAuth Error (GoogleCallback): Failed to exchange Google code: %v", err)
 		http.Error(w, "Failed to exchange authorization code", http.StatusInternalServerError)
 		return
 	}
@@ -99,7 +104,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Get user info from Google
 	userInfo, err := h.getGoogleUserInfo(tokenResp.AccessToken) // Pass the access token for user info
 	if err != nil {
-		log.Printf("Failed to get Google user info: %v", err)
+		log.Printf("OAuth Error (GoogleCallback): Failed to get Google user info: %v", err)
 		http.Error(w, "Failed to get user information", http.StatusInternalServerError)
 		return
 	}
@@ -107,7 +112,9 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Handle user creation/login - NOW PASSING ALL REQUIRED PARAMETERS
 	user, err := h.handleOAuthUser(userInfo, "google", tokenResp.AccessToken, tokenResp.RefreshToken, tokenExpiresAt)
 	if err != nil {
-		log.Printf("Failed to handle OAuth user: %v", err)
+		// --- VERBOSE LOGGING ADDED HERE ---
+		log.Printf("OAuth Error (GoogleCallback): Failed to process user (Database/UserRepo failure). Underlying cause: %v", err)
+		// ----------------------------------
 		http.Error(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
@@ -118,7 +125,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Redirecting to /user/feed for user: %s", user.Email)
+	log.Printf("Redirecting to http://localhost:8081/user/feed for user: %s", user.Email)
 	http.Redirect(w, r, "http://localhost:8081/user/feed", http.StatusFound)
 }
 
@@ -128,12 +135,12 @@ func (h *OAuthHandler) GitHubLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Store state in session for verification
 	http.SetCookie(w, &http.Cookie{
-		Name:     "oauth_state",
-		Value:    state,
-		Path:     "/",
-		MaxAge:   300, // 5 minutes
+		Name:  "oauth_state",
+		Value: state,
+		Path:  "/",
+		MaxAge:  300, // 5 minutes
 		HttpOnly: true,
-		Secure:   false, // true in production
+		Secure:  false, // true in production
 		SameSite: http.SameSiteLaxMode,
 	})
 	GitHubClientID = os.Getenv("GITHUB_CLIENT_ID")
@@ -182,7 +189,7 @@ func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	// Handle user creation/login - NOW PASSING ALL REQUIRED PARAMETERS
 	user, err := h.handleOAuthUser(userInfo, "github", tokenResp.AccessToken, tokenResp.RefreshToken, tokenExpiresAt)
 	if err != nil {
-		log.Printf("Failed to handle OAuth user: %v", err)
+		log.Printf("OAuth Error (GitHubCallback): Failed to process user (Database/UserRepo failure). Underlying cause: %v", err)
 		http.Error(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
@@ -200,9 +207,9 @@ func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 
 // OAuthTokenResponse holds the common fields from OAuth token endpoints
 type OAuthTokenResponse struct {
-	AccessToken  string
+	AccessToken string
 	RefreshToken string
-	ExpiresIn    int // in seconds
+	ExpiresIn int // in seconds
 }
 
 // Helper methods
@@ -228,12 +235,16 @@ func (h *OAuthHandler) exchangeGoogleCode(code string) (*OAuthTokenResponse, err
 	GoogleClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
 	GoogleRedirectURL = os.Getenv("GOOGLE_REDIRECT_URL")
 	data := url.Values{
-		"client_id":     {GoogleClientID},
+		"client_id": {GoogleClientID},
 		"client_secret": {GoogleClientSecret},
-		"code":          {code},
-		"grant_type":    {"authorization_code"},
-		"redirect_uri":  {GoogleRedirectURL},
+		"code": {code},
+		"grant_type": {"authorization_code"},
+		"redirect_uri": {GoogleRedirectURL},
 	}
+
+	// --- DEBUG LINE ADDED ---
+	log.Printf("DEBUG: Sending token exchange request with redirect_uri: %s", GoogleRedirectURL)
+	// ------------------------
 
 	resp, err := http.PostForm("https://oauth2.googleapis.com/token", data)
 	if err != nil {
@@ -263,9 +274,9 @@ func (h *OAuthHandler) exchangeGoogleCode(code string) (*OAuthTokenResponse, err
 	}
 
 	return &OAuthTokenResponse{
-		AccessToken:  accessToken,
+		AccessToken: accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    expiresIn,
+		ExpiresIn: expiresIn,
 	}, nil
 }
 
@@ -289,11 +300,11 @@ func (h *OAuthHandler) getGoogleUserInfo(token string) (*models.OAuthUserInfo, e
 	}
 
 	var googleUser struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		Name          string `json:"name"`
-		Picture       string `json:"picture"`
-		VerifiedEmail bool   `json:"verified_email"`
+		ID string `json:"id"`
+		Email  string `json:"email"`
+		Name string `json:"name"`
+		Picture  string `json:"picture"`
+		VerifiedEmail bool  `json:"verified_email"`
 	}
 
 	if err := json.Unmarshal(body, &googleUser); err != nil {
@@ -301,10 +312,10 @@ func (h *OAuthHandler) getGoogleUserInfo(token string) (*models.OAuthUserInfo, e
 	}
 
 	return &models.OAuthUserInfo{
-		ID:        googleUser.ID,
-		Email:     googleUser.Email,
-		Name:      googleUser.Name,
-		Username:  "", // Will be generated
+		ID: googleUser.ID,
+		Email:  googleUser.Email,
+		Name: googleUser.Name,
+		Username: "", // Will be generated
 		AvatarURL: googleUser.Picture,
 	}, nil
 }
@@ -314,9 +325,9 @@ func (h *OAuthHandler) exchangeGitHubCode(code string) (*OAuthTokenResponse, err
 	GitHubClientID = os.Getenv("GITHUB_CLIENT_ID")
 	GitHubClientSecret = os.Getenv("GITHUB_CLIENT_SECRET")
 	data := url.Values{
-		"client_id":     {GitHubClientID},
+		"client_id": {GitHubClientID},
 		"client_secret": {GitHubClientSecret},
-		"code":          {code},
+		"code": {code},
 	}
 
 	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", nil)
@@ -355,9 +366,9 @@ func (h *OAuthHandler) exchangeGitHubCode(code string) (*OAuthTokenResponse, err
 	}
 
 	return &OAuthTokenResponse{
-		AccessToken:  accessToken,
+		AccessToken: accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    expiresIn,
+		ExpiresIn: expiresIn,
 	}, nil
 }
 
@@ -381,10 +392,10 @@ func (h *OAuthHandler) getGitHubUserInfo(token string) (*models.OAuthUserInfo, e
 	}
 
 	var githubUser struct {
-		ID        int    `json:"id"`
-		Login     string `json:"login"`
-		Name      string `json:"name"`
-		Email     string `json:"email"`
+		ID int `json:"id"`
+		Login string `json:"login"`
+		Name string `json:"name"`
+		Email  string `json:"email"`
 		AvatarURL string `json:"avatar_url"`
 	}
 
@@ -399,10 +410,10 @@ func (h *OAuthHandler) getGitHubUserInfo(token string) (*models.OAuthUserInfo, e
 	}
 
 	return &models.OAuthUserInfo{
-		ID:        fmt.Sprintf("%d", githubUser.ID),
-		Email:     email,
-		Name:      githubUser.Name,
-		Username:  githubUser.Login,
+		ID: fmt.Sprintf("%d", githubUser.ID),
+		Email: email,
+		Name: githubUser.Name,
+		Username: githubUser.Login,
 		AvatarURL: githubUser.AvatarURL,
 	}, nil
 }
@@ -422,8 +433,8 @@ func (h *OAuthHandler) getGitHubUserEmail(token string) (string, error) {
 	defer resp.Body.Close()
 
 	var emails []struct {
-		Email   string `json:"email"`
-		Primary bool   `json:"primary"`
+		Email  string `json:"email"`
+		Primary bool `json:"primary"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&emails); err != nil {
@@ -480,8 +491,10 @@ func (h *OAuthHandler) handleOAuthUser(userInfo *models.OAuthUserInfo, provider,
 
 	reg := models.UserRegistration{
 		Username: username,
-		Email:    userInfo.Email,
+		Email: userInfo.Email,
 		Password: "", // No password for OAuth
+		Age:      18, // ADDED: Default age to satisfy database CHECK constraint
+		Gender:   "prefer_not_to_say", // ADDED: Default gender to satisfy database CHECK constraint
 	}
 
 	return h.UserRepo.CreateOAuthUser(reg, provider, userInfo.ID, userInfo.AvatarURL, accessToken, refreshToken, tokenExpiresAt)

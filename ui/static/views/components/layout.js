@@ -98,6 +98,7 @@ export function initLayout() {
       <header class="app-header">
         <h1 class="logo" id="homeBtn">BookTalk</h1>
         <div class="header-actions">
+          <button id="createPostBtn" class="btn-accent">+ New Post</button>
           <button id="notificationsBtn">🔔</button>
           <button id="logoutBtn">Logout</button>
         </div>
@@ -137,6 +138,8 @@ export function initLayout() {
     </div>
   `;
 
+  const createPostBtn = document.getElementById("createPostBtn");
+
   const catDropdown = initCategoryDropdown({
     dropdownId: "category-list",
     basePath: "/user",
@@ -146,6 +149,11 @@ export function initLayout() {
   // Listener for Home button (using button/H1 is fine)
   document.getElementById("homeBtn").addEventListener("click", () => {
     navigateTo("/user/feed");
+  });
+
+  /* ========== CREATE POST BUTTON ========== */
+  createPostBtn.addEventListener("click", () => {
+    navigateTo("/user/posts/create");
   });
 
   // Listener for Notifications button (using button is fine)
@@ -166,7 +174,7 @@ export function initLayout() {
   });
 
   // ----------------------------------------------------------------
-  // ✅ THE FIX: INTERCEPTING UNHANDLED ANCHOR TAGS 
+  // ✅ THE FIX: INTERCEPTING UNHANDLED ANCHOR TAGS
   // ----------------------------------------------------------------
   const userActivityLinks = document.getElementById("userActivityLinks");
 
@@ -176,8 +184,8 @@ export function initLayout() {
 
       if (link) {
         // 1. Prevents the full page refresh that occurs with standard <a> tags
-        e.preventDefault(); 
-        
+        e.preventDefault();
+
         // 2. Uses the SPA router to update the view
         const path = link.getAttribute("href");
         if (path) {

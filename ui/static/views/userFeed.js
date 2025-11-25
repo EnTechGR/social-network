@@ -9,7 +9,6 @@ export function renderUserFeed(main) {
     <div class="feed-page fade-in">
       <div class="feed-toolbar">
         <h2>Latest Posts</h2>
-        <button id="createPostBtn" class="btn-accent">+ New Post</button>
       </div>
 
       <div id="forumContainer" class="forum-container">
@@ -19,12 +18,6 @@ export function renderUserFeed(main) {
   `;
 
   const forumContainer = document.getElementById("forumContainer");
-  const createPostBtn = document.getElementById("createPostBtn");
-
-  /* ========== CREATE POST BUTTON ========== */
-  createPostBtn.addEventListener("click", () => {
-    navigateTo("/user/posts/create");
-  });
 
   /* ========== LOAD FEED ========== */
   async function loadFeed() {

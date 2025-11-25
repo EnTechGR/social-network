@@ -14,7 +14,6 @@ export async function renderCategoryPage(main, categoryId) {
             <option value="liked">Most Liked</option>
             <option value="commented">Most Commented</option>
           </select>
-          <button id="createPostBtn" class="btn-accent">+ New Post</button>
         </div>
       </div>
       <div id="categoryPosts" class="forum-container">
@@ -26,7 +25,6 @@ export async function renderCategoryPage(main, categoryId) {
   const titleEl = main.querySelector(".category-title");
   const postsContainer = main.querySelector("#categoryPosts");
   const sortSelect = main.querySelector("#sortSelect");
-  const createPostBtn = main.querySelector("#createPostBtn");
 
   try {
     // ✅ Fetch category info AND feed together

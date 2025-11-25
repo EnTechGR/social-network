@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 10 // version 10 adds is_visible column to notifications
+	CURRENT_DB_VERSION = 12 // version 10 adds is_visible column to notifications
 	INITIAL_VERSION    = 1
 )
 
@@ -126,6 +126,28 @@ func GetMigrations() []Migration {
 				config.IdxMessagesUnread,
 			},
 		},
+		{
+            Version:     12,
+            Description: "Replace all old categories with new Genres list",
+            SQL: []string{
+                // 1. Delete ALL existing categories.
+                // NOTE: Due to ON DELETE CASCADE in post_categories, this removes 
+                // all existing category associations from posts.
+                "DELETE FROM categories;",
+
+                // 2. Reset the Auto-Increment counter for categories (Optional, makes IDs start at 1 again)
+                "DELETE FROM sqlite_sequence WHERE name='categories';",
+
+                // 3. Insert the new specific list
+                "INSERT INTO categories (name) VALUES ('Drama');",
+                "INSERT INTO categories (name) VALUES ('Fantasy & Sci-Fi');",
+                "INSERT INTO categories (name) VALUES ('Mystery & Thriller');",
+                "INSERT INTO categories (name) VALUES ('Romance');",
+                "INSERT INTO categories (name) VALUES ('Horror');",
+                "INSERT INTO categories (name) VALUES ('Non-Fiction');",
+                "INSERT INTO categories (name) VALUES ('Young Adult & Kids');",
+            },
+        },
 		// Add future migrations here
 	}
 }

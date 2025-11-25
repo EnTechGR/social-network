@@ -30,7 +30,7 @@ export function renderMyPosts(main) {
       if (!resp.ok) throw new Error("Failed to load posts");
 
       const posts = await resp.json();
-      if (!posts.length) {
+      if (!Array.isArray(posts) || posts.length === 0) {
         container.innerHTML = `<p class="empty-feed">You haven’t written any posts yet.</p>`;
         return;
       }

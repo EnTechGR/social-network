@@ -81,6 +81,8 @@ export function renderPost(main, postId) {
       post.updated_at || post.created_at
     ).toLocaleString()}${metaLabel}`;
 
+    postBox.appendChild(meta);
+
     if (post.image_url) {
       const image = document.createElement("img");
       image.src = post.image_url;

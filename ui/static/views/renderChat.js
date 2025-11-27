@@ -263,6 +263,18 @@ export async function renderChat(main, { userId, username, isOnline = false }) {
     appendMessage(msg, true);
   };
 
+  // ====== Cleanup function ======
+  // This will be called when navigating away from chat
+  const cleanup = () => {
+    messagesContainer.removeEventListener("scroll", handleScroll);
+    if (window.clearActiveChatUser) {
+      window.clearActiveChatUser();
+    }
+  };
+
+  // Store cleanup function so router can call it
+  window.cleanupChat = cleanup;
+
   // ====== Initial load ======
   await loadMessages(true);
 }

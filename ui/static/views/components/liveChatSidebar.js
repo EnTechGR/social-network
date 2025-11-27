@@ -249,6 +249,11 @@ export function initLiveChatSidebar() {
     });
   }
 
+  // Expose function to clear active chat (called when navigating away)
+  window.clearActiveChatUser = () => {
+    activeChatUserId = null;
+  };
+
   // ========= WebSocket =========
   function connectWebSocket() {
     ws = new WebSocket(WS_URL);

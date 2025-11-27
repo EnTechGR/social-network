@@ -23,6 +23,12 @@ export async function router() {
   await verifySession();
   const loggedIn = isAuthenticated();
 
+  // ✅ Call cleanup if it exists (e.g., from chat page)
+  if (window.cleanupChat) {
+    window.cleanupChat();
+    window.cleanupChat = null;
+  }
+
   // ✅ If user is logged in, make sure layout exists in the DOM
   if (loggedIn && !document.getElementById("mainContent")) {
     initLayout(); // sync, safe to call multiple times if DOM got wiped

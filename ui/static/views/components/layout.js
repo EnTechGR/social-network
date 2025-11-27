@@ -100,6 +100,7 @@ export function initLayout() {
         <div class="header-actions">
           <button id="createPostBtn" class="btn-accent">+ New Post</button>
           <button id="notificationsBtn">🔔</button>
+          <button id="profileBtn" class="profile-btn">👤 Profile</button>
           <button id="logoutBtn">Logout</button>
         </div>
       </header>
@@ -154,6 +155,12 @@ export function initLayout() {
   /* ========== CREATE POST BUTTON ========== */
   createPostBtn.addEventListener("click", () => {
     navigateTo("/user/posts/create");
+  });
+
+  /* ========== PROFILE BUTTON ========== */
+  document.getElementById("profileBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    navigateTo("/user/profile");
   });
 
   // Listener for Notifications button (using button is fine)

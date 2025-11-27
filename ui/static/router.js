@@ -13,6 +13,7 @@ import { renderMyComments } from "./views/renderMyComments.js";
 import { renderEditPost } from "./views/editPost.js";
 import { renderChat } from "./views/renderChat.js";
 import { renderNotifications } from "./views/notifications.js";
+import { renderProfile } from "./views/renderProfile.js";
 
 // ❌ no more layoutInitialized
 
@@ -120,6 +121,11 @@ export async function router() {
     case path === "/user/notifications":
       if (!loggedIn) return navigateTo("/login");
       renderNotifications(target);
+      break;
+
+    case path === "/user/profile":
+      if (!loggedIn) return navigateTo("/login");
+      renderProfile(target);
       break;
 
     default:

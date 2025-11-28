@@ -71,6 +71,18 @@ func (r *MessageRepository) GetByID(messageID string) (*models.Message, error) {
 		return nil, fmt.Errorf("failed to get message: %v", err)
 	}
 
+	images, err := r.GetChatImagesByMessageID(messageID)
+    if err != nil {
+        // Log the error but continue if fetching the image fails, 
+        // as the text message itself is valid. Or return error if strict.
+        // Returning error is safer here.
+        return nil, fmt.Errorf("failed to retrieve chat images for message %s: %w", messageID, err)
+    }
+
+    if len(images) > 0 {
+        msg.Image = images[0]
+    }
+
 	return &msg, nil
 }
 

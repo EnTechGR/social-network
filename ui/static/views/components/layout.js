@@ -100,7 +100,7 @@ export function initLayout() {
         <div class="header-actions">
           <button id="createPostBtn" class="btn-accent">+ New Post</button>
           <button id="notificationsBtn">🔔</button>
-          <button id="profileBtn" class="profile-btn">👤 Profile</button>
+          <button id="profileBtn" class="profile-btn">🐦 Profile</button>
           <button id="logoutBtn">Logout</button>
         </div>
       </header>

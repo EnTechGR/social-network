@@ -54,6 +54,18 @@ func (r *MessageRepository) GetConversation(userID, otherUserID string, limit, o
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan message: %v", err)
 		}
+		// Fetch images for the current message
+		images, err := r.GetChatImagesByMessageID(msg.MessageID)
+		if err != nil {
+			// Deciding whether to log and continue or return error is application specific.
+			// Returning error here ensures data integrity.
+			return nil, fmt.Errorf("failed to retrieve chat images for message %s: %w", msg.MessageID, err)
+		}
+
+		if len(images) > 0 {
+			// Assuming 1:1 message:image relationship based on your table design
+			msg.Image = images[0]
+		}
 		messages = append(messages, msg)
 	}
 

@@ -82,22 +82,25 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 
 	// ✅ Broadcast message via WebSocket to the receiver
 	if h.Hub != nil {
-		chatData := websocket.ChatMessageData{
-			MessageID:  msg.MessageID,
-			SenderID:   msg.SenderID,
-			SenderName: user.Username,
+		// FIX: Use models.MessageWithUser to match Hub.SendChatMessage signature
+		msgWithUser := models.MessageWithUser{
+			MessageID: 	msg.MessageID,
+			SenderID: 	msg.SenderID,
+			SenderName: user.Username, // Include SenderName
 			ReceiverID: msg.ReceiverID,
-			Content:    msg.Content,
-			CreatedAt:  msg.CreatedAt,
-			IsRead:     msg.IsRead,
+			Content: 	msg.Content,
+			CreatedAt: 	msg.CreatedAt,
+			IsRead: 	msg.IsRead,
+			// Image field is zero-valued (nil) for text messages
 		}
-		h.Hub.SendChatMessage(req.ReceiverID, chatData)
+		// FIX: Pass the correctly typed variable
+		h.Hub.SendChatMessage(req.ReceiverID, msgWithUser) // This will now use the new function in hub.go
 	}
+	
 
 	utils.JSONResponse(w, map[string]interface{}{
 		"message": msg,
-		"success": true,
-	}, http.StatusCreated)
+	}, http.StatusCreated) // Removed "success": true as it's redundant
 }
 
 // GetConversation retrieves messages between current user and another user

@@ -41,7 +41,8 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo)
-	messageHandler := handlers.NewMessageHandler(messageRepo, hub) // ✅ Pass hub to handler
+	messageHandler := handlers.NewMessageHandler(messageRepo, hub)     // ✅ Pass hub to handler
+	chatImageHandler := handlers.NewChatImageHandler(messageRepo, hub) // ✅ Chat image handler
 
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
@@ -122,5 +123,12 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/forum/api/messages/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))
 	mux.Handle("/forum/api/messages/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))
 
+	// Protected chat image routes
+	mux.Handle("/forum/api/chat/images/upload", protected(http.HandlerFunc(chatImageHandler.UploadChatImage)))
+	mux.Handle("/forum/api/chat/images/message", protected(http.HandlerFunc(chatImageHandler.GetMessageImages)))
+	mux.Handle("/forum/api/chat/images/gallery", protected(http.HandlerFunc(chatImageHandler.GetConversationGallery)))
+	mux.Handle("/forum/api/chat/images/serve/", protected(http.HandlerFunc(chatImageHandler.ServeChatImage)))
+	mux.Handle("/forum/api/chat/images/delete/", protected(http.HandlerFunc(chatImageHandler.DeleteChatImage)))
+	mux.Handle("/forum/api/chat/images/stats", protected(http.HandlerFunc(chatImageHandler.GetUserImageStats)))
 	return authMiddleware.Authenticate(mux)
 }

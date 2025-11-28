@@ -285,6 +285,9 @@ export function initLiveChatSidebar() {
       case "chat":
         handleIncomingMessage(message.data);
         break;
+      case "chat_image":  // ← ADD THIS
+        handleIncomingMessage(message.data);  // ← ADD THIS
+        break;  // ← ADD THIS
       case "online_status":
         handleOnlineStatus(message.data);
         break;

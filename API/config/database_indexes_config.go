@@ -33,3 +33,8 @@ const IdxMessagesConversation = `CREATE INDEX IF NOT EXISTS idx_messages_convers
 // Index for unread messages queries
 const IdxMessagesUnread = `CREATE INDEX IF NOT EXISTS idx_messages_unread 
     ON messages(receiver_id, is_read, created_at DESC);`
+
+// Chat images indexes for efficient queries
+const IdxChatImagesMessageID = `CREATE INDEX IF NOT EXISTS idx_chat_images_message_id ON chat_images(message_id);`
+const IdxChatImagesUserID = `CREATE INDEX IF NOT EXISTS idx_chat_images_user_id ON chat_images(user_id);`
+const IdxChatImagesUploadedAt = `CREATE INDEX IF NOT EXISTS idx_chat_images_uploaded_at ON chat_images(uploaded_at DESC);`

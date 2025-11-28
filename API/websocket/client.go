@@ -47,6 +47,8 @@ const (
 	MessageTypeOnlineStatus  = "online_status"
 	MessageTypeMessageRead   = "message_read"
 	MessageTypeMessageDelete = "message_delete"
+	MessageTypeChatImage     = "chat_image"
+	MessageTypeChatImageDeleted = "chat_image_deleted"
 	MessageTypeError         = "error"
 )
 

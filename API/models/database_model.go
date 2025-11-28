@@ -14,7 +14,7 @@ import (
 
 // Database version constants
 const (
-	CURRENT_DB_VERSION = 12 // version 10 adds is_visible column to notifications
+	CURRENT_DB_VERSION = 13 // version 13 adds chat_images table for image sharing in messages
 	INITIAL_VERSION    = 1
 )
 
@@ -148,6 +148,16 @@ func GetMigrations() []Migration {
                 "INSERT INTO categories (name) VALUES ('Young Adult & Kids');",
             },
         },
+		{
+			Version:     13,
+			Description: "Add chat_images table for image sharing in messages",
+			SQL: []string{
+				config.CreateChatImagesTable,
+				config.IdxChatImagesMessageID,
+				config.IdxChatImagesUserID,
+				config.IdxChatImagesUploadedAt,
+			},
+		},
 		// Add future migrations here
 	}
 }
@@ -517,6 +527,7 @@ func createTables(db *sql.DB) error {
 		config.CreatePostCategoriesTable,
 		config.CreateOAuthTable,
 		config.CreateMessagesTable,
+		config.CreateChatImagesTable,
 		// Add OAuth state table for new installations
 		`CREATE TABLE IF NOT EXISTS oauth_states (
 			state TEXT PRIMARY KEY,
@@ -560,6 +571,9 @@ func createIndexes(db *sql.DB) error {
 		config.IdxMessagesCreatedAt,
 		config.IdxMessagesConversation,
 		config.IdxMessagesUnread,
+		config.IdxChatImagesMessageID,
+		config.IdxChatImagesUserID,
+		config.IdxChatImagesUploadedAt,
 		// OAuth indexes
 		`CREATE INDEX IF NOT EXISTS idx_oauth_provider_user ON oauth_accounts(provider, provider_user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_oauth_user_id ON oauth_accounts(user_id)`,

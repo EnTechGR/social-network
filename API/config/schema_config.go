@@ -135,3 +135,21 @@ const CreateMessagesTable = `CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (receiver_id) REFERENCES user(user_id) ON DELETE CASCADE,
     CHECK (sender_id != receiver_id)
 );`
+
+// CreateChatImagesTable stores images sent through chat messages
+const CreateChatImagesTable = `CREATE TABLE IF NOT EXISTS chat_images (
+    image_id TEXT PRIMARY KEY,
+    message_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    original_filename TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    thumbnail_path TEXT NOT NULL,
+    file_size INTEGER NOT NULL CHECK (file_size > 0),
+    mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/gif', 'image/webp')),
+    width INTEGER NOT NULL CHECK (width > 0),
+    height INTEGER NOT NULL CHECK (height > 0),
+    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+);`

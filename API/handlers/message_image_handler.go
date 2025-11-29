@@ -2,6 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"log"
 	"net/http"
@@ -15,11 +19,10 @@ import (
 	"forum/repository/message"
 	"forum/utils"
 	"forum/websocket"
-	// You will need a package for image processing/metadata
 )
 
 const maxUploadSize = 5 * 1024 * 1024 // 5MB limit
-const uploadPath = "./uploads/chat_images"
+const uploadPath = "./uploads/chat_images" // Directory to store chat images
 
 // ChatImageHandler handles file upload and serving for chat images
 type ChatImageHandler struct {
@@ -27,10 +30,23 @@ type ChatImageHandler struct {
 	Hub         *websocket.Hub
 }
 
-// NewChatImageHandler creates a new ChatImageHandler
+// NewChatImageHandler creates a new ChatImageHandler instance.
+//
+// It is responsible for initializing the handler and performing necessary
+// setup checks, such as ensuring the file upload directory exists.
+//
+// Parameters:
+//   - messageRepo: The repository interface for database operations.
+//   - hub: The WebSocket hub for broadcasting messages.
+//
+// Returns:
+//   - *ChatImageHandler: The initialized handler instance.
 func NewChatImageHandler(messageRepo *message.MessageRepository, hub *websocket.Hub) *ChatImageHandler {
-	// Ensure the upload directory exists
+	// Ensure the file upload directory for chat images exists before the server starts.
+	// os.ModePerm (0777) gives full permissions. MkdirAll creates parents if necessary.
 	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+		// Using log.Fatalf is appropriate here as the server cannot function
+		// without a writable directory for permanent file storage.
 		log.Fatalf("Failed to create upload directory: %v", err)
 	}
 	return &ChatImageHandler{
@@ -40,6 +56,13 @@ func NewChatImageHandler(messageRepo *message.MessageRepository, hub *websocket.
 }
 
 // UploadChatImage handles the multipart form upload for a new message with an image
+//
+// This function performs critical tasks:
+// 1. Authorization and Input Validation (user IDs, caption length, file size).
+// 2. Security Checks: Server-side content-based MIME type validation (anti-spoofing).
+// 3. Metadata Extraction: Decodes image config to get width/height.
+// 4. Persistence: Saves the file to disk and the message/image metadata to the database transactionally.
+// 5. Real-time Notification: Broadcasts the new message via WebSocket.
 func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -53,7 +76,9 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 1. Parse Multipart Form
+	// The maxUploadSize determines the total body size limit and is applied here.
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+		// This error typically means the request body exceeded the maximum size.
 		utils.ErrorResponse(w, fmt.Sprintf("File too large or invalid form: %v", err), http.StatusBadRequest)
 		return
 	}
@@ -62,6 +87,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	receiverID := strings.TrimSpace(r.FormValue("receiver_id"))
 	caption := strings.TrimSpace(r.FormValue("content"))
 
+	// Basic business logic validation
 	if receiverID == "" {
 		utils.ErrorResponse(w, "Receiver ID is required", http.StatusBadRequest)
 		return
@@ -86,18 +112,77 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		utils.ErrorResponse(w, "Error retrieving file", http.StatusInternalServerError)
 		return
 	}
+	// Ensure the form file is closed when the function exits
 	defer file.Close()
-	
+
+	// 3a. Validate MIME type by reading file header
+	// Read the first 512 bytes for MIME type content sniffing (anti-spoofing security check).
+	buffer := make([]byte, 512)
+	n, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		log.Printf("Error reading file header: %v", err)
+		utils.ErrorResponse(w, "Error reading file", http.StatusInternalServerError)
+		return
+	}
+
+	// Reset file pointer to beginning after reading header
+	// This is CRUCIAL so that subsequent file operations (DecodeConfig and io.Copy) read from the start.
+	if _, err := file.Seek(0, 0); err != nil {
+		log.Printf("Error resetting file pointer: %v", err)
+		utils.ErrorResponse(w, "Error processing file", http.StatusInternalServerError)
+		return
+	}
+
+	// Detect actual MIME type from file content (Magic Bytes check)
+	detectedMimeType := http.DetectContentType(buffer[:n])
+
+	// Validate that the detected content type is an allowed image type
+	// Note: This check is redundant with the repository's ValidateMimeType, but is kept here
+	// for clarity on the handler side. If the repository check is exhaustive, this map can be removed.
+	allowedMimeTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		"image/png":  true,
+		"image/gif":  true,
+	}
+
+	if !allowedMimeTypes[detectedMimeType] {
+		utils.ErrorResponse(w, fmt.Sprintf("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed. Detected: %s", detectedMimeType), http.StatusBadRequest)
+		return
+	}
+
+	// 3b. Decode image to get actual dimensions
+	// This step verifies file integrity (is it a valid image?) and extracts width/height.
+	imgConfig, format, err := image.DecodeConfig(file)
+	if err != nil {
+		log.Printf("Error decoding image config: %v", err)
+		// Failure to decode means the file is corrupted or not a valid image format.
+		utils.ErrorResponse(w, "Invalid or corrupted image file", http.StatusBadRequest)
+		return
+	}
+
+	// Reset file pointer again after decoding config
+	// This is CRITICAL because the decoder also moves the file pointer.
+	if _, err := file.Seek(0, 0); err != nil {
+		log.Printf("Error resetting file pointer after decode: %v", err)
+		utils.ErrorResponse(w, "Error processing file", http.StatusInternalServerError)
+		return
+	}
+
+	// Extract actual width and height for database storage
+	imageWidth := imgConfig.Width
+	imageHeight := imgConfig.Height
+
+	log.Printf("Image uploaded: Format=%s, Dimensions=%dx%d, MIME=%s", format, imageWidth, imageHeight, detectedMimeType)
 
 	// 4. Generate metadata and file path
 	imageID := utils.GenerateUUID()
+	// Use the original extension (safer to use a standardized extension based on detectedMimeType if needed, but keeping this for now)
 	filename := imageID + filepath.Ext(header.Filename)
 	filePath := filepath.Join(uploadPath, filename)
 
-	// NOTE: Using dummy values for image processing (replace with real logic if available)
-	const DUMMY_WIDTH = 800
-	const DUMMY_HEIGHT = 600
-	thumbnailPath := filepath.Join(uploadPath, "thumb_"+filename) // Dummy thumbnail path
+	// Thumbnail generation logic would go here.
+	thumbnailPath := "" // Empty for now
 
 	// 5. Save the file to disk (copy from form file to new file)
 	dst, err := os.Create(filePath)
@@ -108,6 +193,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	}
 	defer dst.Close()
 
+	// io.Copy reads from the beginning of 'file' (due to the Seek(0, 0) calls) and writes to 'dst'.
 	if _, err := io.Copy(dst, file); err != nil {
 		log.Printf("Error copying file content: %v", err)
 		utils.ErrorResponse(w, "Failed to save file content", http.StatusInternalServerError)
@@ -133,21 +219,26 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		UserID:           user.ID,
 		Filename:         filename,
 		OriginalFilename: header.Filename,
-		FilePath:         strings.TrimPrefix(filePath, "./"),
-		ThumbnailPath:    strings.TrimPrefix(thumbnailPath, "./"),
-		FileSize:         header.Size,
-		MimeType:         header.Header.Get("Content-Type"),
-		Width:            DUMMY_WIDTH,
-		Height:           DUMMY_HEIGHT,
-		UploadedAt:       now,
+		// Store file paths relative to the application base
+		FilePath:      strings.TrimPrefix(filePath, "./"),
+		ThumbnailPath: thumbnailPath,
+		FileSize:      header.Size,
+		// CRITICAL: Use the server-validated content type and extracted dimensions
+		MimeType:   detectedMimeType,
+		Width:      imageWidth,
+		Height:     imageHeight,
+		UploadedAt: now,
 	}
 
 	// 7. Save to Database (Transactional)
+	// Both the message and image records are inserted in a single atomic transaction.
 	if err := h.MessageRepo.CreateMessageAndImage(message, image); err != nil {
 		log.Printf("Failed to create message and image transactionally: %v", err)
-		// Clean up the file on disk since DB save failed
+		// Clean up the file on disk since DB save failed (Rollback cleanup).
 		os.Remove(filePath)
-		os.Remove(thumbnailPath)
+		if thumbnailPath != "" {
+			os.Remove(thumbnailPath)
+		}
 		utils.ErrorResponse(w, "Failed to save message and image record", http.StatusInternalServerError)
 		return
 	}
@@ -161,25 +252,27 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		Content:    message.Content,
 		CreatedAt:  message.CreatedAt,
 		IsRead:     message.IsRead,
-		// ✅ CRUCIAL: Embed the image data
+		// Embed the complete image metadata for immediate client display
 		Image: image,
 	}
 
-	// ✅ DEBUG: Log the message before sending
-	log.Printf("[DEBUG] Image message created: MessageID=%s, ImageID=%s, FilePath=%s",
+	// Log successful creation details
+	log.Printf("[DEBUG] Image message created: MessageID=%s, ImageID=%s, FilePath=%s, Dimensions=%dx%d",
 		messageWithImage.MessageID,
 		messageWithImage.Image.ImageID,
-		messageWithImage.Image.FilePath)
+		messageWithImage.Image.FilePath,
+		messageWithImage.Image.Width,
+		messageWithImage.Image.Height)
 
 	// 9. Broadcast message via WebSocket to the receiver
 	if h.Hub != nil {
-		// Use the unified chat message function
+		// Send the message object (which includes the image) over the wire.
 		h.Hub.SendChatMessage(receiverID, messageWithImage)
 	}
 
 	// 10. Send HTTP success response (for sender's immediate display)
 	utils.JSONResponse(w, map[string]interface{}{
-		"message": messageWithImage, // Return the message with the image data
+		"message": messageWithImage,
 	}, http.StatusCreated)
 }
 
@@ -245,10 +338,16 @@ func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request
 	http.ServeFile(w, r, fullFilePath)
 }
 
-// GetMessageImages will be covered in the next step (when you implement the message retrieval update)
-// GetConversationGallery will be covered later
-
-// DeleteChatImage deletes an image and its associated message
+// DeleteChatImage deletes an image file, its metadata record, and the associated message record.
+//
+// This operation is critical and requires three steps of cleanup:
+// 1. Database lookups and **sender authorization check**.
+// 2. Filesystem deletion.
+// 3. Database record deletion (image then message).
+// 4. WebSocket notification.
+//
+// Note: This function is not executed within a single database transaction,
+// but relies on sequential repository calls and filesystem operations.
 func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -261,7 +360,8 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Get image ID from URL path (e.g., /forum/api/chat/images/delete/image-id-here)
+	// Extract the image ID from the last segment of the URL path.
+	// This approach is somewhat brittle; a router variable capture is generally safer.
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 2 {
 		utils.ErrorResponse(w, "Image ID is required", http.StatusBadRequest)
@@ -277,26 +377,31 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 	// 1. Get image metadata to find file path and message ID
 	img, err := h.MessageRepo.GetChatImageByID(imageID)
 	if err != nil {
+		// Log specific error for debugging but return generic 404 to client
 		utils.ErrorResponse(w, "Image not found", http.StatusNotFound)
 		return
 	}
 
-	// 2. Check if the current user is the sender/owner of the message
+	// 2. Check if the current user is the sender/owner of the message (Authorization)
 	msg, err := h.MessageRepo.GetByID(img.MessageID)
 	if err != nil {
+		// Image exists, but its parent message is missing (a data integrity issue).
 		log.Printf("Message not found for image %s: %v", imageID, err)
 		utils.ErrorResponse(w, "Associated message not found", http.StatusNotFound)
 		return
 	}
 
 	if msg.SenderID != user.ID {
+		// CRITICAL SECURITY CHECK: Ensure only the message sender can delete.
 		utils.ErrorResponse(w, "Unauthorized: Only the sender can delete the image and message", http.StatusForbidden)
 		return
 	}
 
 	// 3. Delete from filesystem
+	// This step is performed first as it is often the most likely to fail or cause latency.
 	if err := os.Remove(img.FilePath); err != nil {
-		// Log error but continue to try and clean up database records
+		// Log error (file not found or permission issue) but allow subsequent database cleanup.
+		// NOTE: If file deletion fails, the DB records still get cleaned, minimizing dangling metadata.
 		log.Printf("Failed to delete file from disk %s: %v", img.FilePath, err)
 	}
 
@@ -308,9 +413,11 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 5. Delete associated message record
+	// The image is intrinsically linked to the message, so both are deleted together.
+	// We rely on MessageRepo.Delete for final validation and execution.
 	if err := h.MessageRepo.Delete(img.MessageID, user.ID); err != nil {
-		// NOTE: This call relies on MessageRepo.Delete checking if user.ID is the sender
 		log.Printf("Failed to delete message record: %v", err)
+		// NOTE: At this point, the file and image metadata are already gone.
 		utils.ErrorResponse(w, "Failed to delete associated message", http.StatusInternalServerError)
 		return
 	}
@@ -320,12 +427,17 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 		h.Hub.SendMessageDeleteNotification(msg.ReceiverID, img.MessageID, user.ID)
 	}
 
+	// Success response.
 	utils.JSONResponse(w, map[string]interface{}{
 		"success": true,
 	}, http.StatusOK)
 }
 
-// GetUserImageStats retrieves total image count and size for a user
+// GetUserImageStats retrieves the total number of images and the aggregated
+// total file size (in bytes) of all images uploaded by the authenticated user.
+//
+// This endpoint is read-only (GET) and is typically used for displaying user quotas
+// or storage usage statistics on a profile or settings page.
 func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -338,6 +450,7 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// 1. Retrieve the count of images uploaded by the user.
 	count, err := h.MessageRepo.GetImageCountByUser(user.ID)
 	if err != nil {
 		log.Printf("Failed to get image count: %v", err)
@@ -345,6 +458,8 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// 2. Retrieve the sum of all image file sizes for the user.
+	// This uses the COALESCE/SUM SQL aggregation handled in the repository layer.
 	totalSize, err := h.MessageRepo.GetTotalImagesSizeByUser(user.ID)
 	if err != nil {
 		log.Printf("Failed to get total image size: %v", err)
@@ -352,12 +467,23 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// 3. Return the statistics in the response.
 	utils.JSONResponse(w, map[string]interface{}{
-		"image_count":      count,
-		"total_size_bytes": totalSize,
+		"image_count":      count,          // Total number of images (int)
+		"total_size_bytes": totalSize,      // Total size in bytes (int64)
 	}, http.StatusOK)
 }
 
+// GetMessageImages retrieves all image metadata associated with a specific message ID.
+//
+// This function is currently a placeholder and needs to be fully implemented.
+// The intended workflow is:
+// 1. Authenticate the user.
+// 2. Extract the `messageID` from URL path parameters or query parameters.
+// 3. **Authorization Check**: Verify that the authenticated user is either the sender or receiver
+//    of the message associated with the `messageID` (using CanAccessImage or similar logic).
+// 4. Call `h.MessageRepo.GetChatImagesByMessageID(messageID)`.
+// 5. Return the list of image metadata as a JSON response.
 func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -369,13 +495,27 @@ func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Reque
 	// from query params, and fetching image metadata for those messages.
 
 	log.Println("Note: GetMessageImages handler called but not fully implemented.")
+	// Return a temporary successful response with an empty list to prevent client errors.
 	utils.JSONResponse(w, map[string]interface{}{
 		"images":  []interface{}{}, // Return empty list for now
 		"success": true,
 	}, http.StatusOK)
 }
 
-// GetConversationGallery retrieves all images from a conversation between two users
+// GetConversationGallery retrieves a paginated list of all image metadata shared
+// between the authenticated user and a specific conversation partner.
+//
+// This function is currently a placeholder and needs to be fully implemented.
+//
+// Required Implementation Steps:
+// 1. **Authentication**: Get the currently authenticated user (`userID`).
+// 2. **Parameter Extraction**: Retrieve the `otherUserID` from URL query parameters (e.g., "?partner=...")
+//    and extract optional pagination parameters (`limit` and `offset`).
+// 3. **Authorization**: No explicit authorization check is strictly needed beyond authentication,
+//    as the underlying repository call (`GetChatImagesInConversation`) implicitly filters results
+//    based on *both* `userID` and `otherUserID`.
+// 4. **Data Retrieval**: Call `h.MessageRepo.GetChatImagesInConversation(userID, otherUserID, limit, offset)`.
+// 5. **Response**: Return the retrieved list of image metadata, or an empty list if none are found.
 func (h *ChatImageHandler) GetConversationGallery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -387,6 +527,7 @@ func (h *ChatImageHandler) GetConversationGallery(w http.ResponseWriter, r *http
 	// validating the current user, and then calling MessageRepo.GetConversationImages(userID, otherUserID).
 
 	log.Println("Note: GetConversationGallery handler called but not fully implemented.")
+	// Return a temporary successful response with an empty list.
 	utils.JSONResponse(w, map[string]interface{}{
 		"gallery": []interface{}{}, // Return empty list for now
 		"success": true,

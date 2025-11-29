@@ -20,7 +20,7 @@ export function initLayout() {
             🔔
             <span id="notificationBadge" class="notification-badge hidden">0</span>
           </button>
-          <button id="profileBtn" class="profile-btn">🐦 Profile</button>
+          <button id="profileBtn" class="profile-btn">🦄 Profile</button>
           <button id="logoutBtn">Logout</button>
         </div>
       </header>
@@ -57,18 +57,45 @@ export function initLayout() {
         </aside>
       </div>
     </div>
+
+    <!-- ✅ Permission prompt for desktop notifications (Top Banner) -->
+    <div id="notificationPermissionPrompt" class="notification-permission-prompt hidden">
+      <div class="permission-prompt-content">
+        <div class="permission-prompt-title">🔔 Enable Notifications</div>
+        <div class="permission-prompt-text">
+          Get notified when someone likes or comments on your posts, even when you're not actively using BookTalk.
+        </div>
+      </div>
+      <div class="permission-prompt-actions">
+        <button class="permission-prompt-btn deny" id="permissionDeny">Not Now</button>
+        <button class="permission-prompt-btn allow" id="permissionAllow">Enable</button>
+      </div>
+    </div>
   `;
 
   // ✅ Get element references FIRST
   const createPostBtn = document.getElementById("createPostBtn");
   const notificationBtn = document.getElementById("notificationsBtn");
   const notificationBadge = document.getElementById("notificationBadge");
+  const permissionPrompt = document.getElementById("notificationPermissionPrompt");
+  const permissionAllow = document.getElementById("permissionAllow");
+  const permissionDeny = document.getElementById("permissionDeny");
+
+  // ✅ State variables
+  let hasRequestedPermission = false;
+  let notificationAudio = null;
 
   const catDropdown = initCategoryDropdown({
     dropdownId: "category-list",
     basePath: "/user",
   });
   catDropdown.loadCategories();
+
+  // ✅ Preload notification sound
+  preloadNotificationSound();
+
+  // ✅ Check permission status and show prompt if needed
+  checkNotificationPermissionStatus();
 
   // ✅ Load initial notification count
   loadNotificationCount();
@@ -112,6 +139,18 @@ export function initLayout() {
     navigateTo("/login");
   });
 
+  // ✅ Permission prompt buttons
+  permissionAllow.addEventListener("click", async () => {
+    await requestNotificationPermission();
+    hidePermissionPrompt();
+  });
+
+  permissionDeny.addEventListener("click", () => {
+    hidePermissionPrompt();
+    // Remember user declined (use localStorage)
+    localStorage.setItem("notificationPermissionDenied", Date.now());
+  });
+
   // Intercept user activity links
   const userActivityLinks = document.getElementById("userActivityLinks");
   if (userActivityLinks) {
@@ -125,6 +164,113 @@ export function initLayout() {
         }
       }
     });
+  }
+
+  // ✅ Preload notification sound
+  function preloadNotificationSound() {
+    try {
+      // ✅ CHANGE THIS PATH to your audio file
+      // Example paths:
+      // - '/static/sounds/notification.mp3'
+      // - '/static/audio/notification.ogg'
+      // - '/static/notification.wav'
+      const audioPath = '/static/sounds/notification.mp3';
+      
+      notificationAudio = new Audio(audioPath);
+      notificationAudio.volume = 0.3; // 30% volume
+      
+      // Preload the audio file
+      notificationAudio.load();
+      
+      console.log("[Notifications] Audio preloaded from:", audioPath);
+    } catch (err) {
+      console.error("[Notifications] Failed to preload audio:", err);
+    }
+  }
+
+  // ✅ Check notification permission status
+  function checkNotificationPermissionStatus() {
+    if (!("Notification" in window)) {
+      console.log("[Notifications] Desktop notifications not supported");
+      return;
+    }
+
+    // Check if user already denied (and it's been less than 7 days)
+    const deniedTime = localStorage.getItem("notificationPermissionDenied");
+    if (deniedTime) {
+      const daysSinceDenied = (Date.now() - parseInt(deniedTime)) / (1000 * 60 * 60 * 24);
+      if (daysSinceDenied < 7) {
+        console.log("[Notifications] User declined recently, not showing prompt");
+        return;
+      }
+    }
+
+    // Show prompt if permission is default (not granted or denied)
+    if (Notification.permission === "default" && !hasRequestedPermission) {
+      // Show our custom prompt after a short delay (better UX)
+      setTimeout(() => {
+        showPermissionPrompt();
+      }, 3000); // Wait 3 seconds after page load
+    }
+  }
+
+  // ✅ Show permission prompt
+  function showPermissionPrompt() {
+    permissionPrompt.classList.remove("hidden");
+    permissionPrompt.classList.add("show");
+  }
+
+  // ✅ Hide permission prompt
+  function hidePermissionPrompt() {
+    permissionPrompt.classList.remove("show");
+    setTimeout(() => {
+      permissionPrompt.classList.add("hidden");
+    }, 300);
+  }
+
+  // ✅ Request notification permission (called on user action)
+  async function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+      console.log("[Notifications] Desktop notifications not supported");
+      return false;
+    }
+
+    if (Notification.permission === "granted") {
+      console.log("[Notifications] Permission already granted");
+      return true;
+    }
+
+    try {
+      hasRequestedPermission = true;
+      const permission = await Notification.requestPermission();
+      console.log("[Notifications] Permission:", permission);
+      
+      if (permission === "granted") {
+        // Show a test notification
+        showTestNotification();
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error("[Notifications] Permission request failed:", err);
+      return false;
+    }
+  }
+
+  // ✅ Show test notification
+  function showTestNotification() {
+    try {
+      const testNotif = new Notification("BookTalk Notifications Enabled! 🎉", {
+        body: "You'll now receive notifications for likes, comments, and more.",
+        icon: "/favicon.ico",
+        tag: "welcome-notification"
+      });
+
+      setTimeout(() => testNotif.close(), 5000);
+    } catch (err) {
+      console.error("[Notifications] Failed to show test notification:", err);
+    }
   }
 
   // ✅ Load initial notification count from API
@@ -157,7 +303,13 @@ export function initLayout() {
 
       updateNotificationBadge(newCount);
 
-      // Optional: Show a toast notification
+      // ✅ Play notification sound
+      playNotificationSound();
+
+      // ✅ Show desktop notification
+      showDesktopNotification(notification);
+
+      // ✅ Show toast notification
       showNotificationToast(notification);
     };
   }
@@ -179,24 +331,185 @@ export function initLayout() {
     }
   }
 
-  // ✅ Optional: Show a brief toast notification
+  // ✅ Play notification sound (using custom audio file)
+  function playNotificationSound() {
+    if (!notificationAudio) {
+      console.warn("[Notifications] Audio not loaded");
+      return;
+    }
+
+    try {
+      // Reset audio to beginning
+      notificationAudio.currentTime = 0;
+      
+      // Play the sound
+      const playPromise = notificationAudio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("[Notifications] Sound played successfully");
+          })
+          .catch(err => {
+            // Autoplay was prevented
+            console.log("[Notifications] Sound blocked by browser:", err.message);
+            // Fallback to Web Audio API if audio file is blocked
+            playFallbackSound();
+          });
+      }
+    } catch (err) {
+      console.error("[Notifications] Failed to play sound:", err);
+      playFallbackSound();
+    }
+  }
+
+  // ✅ Fallback sound using Web Audio API (if audio file fails)
+  function playFallbackSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Pleasant "ding" sound
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+      
+      console.log("[Notifications] Fallback sound played");
+    } catch (err) {
+      console.error("[Notifications] Fallback sound failed:", err);
+    }
+  }
+
+  // ✅ Show desktop notification
+  function showDesktopNotification(notification) {
+    // Check if notifications are supported and permitted
+    if (!("Notification" in window)) {
+      return;
+    }
+
+    if (Notification.permission !== "granted") {
+      return;
+    }
+
+    // Don't show desktop notification if window is focused
+    if (document.hasFocus()) {
+      console.log("[Notifications] Window has focus, skipping desktop notification");
+      return;
+    }
+
+    try {
+      const message = formatNotificationMessage(notification);
+      const title = "BookTalk";
+      
+      const options = {
+        body: message,
+        icon: "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: notification.id, // Prevents duplicate notifications
+        requireInteraction: false,
+        silent: true, // Don't play sound (we already did)
+        vibrate: [200, 100, 200],
+        data: {
+          url: getNotificationUrl(notification)
+        }
+      };
+
+      const desktopNotif = new Notification(title, options);
+
+      // Handle notification click
+      desktopNotif.onclick = (event) => {
+        event.preventDefault();
+        window.focus();
+        
+        const url = getNotificationUrl(notification);
+        if (url) {
+          navigateTo(url);
+        }
+        
+        desktopNotif.close();
+      };
+
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        desktopNotif.close();
+      }, 5000);
+
+      console.log("[Notifications] Desktop notification shown");
+    } catch (err) {
+      console.error("[Notifications] Failed to show desktop notification:", err);
+    }
+  }
+
+  // ✅ Get URL for notification based on type
+  function getNotificationUrl(notification) {
+    if (notification.post_id) {
+      return `/user/post/${notification.post_id}`;
+    }
+    return "/user/notifications";
+  }
+
+  // ✅ Show toast notification (in-app popup)
   function showNotificationToast(notification) {
     const toast = document.createElement("div");
     toast.className = "notification-toast";
     
+    const icon = getNotificationIcon(notification.type);
     const message = formatNotificationMessage(notification);
-    toast.textContent = message;
+    
+    toast.innerHTML = `
+      <span class="toast-icon">${icon}</span>
+      <span class="toast-message">${message}</span>
+    `;
 
     document.body.appendChild(toast);
 
     // Animate in
     setTimeout(() => toast.classList.add("show"), 10);
 
+    // Make it clickable
+    toast.addEventListener("click", () => {
+      const url = getNotificationUrl(notification);
+      if (url) {
+        navigateTo(url);
+      }
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    });
+
     // Remove after 4 seconds
     setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 300);
     }, 4000);
+  }
+
+  // ✅ Get icon for notification type
+  function getNotificationIcon(type) {
+    switch (type) {
+      case "like":
+        return "👍";
+      case "dislike":
+        return "👎";
+      case "love":
+        return "❤️";
+      case "comment":
+        return "💬";
+      case "edit_comment":
+        return "✏️";
+      case "delete_comment":
+        return "🗑️";
+      default:
+        return "🔔";
+    }
   }
 
   // ✅ Format notification message for display

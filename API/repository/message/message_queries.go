@@ -7,8 +7,21 @@ import (
 	"forum/models"
 )
 
-// GetConversation retrieves messages between two users with pagination
-// Returns the last 'limit' messages, ordered by most recent first
+// GetConversation retrieves paginated messages between two specified users.
+//
+// It performs a two-way check (A->B or B->A) to include all messages in the thread,
+// joins user details for sender/receiver names, and orders by time descending.
+// The result includes attached chat image metadata if available.
+//
+// Parameters:
+//   - userID: The ID of the current authenticated user.
+//   - otherUserID: The ID of the peer user in the conversation.
+//   - limit: The maximum number of messages to return per page.
+//   - offset: The number of records to skip (for pagination).
+//
+// Returns:
+//   - []models.MessageWithUser: A slice of messages with user details.
+//   - error: An error if the query or scanning fails.
 func (r *MessageRepository) GetConversation(userID, otherUserID string, limit, offset int) ([]models.MessageWithUser, error) {
 	if limit <= 0 {
 		limit = 10
@@ -76,7 +89,15 @@ func (r *MessageRepository) GetConversation(userID, otherUserID string, limit, o
 	return messages, nil
 }
 
-// GetConversationCount returns total message count between two users
+// GetConversationCount returns the total number of messages exchanged between two users.
+//
+// Parameters:
+//   - userID: The ID of the first user.
+//   - otherUserID: The ID of the second user.
+//
+// Returns:
+//   - int: The total count of messages.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetConversationCount(userID, otherUserID string) (int, error) {
 	var count int
 	err := r.DB.QueryRow(`
@@ -93,7 +114,16 @@ func (r *MessageRepository) GetConversationCount(userID, otherUserID string) (in
 	return count, nil
 }
 
-// GetUnreadCount returns the number of unread messages for a user from another user
+// GetUnreadCount returns the number of unread messages sent by a specific user (fromUserID)
+// to the current user (userID).
+//
+// Parameters:
+//   - userID: The ID of the message recipient (current user).
+//   - fromUserID: The ID of the message sender (peer user).
+//
+// Returns:
+//   - int: The count of unread messages.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetUnreadCount(userID, fromUserID string) (int, error) {
 	var count int
 	err := r.DB.QueryRow(`
@@ -109,7 +139,14 @@ func (r *MessageRepository) GetUnreadCount(userID, fromUserID string) (int, erro
 	return count, nil
 }
 
-// GetTotalUnreadCount returns total unread messages for a user
+// GetTotalUnreadCount returns the overall total number of unread messages for a given user.
+//
+// Parameters:
+//   - userID: The ID of the user whose unread count is being checked.
+//
+// Returns:
+//   - int: The total count of all unread messages.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetTotalUnreadCount(userID string) (int, error) {
 	var count int
 	err := r.DB.QueryRow(`
@@ -125,10 +162,22 @@ func (r *MessageRepository) GetTotalUnreadCount(userID string) (int, error) {
 	return count, nil
 }
 
-// GetConversations retrieves all conversations for a user
-// Ordered by last message time (most recent first)
+// GetConversations retrieves a summary list of all active conversations for a user.
+//
+// It uses Common Table Expressions (CTEs) and subqueries to efficiently:
+// 1. Identify all unique peer users (other_user_id).
+// 2. Fetch the content and time of the last message for each thread.
+// 3. Calculate the unread count for each thread.
+// The list is ordered by the most recent message time.
+//
+// Parameters:
+//   - userID: The ID of the user whose conversations are being retrieved.
+//
+// Returns:
+//   - []models.Conversation: A slice of conversation summaries.
+//   - error: An error if the query or scanning fails.
 func (r *MessageRepository) GetConversations(userID string) ([]models.Conversation, error) {
-	// ✅ FIXED: Use a subquery to get the other_user_id first, then join to get details
+	// Query to get conversation summaries
 	rows, err := r.DB.Query(`
 		WITH user_conversations AS (
 			SELECT DISTINCT
@@ -195,7 +244,6 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 			conv.LastMessage = ""
 		}
 
-		// Note: IsOnline will be set by the WebSocket manager
 		conv.IsOnline = false
 
 		conversations = append(conversations, conv)
@@ -208,8 +256,16 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 	return conversations, nil
 }
 
-// GetUsersWithoutConversation retrieves users who don't have a conversation with the current user
-// Useful for showing "new chat" options
+// GetUsersWithoutConversation retrieves users who have NOT yet exchanged messages with the current user.
+//
+// This is used, for example, to populate a list of potential new chat partners.
+//
+// Parameters:
+//   - userID: The ID of the current user.
+//
+// Returns:
+//   - []models.User: A slice of user models for users without a conversation history.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models.User, error) {
 	rows, err := r.DB.Query(`
 		SELECT u.user_id, u.username, u.email, u.first_name, u.last_name, u.age, u.gender, u.created_at
@@ -258,7 +314,15 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 	return users, nil
 }
 
-// GetAllUsers retrieves all users except the current user (for chat list)
+// GetAllUsers retrieves all user profiles in the system, excluding the current user.
+// Used for displaying a full list of potential chat contacts.
+//
+// Parameters:
+//   - currentUserID: The ID of the user to exclude from the list.
+//
+// Returns:
+//   - []models.User: A slice of all other user profiles.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, error) {
 	rows, err := r.DB.Query(`
 		SELECT user_id, username, email, first_name, last_name, age, gender, created_at

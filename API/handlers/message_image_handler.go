@@ -87,6 +87,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer file.Close()
+	
 
 	// 4. Generate metadata and file path
 	imageID := utils.GenerateUUID()

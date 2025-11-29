@@ -9,6 +9,15 @@ import (
 )
 
 // CreateMessageAndImage creates a message and the associated chat image within a single database transaction.
+//
+// This ensures atomicity: both records (message and image metadata) are created, or neither is.
+//
+// Parameters:
+//   - msg: Pointer to the initialized Message model.
+//   - img: Pointer to the initialized ChatImage model (must be linked to msg.MessageID).
+//
+// Returns:
+//   - error: An error if the transaction fails at any step (begin, insert, or commit).
 func (r *MessageRepository) CreateMessageAndImage(msg *models.Message, img *models.ChatImage) error {
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -53,7 +62,14 @@ func (r *MessageRepository) CreateMessageAndImage(msg *models.Message, img *mode
 	return tx.Commit()
 }
 
-// CreateChatImage inserts a new chat image into the database
+// CreateChatImage inserts a new chat image metadata record into the database.
+// This function assumes the associated message record already exists.
+//
+// Parameters:
+//   - img: Pointer to the ChatImage model to be persisted.
+//
+// Returns:
+//   - error: An error if the database execution fails.
 func (r *MessageRepository) CreateChatImage(img *models.ChatImage) error {
 	query := `
 		INSERT INTO chat_images (
@@ -85,9 +101,14 @@ func (r *MessageRepository) CreateChatImage(img *models.ChatImage) error {
 	return nil
 }
 
-// ... (Rest of the GetChatImageByID, GetChatImagesByMessageID, etc., functions remain unchanged) ...
-
-// GetChatImageByID retrieves a chat image by its ID
+// GetChatImageByID retrieves a chat image metadata record using its unique ID.
+//
+// Parameters:
+//   - imageID: The unique ID of the image metadata.
+//
+// Returns:
+//   - *models.ChatImage: The image metadata object.
+//   - error: An error if the image is not found or the query fails.
 func (r *MessageRepository) GetChatImageByID(imageID string) (*models.ChatImage, error) {
 	query := `
 		SELECT image_id, message_id, user_id, filename, original_filename,
@@ -122,7 +143,14 @@ func (r *MessageRepository) GetChatImageByID(imageID string) (*models.ChatImage,
 	return img, nil
 }
 
-// GetChatImagesByMessageID retrieves all images for a specific message
+// GetChatImagesByMessageID retrieves all image metadata records associated with a specific message.
+//
+// Parameters:
+//   - messageID: The ID of the parent message.
+//
+// Returns:
+//   - []*models.ChatImage: A slice of image metadata, ordered by upload time.
+//   - error: An error if the query or row iteration fails.
 func (r *MessageRepository) GetChatImagesByMessageID(messageID string) ([]*models.ChatImage, error) {
 	query := `
 		SELECT image_id, message_id, user_id, filename, original_filename,
@@ -168,7 +196,16 @@ func (r *MessageRepository) GetChatImagesByMessageID(messageID string) ([]*model
 	return images, nil
 }
 
-// GetChatImagesByUserID retrieves all images uploaded by a specific user
+// GetChatImagesByUserID retrieves paginated list of all image metadata records uploaded by a specific user.
+//
+// Parameters:
+//   - userID: The ID of the user who uploaded the images.
+//   - limit: Maximum number of records to return.
+//   - offset: Number of records to skip.
+//
+// Returns:
+//   - []*models.ChatImage: A paginated slice of image metadata, ordered by newest first.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetChatImagesByUserID(userID string, limit, offset int) ([]*models.ChatImage, error) {
 	query := `
 		SELECT image_id, message_id, user_id, filename, original_filename,
@@ -215,7 +252,13 @@ func (r *MessageRepository) GetChatImagesByUserID(userID string, limit, offset i
 	return images, nil
 }
 
-// DeleteChatImage removes a chat image from the database
+// DeleteChatImage removes a single image metadata record by its unique ID.
+//
+// Parameters:
+//   - imageID: The ID of the image to delete.
+//
+// Returns:
+//   - error: Returns 'chat image not found' if no rows were affected, or a database error.
 func (r *MessageRepository) DeleteChatImage(imageID string) error {
 	query := `DELETE FROM chat_images WHERE image_id = ?`
 
@@ -236,7 +279,14 @@ func (r *MessageRepository) DeleteChatImage(imageID string) error {
 	return nil
 }
 
-// DeleteChatImagesByMessageID removes all images associated with a message
+// DeleteChatImagesByMessageID removes all image metadata records associated with a specific message ID.
+// This is typically called when a message is deleted and the database's CASCADE behavior isn't used or requires manual handling.
+//
+// Parameters:
+//   - messageID: The ID of the parent message whose images should be deleted.
+//
+// Returns:
+//   - error: An error if the deletion query fails.
 func (r *MessageRepository) DeleteChatImagesByMessageID(messageID string) error {
 	query := `DELETE FROM chat_images WHERE message_id = ?`
 
@@ -248,7 +298,14 @@ func (r *MessageRepository) DeleteChatImagesByMessageID(messageID string) error 
 	return nil
 }
 
-// GetTotalImagesSizeByUser calculates the total size of images uploaded by a user
+// GetTotalImagesSizeByUser calculates the total file size (in bytes) of all images uploaded by a user.
+//
+// Parameters:
+//   - userID: The ID of the user.
+//
+// Returns:
+//   - int64: The aggregated file size, or 0 if the user has no images.
+//   - error: An error if the aggregation query fails.
 func (r *MessageRepository) GetTotalImagesSizeByUser(userID string) (int64, error) {
 	query := `SELECT COALESCE(SUM(file_size), 0) FROM chat_images WHERE user_id = ?`
 
@@ -261,7 +318,14 @@ func (r *MessageRepository) GetTotalImagesSizeByUser(userID string) (int64, erro
 	return totalSize, nil
 }
 
-// GetImageCountByUser returns the number of images uploaded by a user
+// GetImageCountByUser returns the total number of images uploaded by a user.
+//
+// Parameters:
+//   - userID: The ID of the user.
+//
+// Returns:
+//   - int: The count of uploaded images.
+//   - error: An error if the counting query fails.
 func (r *MessageRepository) GetImageCountByUser(userID string) (int, error) {
 	query := `SELECT COUNT(*) FROM chat_images WHERE user_id = ?`
 
@@ -274,7 +338,19 @@ func (r *MessageRepository) GetImageCountByUser(userID string) (int, error) {
 	return count, nil
 }
 
-// GetChatImagesInConversation retrieves all images shared between two users
+// GetChatImagesInConversation retrieves paginated image metadata for all images shared between two users.
+//
+// The query joins `chat_images` to `messages` to determine conversation context.
+//
+// Parameters:
+//   - userID1: The ID of the first user.
+//   - userID2: The ID of the second user.
+//   - limit: Maximum number of records to return.
+//   - offset: Number of records to skip.
+//
+// Returns:
+//   - []*models.ChatImage: A slice of image metadata, ordered by newest first.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetChatImagesInConversation(userID1, userID2 string, limit, offset int) ([]*models.ChatImage, error) {
 	query := `
 		SELECT ci.image_id, ci.message_id, ci.user_id, ci.filename, ci.original_filename,
@@ -324,7 +400,14 @@ func (r *MessageRepository) GetChatImagesInConversation(userID1, userID2 string,
 	return images, nil
 }
 
-// ValidateMimeType checks if the provided MIME type is supported
+// ValidateMimeType checks if the provided MIME type string is within the list of supported types.
+// This is typically used for pre-validation before file processing and database insertion.
+//
+// Parameters:
+//   - mimeType: The MIME type string (e.g., "image/jpeg").
+//
+// Returns:
+//   - bool: True if the type is supported, false otherwise.
 func (r *MessageRepository) ValidateMimeType(mimeType string) bool {
 	validTypes := map[string]bool{
 		"image/jpeg": true,
@@ -335,7 +418,16 @@ func (r *MessageRepository) ValidateMimeType(mimeType string) bool {
 	return validTypes[mimeType]
 }
 
-// GetImagesByDateRange retrieves images uploaded within a specific date range
+// GetImagesByDateRange retrieves images uploaded by a specific user within a given timeframe.
+//
+// Parameters:
+//   - userID: The user who uploaded the images.
+//   - startDate: The beginning of the date range (inclusive).
+//   - endDate: The end of the date range (inclusive).
+//
+// Returns:
+//   - []*models.ChatImage: A slice of image metadata matching the criteria.
+//   - error: An error if the query fails.
 func (r *MessageRepository) GetImagesByDateRange(userID string, startDate, endDate time.Time) ([]*models.ChatImage, error) {
 	query := `
 		SELECT image_id, message_id, user_id, filename, original_filename,
@@ -381,8 +473,16 @@ func (r *MessageRepository) GetImagesByDateRange(userID string, startDate, endDa
 	return images, nil
 }
 
-// CanAccessImage checks if a user can access a specific image
-// User can access if they're either sender or receiver of the message associated with the image.
+// CanAccessImage checks if a user is authorized to view an image.
+// Authorization is granted if the user is either the sender or the receiver of the message associated with the image.
+//
+// Parameters:
+//   - imageID: The ID of the image file metadata.
+//   - userID: The ID of the user attempting access.
+//
+// Returns:
+//   - bool: True if the user can access the image, false otherwise.
+//   - error: An error if the verification query fails.
 func (r *MessageRepository) CanAccessImage(imageID, userID string) (bool, error) {
 	// Query joins chat_images to messages to check the sender/receiver IDs
 	query := `

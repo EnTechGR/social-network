@@ -107,49 +107,60 @@ const CreateImagesTable = `CREATE TABLE IF NOT EXISTS images (
 
 // -- OAuth providers table to store OAuth account information
 const CreateOAuthTable = `CREATE TABLE IF NOT EXISTS oauth_accounts (
-    oauth_id TEXT PRIMARY KEY,                    -- Unique identifier for this OAuth record
-    user_id TEXT NOT NULL,                        -- Links to your existing user table
-    provider TEXT NOT NULL CHECK (provider IN ('google', 'github', 'discord', 'facebook')), -- OAuth provider
-    provider_user_id TEXT NOT NULL,               -- User ID from the OAuth provider
-    provider_username TEXT,                       -- Username from provider (optional)
-    provider_email TEXT,                          -- Email from provider
-    provider_avatar_url TEXT,                     -- Avatar URL from provider (optional)
-    access_token TEXT,                            -- OAuth access token (encrypted in production)
-    refresh_token TEXT,                           -- OAuth refresh token (encrypted in production)
-    token_expires_at TIMESTAMP,                   -- When the access token expires
+    oauth_id TEXT PRIMARY KEY,                                                                  -- Unique identifier for this OAuth record
+    user_id TEXT NOT NULL,                                                                      -- Links to your existing user table
+    provider TEXT NOT NULL CHECK (provider IN ('google', 'github', 'discord', 'facebook')),     -- OAuth provider
+    provider_user_id TEXT NOT NULL,                                                             -- User ID from the OAuth provider
+    provider_username TEXT,                                                                     -- Username from provider (optional)
+    provider_email TEXT,                                                                        -- Email from provider
+    provider_avatar_url TEXT,                                                                   -- Avatar URL from provider (optional)
+    access_token TEXT,                                                                          -- OAuth access token (encrypted in production)
+    refresh_token TEXT,                                                                         -- OAuth refresh token (encrypted in production)
+    token_expires_at TIMESTAMP,                                                                 -- When the access token expires
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     UNIQUE(provider, provider_user_id),
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
 );`
 
-// CreateMessagesTable stores private messages between users
+/**
+ * @name messages
+ * @description Stores all private message records exchanged between users.
+ * This table uses CASCADE on deletion for both sender and receiver
+ * to ensure message integrity if a user account is removed.
+ */
 const CreateMessagesTable = `CREATE TABLE IF NOT EXISTS messages (
-    message_id TEXT PRIMARY KEY,
-    sender_id TEXT NOT NULL,
-    receiver_id TEXT NOT NULL,
-    content TEXT NOT NULL CHECK (LENGTH(content) <= 1000),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN NOT NULL DEFAULT 0,
-    FOREIGN KEY (sender_id) REFERENCES user(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES user(user_id) ON DELETE CASCADE,
-    CHECK (sender_id != receiver_id)
+    message_id TEXT PRIMARY KEY,                                            -- Unique identifier for the message (e.g., a UUID).
+    sender_id TEXT NOT NULL,                                                -- ID of the user who sent the message.
+    receiver_id TEXT NOT NULL,                                              -- ID of the user intended to receive the message.
+    content TEXT NOT NULL CHECK (LENGTH(content) <= 1000),                  -- The message text, limited to 1000 characters to prevent abuse/excessive storage.
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,                -- Timestamp when the message was recorded.
+    is_read BOOLEAN NOT NULL DEFAULT 0,                                     -- Status indicating if the receiver has viewed the message (0=unread, 1=read).
+    FOREIGN KEY (sender_id) REFERENCES user(user_id) ON DELETE CASCADE,     -- Ensures sender exists and handles cleanup if sender is deleted.
+    FOREIGN KEY (receiver_id) REFERENCES user(user_id) ON DELETE CASCADE,   -- Ensures receiver exists and handles cleanup if receiver is deleted.
+    CHECK (sender_id != receiver_id)                                        -- Constraint: A user cannot send a message to themselves.
 );`
 
-// CreateChatImagesTable stores images sent through chat messages
+
+/**
+ * @name chat_images
+ * @description Stores metadata for image files attached to chat messages.
+ * This table is designed for scalability by separating large file metadata
+ * from the core 'messages' table. It supports a constrained set of common image types.
+ */
 const CreateChatImagesTable = `CREATE TABLE IF NOT EXISTS chat_images (
-    image_id TEXT PRIMARY KEY,
-    message_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    filename TEXT NOT NULL,
-    original_filename TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    thumbnail_path TEXT NOT NULL,
-    file_size INTEGER NOT NULL CHECK (file_size > 0),
-    mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/gif', 'image/webp')),
-    width INTEGER NOT NULL CHECK (width > 0),
-    height INTEGER NOT NULL CHECK (height > 0),
-    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+    image_id TEXT PRIMARY KEY,                                                                              -- Unique identifier for the image record.
+    message_id TEXT NOT NULL,                                                                               -- The message this image is attached to (links back to the 'messages' table).
+    user_id TEXT NOT NULL,                                                                                  -- The user who uploaded the image (should match messages.sender_id).
+    filename TEXT NOT NULL,                                                                                 -- The unique, server-generated name of the stored file (e.g., a UUID).
+    original_filename TEXT NOT NULL,                                                                        -- The name the user originally gave the file.
+    file_path TEXT NOT NULL,                                                                                -- Full path to the original, high-resolution image file on the storage system.
+    thumbnail_path TEXT NOT NULL,                                                                           -- Path to the smaller, optimized thumbnail for quick loading in chat previews.
+    file_size INTEGER NOT NULL CHECK (file_size > 0),                                                       -- Size of the original file in bytes. Must be positive.
+    mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/gif', 'image/webp')),    -- Restricted list of allowed image MIME types.
+    width INTEGER NOT NULL CHECK (width > 0),                                                               -- Width of the image in pixels.
+    height INTEGER NOT NULL CHECK (height > 0),                                                             -- Height of the image in pixels.
+    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,                                               -- Timestamp when the image record was created.
+    FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,                             -- If the message is deleted, its associated image metadata is also removed.
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE                                        -- Ensures the uploader exists and handles cleanup if user is deleted.
 );`

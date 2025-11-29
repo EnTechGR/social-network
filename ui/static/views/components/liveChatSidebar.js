@@ -6,10 +6,9 @@ const WS_URL = "ws://localhost:8080/ws";
 let ws = null;
 let shouldReconnect = false;
 let cleanupRegistered = false;
+let isConnecting = false; // ✅ ADD: Prevent multiple simultaneous connection attempts
 
 export function initLiveChatSidebar() {
-  // We query 'main' here because it is needed for the click event listeners later,
-  // but we delay querying 'usersList' and 'currentUserInfo' until they are strictly needed.
   const main = document.getElementById("mainContent");
 
   if (!main) {
@@ -37,7 +36,6 @@ export function initLiveChatSidebar() {
 
   // ========= Session & init =========
   async function checkSession() {
-    // Logic from File 2: Query element here to ensure it exists before writing to it
     const currentUserInfo = document.getElementById("currentUserInfo");
     if (!currentUserInfo) return;
 
@@ -65,11 +63,15 @@ export function initLiveChatSidebar() {
 
   async function initializeChatSidebar() {
     await Promise.all([loadConversations(), loadAllUsers()]);
-    connectWebSocket();
+    
+    // ✅ FIX: Only connect if not already connected or connecting
+    if (!ws || ws.readyState === WebSocket.CLOSED) {
+      connectWebSocket();
+    }
 
-    // ensure WS is closed when the tab is closed/reloaded
     if (!cleanupRegistered) {
       window.addEventListener("beforeunload", () => {
+        shouldReconnect = false; // ✅ FIX: Prevent reconnection on page unload
         if (ws) {
           ws.close();
           ws = null;
@@ -151,7 +153,6 @@ export function initLiveChatSidebar() {
   }
 
   function renderUsersList(users) {
-    // Logic from File 2: Get element here (Safe access)
     const usersList = document.getElementById("usersList");
     if (!usersList) return;
 
@@ -192,7 +193,6 @@ export function initLiveChatSidebar() {
     }
   }
 
-  // Exact UI Style from File 1
   function createUserListItem(user) {
     const isOnline = onlineUsers.has(String(user.id));
     const unread = unreadCounts.get(String(user.id)) || 0;
@@ -236,7 +236,6 @@ export function initLiveChatSidebar() {
   }
 
   function refreshOnlineIndicators() {
-    // Logic from File 2: Get element here (Safe access)
     const usersList = document.getElementById("usersList");
     if (!usersList) return;
 
@@ -249,17 +248,32 @@ export function initLiveChatSidebar() {
     });
   }
 
-  // Expose function to clear active chat (called when navigating away)
   window.clearActiveChatUser = () => {
     activeChatUserId = null;
   };
 
   // ========= WebSocket =========
   function connectWebSocket() {
+    // ✅ FIX: Prevent multiple simultaneous connections
+    if (isConnecting) {
+      console.log("[chat] Already connecting, skipping...");
+      return;
+    }
+
+    // ✅ FIX: Don't reconnect if already connected
+    if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+      console.log("[chat] WebSocket already connected or connecting");
+      return;
+    }
+
+    isConnecting = true;
+    console.log("[chat] Initiating WebSocket connection...");
+    
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-      console.log("[chat] WebSocket connected");
+      isConnecting = false;
+      console.log("[chat] ✅ WebSocket connected successfully");
     };
 
     ws.onmessage = (event) => {
@@ -268,43 +282,70 @@ export function initLiveChatSidebar() {
     };
 
     ws.onerror = (err) => {
-      console.error("[chat] WebSocket error:", err);
+      isConnecting = false;
+      console.error("[chat] ❌ WebSocket error:", err);
     };
 
-    ws.onclose = () => {
-      console.log("[chat] WebSocket closed");
-      // if user is still logged in, we auto-reconnect
-      if (shouldReconnect) {
-        setTimeout(connectWebSocket, 3000);
+    ws.onclose = (event) => {
+      isConnecting = false;
+      console.log("[chat] 🔌 WebSocket closed. Code:", event.code, "Reason:", event.reason);
+      
+      // ✅ FIX: Only reconnect if it's an unexpected closure and we should reconnect
+      // Code 1000 = normal closure, don't reconnect
+      // Code 1001 = going away (e.g., tab closing), don't reconnect
+      if (shouldReconnect && event.code !== 1000 && event.code !== 1001) {
+        console.log("[chat] ⏳ Reconnecting in 3 seconds...");
+        setTimeout(() => {
+          if (shouldReconnect) { // Check again in case user logged out
+            connectWebSocket();
+          }
+        }, 3000);
+      } else {
+        console.log("[chat] Not reconnecting (shouldReconnect:", shouldReconnect, "code:", event.code, ")");
       }
     };
   }
 
   function handleWebSocketMessage(message) {
+    console.log('[WS] Received message:', message.type);
+    
     switch (message.type) {
       case "chat":
         handleIncomingMessage(message.data);
         break;
-      case "chat_image":  // ← ADD THIS
-        handleIncomingMessage(message.data);  // ← ADD THIS
-        break;  // ← ADD THIS
+      // ✅ FIX: Handle chat_image type
+      case "chat_image":
+        console.log('[WS] Handling chat_image message');
+        handleIncomingMessage(message.data);
+        break;
       case "online_status":
         handleOnlineStatus(message.data);
         break;
       case "online_users_list":
         handleOnlineUsersList(message.data);
         break;
+      case "message_delete":
+        if (window.handleMessageDelete) {
+          window.handleMessageDelete(message.data);
+        }
+        break;
       default:
+        console.warn('[WS] Unknown message type:', message.type);
         break;
     }
   }
 
   function handleIncomingMessage(data) {
+    console.log('[WS] Processing incoming message. Has image?', !!data.image);
+    
     const senderId = String(data.sender_id);
 
+    // For image messages, show a preview in the conversation list
+    const displayContent = data.image ? '📷 Image' : data.content;
+    
     updateConversationLastMessage(
       senderId,
-      data.content,
+      displayContent,
       new Date(data.created_at)
     );
 
@@ -363,7 +404,7 @@ export function disconnectLiveChatSidebar() {
     shouldReconnect = false;
     if (ws) {
       console.log("[chat] Closing WebSocket on logout");
-      ws.close();
+      ws.close(1000, "User logged out"); // ✅ FIX: Use normal closure code
       ws = null;
     }
   } catch (err) {

@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"forum/middleware"
 	"forum/models"
 	"forum/repository"
 	"forum/utils"
+	"forum/websocket"
 )
 
 // CommentHandler handles comment related endpoints
@@ -15,6 +17,7 @@ type CommentHandler struct {
 	CommentRepo      *repository.CommentRepository
 	PostRepo         *repository.PostRepository
 	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub // ✅ Add Hub reference
 }
 
 // NewCommentHandler creates a new CommentHandler
@@ -22,11 +25,13 @@ func NewCommentHandler(
 	commentRepo *repository.CommentRepository,
 	postRepo *repository.PostRepository,
 	notifRepo *repository.NotificationRepository,
+	hub *websocket.Hub, // ✅ Add Hub parameter
 ) *CommentHandler {
 	return &CommentHandler{
 		CommentRepo:      commentRepo,
 		PostRepo:         postRepo,
 		NotificationRepo: notifRepo,
+		Hub:              hub,
 	}
 }
 
@@ -68,7 +73,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// notify post owner about new comment
+	// ✅ Notify post owner about new comment
 	if post, err := h.PostRepo.GetByID(req.PostID); err == nil && post != nil && post.UserID != user.ID {
 		n := models.Notification{
 			UserID:     post.UserID,
@@ -77,7 +82,27 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 			PostID:     req.PostID,
 			CommentID:  &created.ID,
 		}
-		_ = h.NotificationRepo.Create(n)
+		
+		if err := h.NotificationRepo.Create(n); err != nil {
+			log.Printf("[CommentHandler] Failed to create notification: %v", err)
+		} else {
+			// ✅ Send real-time notification via WebSocket
+			if h.Hub != nil {
+				notificationView := models.NotificationView{
+					ID:        n.ID,
+					Username:  user.Username,
+					Type:      "comment",
+					PostID:    req.PostID,
+					CommentID: &created.ID,
+					CreatedAt: n.CreatedAt,
+					Read:      false,
+					Visible:   true,
+				}
+				
+				log.Printf("[CommentHandler] Sending WebSocket notification to user %s", post.UserID)
+				h.Hub.SendNotification(post.UserID, notificationView)
+			}
+		}
 	}
 
 	utils.JSONResponse(w, created, http.StatusCreated)
@@ -131,6 +156,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ✅ Notify post owner about edited comment
 	if comment, err := h.CommentRepo.GetByID(commentID); err == nil && comment != nil {
 		if post, err2 := h.PostRepo.GetByID(comment.PostID); err2 == nil && post != nil && post.UserID != user.ID {
 			n := models.Notification{
@@ -140,9 +166,29 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 				PostID:     comment.PostID,
 				CommentID:  &comment.ID,
 			}
-			_ = h.NotificationRepo.Create(n)
+			
+			if err := h.NotificationRepo.Create(n); err != nil {
+				log.Printf("[CommentHandler] Failed to create edit notification: %v", err)
+			} else {
+				// ✅ Send real-time notification via WebSocket
+				if h.Hub != nil {
+					notificationView := models.NotificationView{
+						ID:        n.ID,
+						Username:  user.Username,
+						Type:      "edit_comment",
+						PostID:    comment.PostID,
+						CommentID: &comment.ID,
+						CreatedAt: n.CreatedAt,
+						Read:      false,
+						Visible:   true,
+					}
+					
+					h.Hub.SendNotification(post.UserID, notificationView)
+				}
+			}
 		}
 	}
+	
 	utils.JSONResponse(w, map[string]string{"status": "updated"}, http.StatusOK)
 }
 
@@ -184,7 +230,7 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create notification for post owner
+	// ✅ Create notification for post owner about deleted comment
 	if comment != nil {
 		if post, err := h.PostRepo.GetByID(comment.PostID); err == nil && post != nil && post.UserID != user.ID {
 			n := models.Notification{
@@ -194,8 +240,28 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 				PostID:     comment.PostID,
 				CommentID:  &comment.ID,
 			}
-			_ = h.NotificationRepo.Create(n)
+			
+			if err := h.NotificationRepo.Create(n); err != nil {
+				log.Printf("[CommentHandler] Failed to create delete notification: %v", err)
+			} else {
+				// ✅ Send real-time notification via WebSocket
+				if h.Hub != nil {
+					notificationView := models.NotificationView{
+						ID:        n.ID,
+						Username:  user.Username,
+						Type:      "delete_comment",
+						PostID:    comment.PostID,
+						CommentID: &comment.ID,
+						CreatedAt: n.CreatedAt,
+						Read:      false,
+						Visible:   true,
+					}
+					
+					h.Hub.SendNotification(post.UserID, notificationView)
+				}
+			}
 		}
 	}
+	
 	utils.JSONResponse(w, map[string]string{"status": "deleted"}, http.StatusOK)
 }

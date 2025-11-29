@@ -447,3 +447,23 @@ func (h *Hub) SendChatImageDeleteNotification(userID, imageID, messageID string)
 	// 4. Send the notification to the target user (receiver).
 	h.BroadcastToUser(userID, message)
 }
+
+// SendNotification sends a real-time notification to a user
+func (h *Hub) SendNotification(userID string, notification models.NotificationView) {
+    wsMsg := WebSocketMessage{
+        Type:      "notification",
+        Data:      notification,
+        Timestamp: time.Now(),
+    }
+
+    message, err := json.Marshal(wsMsg)
+    if err != nil {
+        log.Printf("Failed to marshal notification: %v", err)
+        return
+    }
+
+    log.Printf("[Hub] Sending notification to user %s: Type=%s, From=%s", 
+        userID, notification.Type, notification.Username)
+
+    h.BroadcastToUser(userID, message)
+}

@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"forum/middleware"
 	"forum/models"
 	"forum/repository"
 	"forum/utils"
+	"forum/websocket"
 )
 
 // ReactionHandler handles like/dislike reactions
@@ -16,10 +18,23 @@ type ReactionHandler struct {
 	PostRepo         *repository.PostRepository
 	CommentRepo      *repository.CommentRepository
 	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub // ✅ Add Hub reference
 }
 
-func NewReactionHandler(repo *repository.ReactionRepository, postRepo *repository.PostRepository, commentRepo *repository.CommentRepository, notifRepo *repository.NotificationRepository) *ReactionHandler {
-	return &ReactionHandler{Repo: repo, PostRepo: postRepo, CommentRepo: commentRepo, NotificationRepo: notifRepo}
+func NewReactionHandler(
+	repo *repository.ReactionRepository,
+	postRepo *repository.PostRepository,
+	commentRepo *repository.CommentRepository,
+	notifRepo *repository.NotificationRepository,
+	hub *websocket.Hub, // ✅ Add Hub parameter
+) *ReactionHandler {
+	return &ReactionHandler{
+		Repo:             repo,
+		PostRepo:         postRepo,
+		CommentRepo:      commentRepo,
+		NotificationRepo: notifRepo,
+		Hub:              hub,
+	}
 }
 
 // React toggles a reaction on a post or comment for the authenticated user
@@ -56,14 +71,18 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create notification for the owner of the post/comment
+	// ✅ Create notification for the owner of the post/comment
 	var notifType string
 	if req.ReactionType == 1 {
 		notifType = "like"
-	} else {
+	} else if req.ReactionType == 2 {
 		notifType = "dislike"
+	} else if req.ReactionType == 3 {
+		notifType = "love"
 	}
+
 	if req.TargetType == "post" {
+		// Reaction on a post
 		if post, err := h.PostRepo.GetByID(req.TargetID); err == nil && post != nil && post.UserID != user.ID {
 			n := models.Notification{
 				UserID:     post.UserID,
@@ -71,9 +90,30 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				Type:       notifType,
 				PostID:     post.ID,
 			}
-			_ = h.NotificationRepo.Create(n)
+			
+			if err := h.NotificationRepo.Create(n); err != nil {
+				log.Printf("[ReactionHandler] Failed to create notification: %v", err)
+			} else {
+				// ✅ Send real-time notification via WebSocket
+				if h.Hub != nil {
+					notificationView := models.NotificationView{
+						ID:        n.ID,
+						Username:  user.Username,
+						Type:      notifType,
+						PostID:    post.ID,
+						CommentID: nil,
+						CreatedAt: n.CreatedAt,
+						Read:      false,
+						Visible:   true,
+					}
+					
+					log.Printf("[ReactionHandler] Sending %s notification to user %s for post %s", notifType, post.UserID, post.ID)
+					h.Hub.SendNotification(post.UserID, notificationView)
+				}
+			}
 		}
 	} else {
+		// Reaction on a comment
 		if comment, err := h.CommentRepo.GetByID(req.TargetID); err == nil && comment != nil && comment.UserID != user.ID {
 			n := models.Notification{
 				UserID:     comment.UserID,
@@ -82,10 +122,31 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				PostID:     comment.PostID,
 				CommentID:  &comment.ID,
 			}
-			_ = h.NotificationRepo.Create(n)
+			
+			if err := h.NotificationRepo.Create(n); err != nil {
+				log.Printf("[ReactionHandler] Failed to create notification: %v", err)
+			} else {
+				// ✅ Send real-time notification via WebSocket
+				if h.Hub != nil {
+					notificationView := models.NotificationView{
+						ID:        n.ID,
+						Username:  user.Username,
+						Type:      notifType,
+						PostID:    comment.PostID,
+						CommentID: &comment.ID,
+						CreatedAt: n.CreatedAt,
+						Read:      false,
+						Visible:   true,
+					}
+					
+					log.Printf("[ReactionHandler] Sending %s notification to user %s for comment %s", notifType, comment.UserID, comment.ID)
+					h.Hub.SendNotification(comment.UserID, notificationView)
+				}
+			}
 		}
 	}
 
+	// Return updated reactions list
 	var (
 		reactions []models.ReactionWithUser
 		err       error

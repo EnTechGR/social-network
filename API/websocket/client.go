@@ -80,15 +80,15 @@ type WebSocketMessage struct {
 }
 
 // ChatMessageData represents the data payload for a new chat message.
-type ChatMessageData struct {
-	MessageID  string    `json:"message_id"`
-	SenderID   string    `json:"sender_id"`
-	SenderName string    `json:"sender_name"`
-	ReceiverID string    `json:"receiver_id"`
-	Content    string    `json:"content"`
-	CreatedAt  time.Time `json:"created_at"`
-	IsRead     bool      `json:"is_read"`
-}
+// type ChatMessageData struct {
+// 	MessageID  string    `json:"message_id"`
+// 	SenderID   string    `json:"sender_id"`
+// 	SenderName string    `json:"sender_name"`
+// 	ReceiverID string    `json:"receiver_id"`
+// 	Content    string    `json:"content"`
+// 	CreatedAt  time.Time `json:"created_at"`
+// 	IsRead     bool      `json:"is_read"`
+// }
 
 // TypingData represents the payload for the typing indicator feature.
 type TypingData struct {

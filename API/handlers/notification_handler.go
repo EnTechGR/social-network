@@ -7,15 +7,22 @@ import (
 	"forum/models"
 	"forum/repository"
 	"forum/utils"
+	"forum/websocket"
 )
 
-// NotificationHandler handles fetching notifications for a user
 type NotificationHandler struct {
 	Repo *repository.NotificationRepository
+	Hub  *websocket.Hub // ✅ Add this
 }
 
-func NewNotificationHandler(repo *repository.NotificationRepository) *NotificationHandler {
-	return &NotificationHandler{Repo: repo}
+func NewNotificationHandler(
+	repo *repository.NotificationRepository,
+	hub *websocket.Hub, // ✅ Add this parameter
+) *NotificationHandler {
+	return &NotificationHandler{
+		Repo: repo,
+		Hub:  hub,
+	}
 }
 
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {

@@ -318,6 +318,9 @@ export function initLiveChatSidebar() {
         console.log('[WS] Handling chat_image message');
         handleIncomingMessage(message.data);
         break;
+      case "notification":
+            handleNotification(message.data);
+            break;
       case "online_status":
         handleOnlineStatus(message.data);
         break;
@@ -334,6 +337,14 @@ export function initLiveChatSidebar() {
         break;
     }
   }
+
+  function handleNotification(data) {
+    console.log('[WS] Notification received:', data);
+    
+    if (window.handleNotificationReceived) {
+        window.handleNotificationReceived(data);
+    }
+}
 
   function handleIncomingMessage(data) {
     console.log('[WS] Processing incoming message. Has image?', !!data.image);

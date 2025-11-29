@@ -3,13 +3,18 @@
    =========================== */
 
 .chat-page {
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 100%;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   background: #fdfbf7;
   border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 1.25rem 1.4rem 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Top bar of the chat page */
@@ -21,6 +26,7 @@
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
   margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .chat-page-header h2 {
@@ -75,31 +81,44 @@
 
 /* If you use a primary chat send button */
 .btn-accent {
-  padding: 0.45rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
   background: var(--accent);
   color: #fff;
-  border-radius: 999px;
+  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-accent:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-accent:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Container with messages + input */
 .chat-thread-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px - 5rem); /* header height + some padding */
-  max-height: 65vh;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Scrollable messages area (like a long page of marginalia) */
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 0.6rem 0.3rem 0.3rem;
+  overflow-x: hidden;
+  padding: 1rem;
   margin-bottom: 0.5rem;
   border-radius: 8px;
   background: linear-gradient(
@@ -109,39 +128,45 @@
     #fdfbf7 100%
   );
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  min-height: 0;
+  max-height: 100%;
 }
 
 .messages-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.6rem;
+  width: 100%;
 }
 
-/* Each message row */
+/* Each message row - NOW USES FULL WIDTH */
 .message {
-  max-width: 80%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
   font-size: 0.9rem;
 }
 
 /* Sent vs received alignment */
 .message.sent {
-  align-self: flex-end;
+  align-items: flex-end;
 }
 
 .message.received {
-  align-self: flex-start;
+  align-items: flex-start;
 }
 
-/* Speech bubble */
+/* Speech bubble - MAX 70% WIDTH */
 .message-bubble {
-  padding: 0.45rem 0.65rem;
+  max-width: 70%;
+  padding: 0.6rem 0.85rem;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: #fffdf7;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Slight tint difference for sent messages */
@@ -150,24 +175,95 @@
   border-color: #cfe2cf;
 }
 
+/* Image messages */
+.message-bubble.image-message {
+  max-width: 400px;
+  padding: 0.3rem;
+}
+
+.chat-image-thumbnail {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.image-caption {
+  margin-top: 0.5rem;
+  padding: 0 0.3rem;
+  font-size: 0.85rem;
+}
+
 /* Tiny metadata under bubbles */
 .message-info {
   font-size: 0.75rem;
   color: var(--muted);
+  padding: 0 0.4rem;
 }
 
-/* Message input row */
+/* Message form - IMPROVED LAYOUT */
 .message-form {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
   margin-top: 0.25rem;
-  padding-top: 0.5rem;
+  padding-top: 0.75rem;
   border-top: 1px dashed var(--border);
+  flex-shrink: 0;
 }
 
+/* Input row with buttons at edges */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Image upload button - LEFT EDGE */
+.image-upload-label {
+  cursor: pointer;
+  padding: 0.6rem 0.8rem;
+  background: #f5f1e8;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.image-upload-label:hover {
+  background: #f0e8d8;
+  border-color: var(--accent);
+}
+
+.icon-image {
+  font-size: 1.2rem;
+}
+
+/* Text input - TAKES ALL AVAILABLE SPACE */
 .message-form input[type="text"] {
   flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  transition: all 0.2s;
+  min-width: 0;
+}
+
+.message-form input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 46, 0.1);
+}
+
+/* Send button - RIGHT EDGE */
+#sendMessageBtn {
+  /* Inherits .btn-accent styles */
 }
 
 /* Error message style in chat */
@@ -180,77 +276,71 @@
   font-size: 0.9rem;
 }
 
-/* static/styles/views/renderChat.css */
-
 /* --- Image Preview Section --- */
-
 .image-preview-container {
-    display: none; /* Hidden by default, shown by JS */
-    padding: 10px;
-    border-bottom: 1px solid var(--color-border);
-    background-color: var(--color-background-secondary); /* Lighter background */
-    max-height: 150px;
-    overflow: hidden;
-    position: relative; /* Context for delete button */
+  display: none;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  background-color: #f9f7f3;
+  border-radius: 8px 8px 0 0;
 }
 
 .image-preview-container .preview-card {
-    position: relative;
-    width: 150px; /* Small, manageable preview size */
-    height: 120px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  width: 150px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .image-preview-container .preview-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .image-preview-container .delete-preview-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: rgba(255, 0, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    z-index: 10;
-    transition: background-color 0.2s;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(255, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+  transition: background-color 0.2s;
 }
 
 .image-preview-container .delete-preview-btn:hover {
-    background-color: red;
+  background-color: red;
 }
 
-/* --- Input Bar Adjustment --- */
-
-/* Ensure the input row is always at the bottom */
-.message-form {
-    display: flex;
-    flex-direction: column; /* Stacks preview and input row */
-    /* ... existing styles ... */
+/* Scrollbar styling for messages container */
+.messages-container::-webkit-scrollbar {
+  width: 8px;
 }
 
-.message-form .input-row {
-    display: flex;
-    gap: 8px;
-    padding: 10px;
-    border-top: 1px solid var(--color-border);
-    /* ... existing styles ... */
+.messages-container::-webkit-scrollbar-track {
+  background: #f0ebe0;
+  border-radius: 4px;
 }
 
-.message-form input[type="text"] {
-    flex-grow: 1;
+.messages-container::-webkit-scrollbar-thumb {
+  background: #d4c4a8;
+  border-radius: 4px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: #c4b498;
 }

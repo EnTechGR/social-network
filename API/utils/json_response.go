@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"forum/models"
 	"net/http"
 	"strings"
 )
@@ -13,15 +14,13 @@ func JSONResponse(w http.ResponseWriter, data interface{}, status int) {
 }
 
 func ErrorResponse(w http.ResponseWriter, message string, status int) {
-	response := struct {
-		Code	int    `json:"code"`   // Use the HTTP status code
-		Error   string `json:"error"`
-		Message string `json:"message"` // Often good to include a user-friendly message
-	}{
-		Code:   status, // Use the HTTP status code
+	// Use the named model type
+	response := models.ErrorResponse{
+		Code:    status,                  // Use the HTTP status code
 		Error:   http.StatusText(status), // Get standard HTTP status text
 		Message: message,
 	}
+	// Assuming JSONResponse is in utils and accepts models.ErrorResponse
 	JSONResponse(w, response, status)
 }
 

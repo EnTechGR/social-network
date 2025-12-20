@@ -29,7 +29,20 @@ func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionR
 	}
 }
 
+
+
 // Register handles user registration with all required fields
+// @Summary      Register a new user
+// @Description  Creates a new user account, validates input fields, and establishes a session cookie.
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        data body models.UserRegistration true "User registration details"
+// @Success      201  {object}  models.LoginResponse "User successfully registered and logged in."
+// @Failure      400  {object}  models.ErrorResponse "Invalid request body or validation failed (e.g., weak password, invalid age)."
+// @Failure      409  {object}  models.ErrorResponse "Conflict: Username or email is already taken."
+// @Failure      500  {object}  models.ErrorResponse "Internal server error."
+// @Router       /forum/api/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST requests
 	if r.Method != http.MethodPost {
@@ -142,6 +155,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // Login handles user login with username OR email
+// @Summary      Log in a user
+// @Description  Authenticates a user using either username or email and password, then creates a session cookie.
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        data body models.UserLogin true "User login credentials"
+// @Success      200  {object}  models.LoginResponse "User successfully logged in."
+// @Failure      400  {object}  models.ErrorResponse "Invalid request body or missing credentials."
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized: Invalid username/email or password."
+// @Failure      500  {object}  models.ErrorResponse "Internal server error."
+// @Router       /forum/api/session/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST requests
 	if r.Method != http.MethodPost {
@@ -196,6 +220,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout handles user logout
+// @Summary      Log out a user
+// @Description  Deletes the current user session from the database and clears the session and CSRF cookies.
+// @Tags         Authentication
+// @Produce      plain
+// @Success      200 "Successfully logged out (session cookie cleared)."
+// @Router       /forum/api/session/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -242,7 +272,17 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+
 // VerifySession handles session verification
+// @Summary      Verify current session status
+// @Description  Checks if the session cookie is valid, active, and not expired. Returns user data if session is valid.
+// @Tags         Authentication
+// @Produce      json
+// @Success      200  {object}  object "Session is valid."
+// @Success      200  {object}  object{user=models.User,csrf_token=string}
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized: Session cookie not found, invalid, or expired."
+// @Failure      500  {object}  models.ErrorResponse "Internal server error."
+// @Router       /forum/api/session/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -302,6 +342,14 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 }
 
 // LogoutAll handles logout from all devices
+// @Summary      Log out from all devices
+// @Description  Deletes all active sessions for the currently authenticated user and clears the current session cookie.
+// @Tags         Authentication
+// @Produce      plain
+// @Success      200 "Successfully logged out from all devices."
+// @Failure      401  "Unauthorized: User not authenticated." // NOTE: We cannot use models.ErrorResponse here unless the handler uses utils.ErrorResponse()
+// @Failure      500  {object}  models.ErrorResponse "Internal server error."
+// @Router       /forum/api/session/logout-all [post]
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -337,6 +385,13 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProfile returns the current user's profile
+// @Summary      Get current user profile
+// @Description  Returns the profile data for the user associated with the active session.
+// @Tags         User Profile
+// @Produce      json
+// @Success      200  {object}  models.User "Successful response."
+// @Failure      401  "Unauthorized: User not authenticated."
+// @Router       /forum/api/user/profile [get]
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetCurrentUser(r)
 	if user == nil {

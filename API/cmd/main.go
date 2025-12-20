@@ -1,3 +1,9 @@
+// @title           Forum Application API
+// @version         1.0
+// @description     This is the API documentation for the forum application.
+// @host      localhost:8080 
+// @BasePath  /forum/api
+
 package main
 
 import (

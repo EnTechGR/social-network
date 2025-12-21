@@ -46,20 +46,28 @@ jobs:
           ~/go/bin/swag init --dir ./API/cmd,./API/handlers,./API/models,./API/utils --output ./API/docs --generalInfo ./API/cmd/main.go --parseDependency --parseVendor
 
       # --- SECTION 3: MERGE FOR DEPLOYMENT ---
+      # --- SECTION 3: MERGE FOR DEPLOYMENT ---
       - name: Prepare Deployment Folder
         run: |
-          mkdir -p deployment-folder
-          # Copy DB docs to /database subfolder
-          cp -r API/database/schema_doc/output ./deployment-folder/database
-          # Copy Swagger docs (json, yaml, and our html) to root
-          cp API/docs/swagger.json ./deployment-folder/
-          cp API/docs/swagger.yaml ./deployment-folder/
-          cp API/docs/swagger.html ./deployment-folder/index.html
+          # 1. Create a clean staging area
+          mkdir -p staging-site
+          mkdir -p staging-site/database
+
+          # 2. Copy API Docs (Swagger) to the ROOT
+          # This ensures https://entechgr.github.io/social-network/ shows Swagger
+          cp API/docs/swagger.json staging-site/
+          cp API/docs/swagger.yaml staging-site/
+          cp API/docs/swagger.html staging-site/index.html
+
+          # 3. Copy Database Docs (SchemaSpy) to the /database subfolder
+          # Using ./* ensures we copy the CONTENTS of output into staging-site/database
+          cp -r API/database/schema_doc/output/* staging-site/database/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./deployment-folder
+          # Use the new staging folder we just built
+          path: ./staging-site
 
   deploy-docs:
     needs: build-docs

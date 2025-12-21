@@ -1,0 +1,15 @@
+oauth_states
+database_version
+notifications
+reactions
+post_categories
+images
+chat_images
+user_auth
+sessions
+oauth_accounts
+messages
+comments
+posts
+categories
+user

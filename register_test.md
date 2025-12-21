@@ -262,7 +262,7 @@ curl -X POST http://localhost:8080/forum/api/register \
   -d '{"username": "user3", "email": "user3@example.com", "password": "Pass1234", "first_name": "User", "last_name": "Three", "age": 22, "gender": "other"}'
 
 # Test prefer_not_to_say
-curl -X POST http://localhost:8080/forum/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "user4", "email": "user4@example.com", "password": "Pass1234", "first_name": "User", "last_name": "Four", "age": 35, "gender": "prefer_not_to_say"}'
-```
+# curl -X POST http://localhost:8080/forum/api/register \
+#   -H "Content-Type: application/json" \
+#   -d '{"username": "user4", "email": "user4@example.com", "password": "Pass1234", "first_name": "User", "last_name": "Four", "age": 35, "gender": "prefer_not_to_say"}'
+# ```

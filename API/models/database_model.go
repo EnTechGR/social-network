@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"forum/config"
+	dbmigrate "forum/pkg/db/sqlite"
 	"io"
 	"os"
 	"path/filepath"
@@ -166,12 +167,9 @@ func GetMigrations() []Migration {
 func InitDB() (*sql.DB, error) {
 	dbPath := filepath.Join("./database", "forum.db")
 
-	firstTime := false
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		firstTime = true
-		if err := os.MkdirAll("./database", 0755); err != nil {
-			return nil, fmt.Errorf("failed to create database directory: %v", err)
-		}
+	// NEW: ensure database directory exists before opening the SQLite file
+	if err := os.MkdirAll("./database", 0755); err != nil {
+		return nil, fmt.Errorf("failed to create database directory: %v", err)
 	}
 
 	db, err := sql.Open("sqlite3", dbPath+"?_foreign_keys=on")
@@ -187,48 +185,18 @@ func InitDB() (*sql.DB, error) {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 
-	// Always ensure the database_version table exists before doing anything with versions
-	if err := createDatabaseVersionTable(db); err != nil {
+	// NEW: use golang-migrate to apply SQL files under pkg/db/migrations/sqlite
+	if err := dbmigrate.Migrate(db); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to create database version table: %v", err)
+		return nil, fmt.Errorf("failed to apply migrations: %v", err)
 	}
+	fmt.Println("Database migrations applied via golang-migrate.")
 
-	// Determine if it's truly a first-time setup or just missing version info
-	currentVersion, err := getDatabaseVersion(db)
-	if err != nil {
+	// NEW: seed default categories idempotently
+	if err := populateCategories(db, config.Categories); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to get database version: %v", err)
+		return nil, fmt.Errorf("failed to populate categories: %v", err)
 	}
-
-	if firstTime || currentVersion == 0 { // If file didn't exist, or version is 0 (meaning no version recorded yet)
-		fmt.Println("Performing initial database setup...")
-		if err := createTables(db); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to create tables: %v", err)
-		}
-		if err := createIndexes(db); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to create indexes: %v", err)
-		}
-		if err := populateCategories(db, config.Categories); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to populate categories: %v", err)
-		}
-		// After creating initial tables, set the version to INITIAL_VERSION (1)
-		// and then run any pending migrations from there to CURRENT_DB_VERSION.
-		if err := setDatabaseVersion(db, INITIAL_VERSION); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to set initial database version: %v", err)
-		}
-		fmt.Println("Initial database setup completed.")
-	}
-
-	// Always run migrations to catch up to the CURRENT_DB_VERSION
-	if err := runMigrations(db); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to run migrations: %v", err)
-	}
-	fmt.Println("Database initialization and migrations completed successfully.")
 
 	return db, nil
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"forum/config"
+	dbmigrate "forum/pkg/db/sqlite"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,271 +13,87 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Database version constants
-const (
-	CURRENT_DB_VERSION = 13 // version 13 adds chat_images table for image sharing in messages
-	INITIAL_VERSION    = 1
-)
-
-// Migration represents a database migration
-type Migration struct {
-	Version     int
-	Description string
-	SQL         []string
-}
-
-// GetMigrations returns all available migrations
-func GetMigrations() []Migration {
-	return []Migration{
-		{
-			Version:     2,
-			Description: "Add OAuth support",
-			SQL: []string{
-				config.CreateOAuthTable,
-				`CREATE INDEX IF NOT EXISTS idx_oauth_provider_user ON oauth_accounts(provider, provider_user_id)`,
-				`CREATE INDEX IF NOT EXISTS idx_oauth_user_id ON oauth_accounts(user_id)`,
-			},
-		},
-		{
-			Version:     3,
-			Description: "Add OAuth state management",
-			SQL: []string{
-				`CREATE TABLE IF NOT EXISTS oauth_states (
-					state TEXT PRIMARY KEY,
-					provider TEXT NOT NULL,
-					ip_address TEXT,
-					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-					expires_at TIMESTAMP NOT NULL
-				)`,
-				`CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at)`,
-				`CREATE INDEX IF NOT EXISTS idx_oauth_states_provider ON oauth_states(provider)`,
-			},
-		},
-		{
-			Version:     4,
-			Description: "Add images table",
-			SQL: []string{
-				config.CreateImagesTable,
-				config.IdxImagesPostID,
-			},
-		},
-		{
-			Version:     5,
-			Description: "Make post title/content and comment content nullable",
-			SQL: []string{
-				// SQLite does not support DROP NOT NULL directly, so we document manual migration or use a workaround
-				// For new installs, schema_config.go is already correct
-				// For existing DBs, manual migration or tool like sqlite-utils is needed
-				// Example (manual):
-				// 1. Create new table with correct schema
-				// 2. Copy data
-				// 3. Drop old table
-				// 4. Rename new table
-				// Here, we just add a comment for manual migration
-				"-- Manual migration required: Make posts.title, posts.content, comments.content nullable.",
-			},
-		},
-		{
-			Version:     6,
-			Description: "Add notifications table",
-			SQL: []string{
-				config.CreateNotificationsTable,
-				config.IdxNotificationsUserID,
-				config.IdxNotificationsFromUserID,
-			},
-		},
-		{
-			Version:     7,
-			Description: "Add from_user_id to notifications",
-			SQL: []string{
-				"ALTER TABLE notifications ADD COLUMN from_user_id TEXT;",
-				config.IdxNotificationsFromUserID,
-			},
-		},
-		{
-			Version:     8,
-			Description: "Add is_visible to notifications",
-			SQL: []string{
-				"ALTER TABLE notifications ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1;",
-			},
-		},
-		{
-			Version:     9,
-			Description: "Add user profile fields (first_name, last_name, age, gender)",
-			SQL: []string{
-				"ALTER TABLE user ADD COLUMN first_name TEXT;",
-				"ALTER TABLE user ADD COLUMN last_name TEXT;",
-				"ALTER TABLE user ADD COLUMN age INTEGER;",
-				"ALTER TABLE user ADD COLUMN gender TEXT;",
-				"UPDATE user SET first_name = 'Unknown' WHERE first_name IS NULL;",
-				"UPDATE user SET last_name = 'User' WHERE last_name IS NULL;",
-				"UPDATE user SET age = 18 WHERE age IS NULL;",
-				"UPDATE user SET gender = 'prefer_not_to_say' WHERE gender IS NULL;",
-			},
-		},
-		{
-			Version:     10,
-			Description: "Add private messages table and indexes",
-			SQL: []string{
-				config.CreateMessagesTable,
-				config.IdxMessagesSenderID,
-				config.IdxMessagesReceiverID,
-				config.IdxMessagesCreatedAt,
-				config.IdxMessagesConversation,
-				config.IdxMessagesUnread,
-			},
-		},
-		{
-            Version:     12,
-            Description: "Replace all old categories with new Genres list",
-            SQL: []string{
-                // 1. Delete ALL existing categories.
-                // NOTE: Due to ON DELETE CASCADE in post_categories, this removes 
-                // all existing category associations from posts.
-                "DELETE FROM categories;",
-
-                // 2. Reset the Auto-Increment counter for categories (Optional, makes IDs start at 1 again)
-                "DELETE FROM sqlite_sequence WHERE name='categories';",
-
-                // 3. Insert the new specific list
-                "INSERT INTO categories (name) VALUES ('Drama');",
-                "INSERT INTO categories (name) VALUES ('Fantasy & Sci-Fi');",
-                "INSERT INTO categories (name) VALUES ('Mystery & Thriller');",
-                "INSERT INTO categories (name) VALUES ('Romance');",
-                "INSERT INTO categories (name) VALUES ('Horror');",
-                "INSERT INTO categories (name) VALUES ('Non-Fiction');",
-                "INSERT INTO categories (name) VALUES ('Young Adult & Kids');",
-            },
-        },
-		{
-			Version:     13,
-			Description: "Add chat_images table for image sharing in messages",
-			SQL: []string{
-				config.CreateChatImagesTable,
-				config.IdxChatImagesMessageID,
-				config.IdxChatImagesUserID,
-				config.IdxChatImagesUploadedAt,
-			},
-		},
-		// Add future migrations here
-	}
-}
-
-// InitDB initializes the database and returns a connection
+// InitDB initializes the database and returns a connection.
+// It applies migrations via golang-migrate and seeds default categories.
 func InitDB() (*sql.DB, error) {
 	dbPath := filepath.Join("./database", "forum.db")
 
-	firstTime := false
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		firstTime = true
-		if err := os.MkdirAll("./database", 0755); err != nil {
-			return nil, fmt.Errorf("failed to create database directory: %v", err)
-		}
+	// Ensure database directory exists before opening the SQLite file
+	if err := os.MkdirAll("./database", 0755); err != nil {
+		return nil, fmt.Errorf("failed to create database directory: %v", err)
 	}
 
+	// Open database connection with foreign keys enabled
 	db, err := sql.Open("sqlite3", dbPath+"?_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
+	// Test connection
 	if err := db.Ping(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
+	// Set connection pool limits
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 
-	// Always ensure the database_version table exists before doing anything with versions
-	if err := createDatabaseVersionTable(db); err != nil {
+	// Apply SQL migrations using golang-migrate
+	if err := dbmigrate.Migrate(db); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to create database version table: %v", err)
+		return nil, fmt.Errorf("failed to apply migrations: %v", err)
 	}
+	fmt.Println("✅ Database migrations applied via golang-migrate.")
 
-	// Determine if it's truly a first-time setup or just missing version info
-	currentVersion, err := getDatabaseVersion(db)
-	if err != nil {
+	// Seed default categories idempotently
+	// Note: Categories are seeded by application code, not migrations
+	// This allows easy customization without creating new migration files
+	if err := populateCategories(db, config.Categories); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to get database version: %v", err)
+		return nil, fmt.Errorf("failed to populate categories: %v", err)
 	}
-
-	if firstTime || currentVersion == 0 { // If file didn't exist, or version is 0 (meaning no version recorded yet)
-		fmt.Println("Performing initial database setup...")
-		if err := createTables(db); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to create tables: %v", err)
-		}
-		if err := createIndexes(db); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to create indexes: %v", err)
-		}
-		if err := populateCategories(db, config.Categories); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to populate categories: %v", err)
-		}
-		// After creating initial tables, set the version to INITIAL_VERSION (1)
-		// and then run any pending migrations from there to CURRENT_DB_VERSION.
-		if err := setDatabaseVersion(db, INITIAL_VERSION); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to set initial database version: %v", err)
-		}
-		fmt.Println("Initial database setup completed.")
-	}
-
-	// Always run migrations to catch up to the CURRENT_DB_VERSION
-	if err := runMigrations(db); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to run migrations: %v", err)
-	}
-	fmt.Println("Database initialization and migrations completed successfully.")
 
 	return db, nil
 }
 
-func createDatabaseVersionTable(db *sql.DB) error {
-	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS database_version (
-			version INTEGER PRIMARY KEY,
-			applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	return err
-}
-
-func getDatabaseVersion(db *sql.DB) (int, error) {
-
-	var version int
-	err := db.QueryRow("SELECT version FROM database_version ORDER BY version DESC LIMIT 1").Scan(&version)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// If there are no rows in database_version, check if other tables exist.
-			// This handles cases where a very old database might exist without a version table,
-			// or a newly created one before any version is set.
-			var count int
-			err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users'").Scan(&count) // Changed to 'users' for consistency
-			if err != nil {
-				return 0, fmt.Errorf("failed to check existing tables: %v", err)
-			}
-			if count > 0 {
-				// If 'users' table exists but no database_version, assume INITIAL_VERSION
-				// This might be redundant with the new InitDB logic, but provides a fallback.
-				if err := setDatabaseVersion(db, INITIAL_VERSION); err != nil {
-					return 0, fmt.Errorf("failed to set initial version: %v", err)
-				}
-				return INITIAL_VERSION, nil
-			}
-			return 0, nil // No version and no existing user table, implies brand new DB
-		}
-		return 0, fmt.Errorf("failed to get database version: %v", err)
+// populateCategories inserts default categories into the database.
+// Uses INSERT OR IGNORE to make the operation idempotent.
+// This is called after migrations to seed initial data.
+func populateCategories(db *sql.DB, categories []string) error {
+	if len(categories) == 0 {
+		return nil
 	}
-	return version, nil
+
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %v", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT OR IGNORE INTO categories (name) VALUES (?)`)
+	if err != nil {
+		return fmt.Errorf("prepare stmt: %v", err)
+	}
+	defer stmt.Close()
+
+	for _, c := range categories {
+		if _, err := stmt.Exec(c); err != nil {
+			return fmt.Errorf("insert category '%s': %v", c, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit tx: %v", err)
+	}
+
+	fmt.Println("✅ Categories populated (duplicates ignored).")
+	return nil
 }
 
-func setDatabaseVersion(db *sql.DB, version int) error {
-	_, err := db.Exec("INSERT INTO database_version (version) VALUES (?)", version)
-	return err
-}
-
+// createBackup creates a timestamped backup of the database.
+// Backups are stored in ./database/backups/ directory.
+// Returns the path to the backup file.
 func createBackup(dbPath string) (string, error) {
 	backupDir := filepath.Join("./database", "backups")
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
@@ -310,6 +127,8 @@ func createBackup(dbPath string) (string, error) {
 	return backupPath, nil
 }
 
+// cleanupOldBackups removes backup files older than maxAgeDays.
+// Useful for automatic cleanup via cron job or periodic task.
 func cleanupOldBackups(maxAgeDays int) error {
 	backupDir := filepath.Join("./database", "backups")
 	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
@@ -328,13 +147,16 @@ func cleanupOldBackups(maxAgeDays int) error {
 		if entry.IsDir() {
 			continue
 		}
+		// Only process files that match backup naming pattern
 		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "forum_backup" {
 			continue
 		}
+		
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
+		
 		if info.ModTime().Before(cutoff) {
 			path := filepath.Join(backupDir, entry.Name())
 			if err := os.Remove(path); err == nil {
@@ -342,317 +164,31 @@ func cleanupOldBackups(maxAgeDays int) error {
 			}
 		}
 	}
+	
 	if deleted > 0 {
-		fmt.Printf("Cleaned up %d old backup(s)\n", deleted)
+		fmt.Printf("🧹 Cleaned up %d old backup(s)\n", deleted)
 	}
 	return nil
 }
 
-// columnExists checks if a column is present in the given table using
-// `PRAGMA table_info`.
-func columnExists(db *sql.DB, tableName, columnName string) (bool, error) {
-	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
-	rows, err := db.Query(query)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-
-	var (
-		cid     int
-		name    string
-		ctype   string
-		notnull int
-		dflt    sql.NullString
-		pk      int
-	)
-	for rows.Next() {
-		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
-			return false, err
-		}
-		if name == columnName {
-			return true, nil
-		}
-	}
-	return false, rows.Err()
-}
-
-func runMigrations(db *sql.DB) error {
-	currentVersion, err := getDatabaseVersion(db)
-	if err != nil {
-		return fmt.Errorf("failed to get current database version: %v", err)
-	}
-
-	migrations := GetMigrations()
-	var pending []Migration
-	for _, m := range migrations {
-		if m.Version > currentVersion {
-			pending = append(pending, m)
-		}
-	}
-
-	if len(pending) == 0 && currentVersion == CURRENT_DB_VERSION {
-		fmt.Printf("Database is up to date (version %d)\n", currentVersion)
-		return nil
-	} else if len(pending) == 0 && currentVersion < CURRENT_DB_VERSION {
-		// This case means there are no migrations defined beyond the current version
-		// but the current version is not yet the latest expected version.
-		// This can happen if CURRENT_DB_VERSION constant is updated, but no
-		// corresponding migration is added to GetMigrations().
-		fmt.Printf("Warning: Database version (%d) is not at the latest expected version (%d), but no pending migrations found.\n", currentVersion, CURRENT_DB_VERSION)
-		return nil
-	}
-
-	fmt.Printf("Running %d migration(s)...\n", len(pending))
-
-	dbPath := filepath.Join("./database", "forum.db")
-	backupPath, err := createBackup(dbPath)
-	if err != nil {
-		return fmt.Errorf("failed to create backup: %v", err)
-	}
-	fmt.Printf("✅ Database backup created: %s\n", backupPath)
-
-	if err := cleanupOldBackups(30); err != nil {
-		fmt.Printf("Warning: failed to clean backups: %v\n", err)
-	}
-
-	for _, m := range pending {
-		fmt.Printf("Applying migration %d: %s\n", m.Version, m.Description)
-
-		sqlStmts := m.SQL
-		if m.Version == 7 {
-			exists, err := columnExists(db, "notifications", "from_user_id")
-			if err != nil {
-				return fmt.Errorf("failed to check notifications table: %v", err)
-			}
-			if exists && len(sqlStmts) > 0 {
-				sqlStmts = sqlStmts[1:]
-			}
-		} else if m.Version == 8 {
-			exists, err := columnExists(db, "notifications", "is_visible")
-			if err != nil {
-				return fmt.Errorf("failed to check notifications table: %v", err)
-			}
-			if exists && len(sqlStmts) > 0 {
-				sqlStmts = sqlStmts[1:]
-			}
-		} else if m.Version == 9 {
-			// ✅ ADD THIS NEW BLOCK
-			// Check each column and skip ALTER if it exists
-			sqlStmts = []string{}
-
-			exists, err := columnExists(db, "user", "first_name")
-			if err != nil {
-				return fmt.Errorf("failed to check user table: %v", err)
-			}
-			if !exists {
-				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN first_name TEXT;")
-			}
-
-			exists, err = columnExists(db, "user", "last_name")
-			if err != nil {
-				return fmt.Errorf("failed to check user table: %v", err)
-			}
-			if !exists {
-				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN last_name TEXT;")
-			}
-
-			exists, err = columnExists(db, "user", "age")
-			if err != nil {
-				return fmt.Errorf("failed to check user table: %v", err)
-			}
-			if !exists {
-				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN age INTEGER;")
-			}
-
-			exists, err = columnExists(db, "user", "gender")
-			if err != nil {
-				return fmt.Errorf("failed to check user table: %v", err)
-			}
-			if !exists {
-				sqlStmts = append(sqlStmts, "ALTER TABLE user ADD COLUMN gender TEXT;")
-			}
-
-			// Always run UPDATE statements to ensure existing users have values
-			sqlStmts = append(sqlStmts,
-				"UPDATE user SET first_name = 'Unknown' WHERE first_name IS NULL;",
-				"UPDATE user SET last_name = 'User' WHERE last_name IS NULL;",
-				"UPDATE user SET age = 18 WHERE age IS NULL;",
-				"UPDATE user SET gender = 'prefer_not_to_say' WHERE gender IS NULL;",
-			)
-		}
-
-		tx, err := db.Begin()
-		if err != nil {
-			return fmt.Errorf("begin tx for migration %d: %v\nBackup: %s", m.Version, err, backupPath)
-		}
-		for i, stmt := range sqlStmts {
-			if _, err := tx.Exec(stmt); err != nil {
-				tx.Rollback()
-				return fmt.Errorf("migration %d stmt %d failed: %v\nSQL: %s\nBackup: %s", m.Version, i+1, err, stmt, backupPath)
-			}
-		}
-		if _, err := tx.Exec("INSERT INTO database_version (version) VALUES (?)", m.Version); err != nil {
-			tx.Rollback()
-			return fmt.Errorf("failed to update version %d: %v\nBackup: %s", m.Version, err, backupPath)
-		}
-		if err := tx.Commit(); err != nil {
-			return fmt.Errorf("commit migration %d failed: %v\nBackup: %s", m.Version, err, backupPath)
-		}
-		fmt.Printf("Migration %d completed\n", m.Version)
-	}
-
-	fmt.Println("🎉 All migrations completed successfully!")
-	fmt.Printf("📁 Backup stored at: %s\n", backupPath)
-	return nil
-}
-
-func createTables(db *sql.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin tx: %v", err)
-	}
-	defer tx.Rollback()
-
-	statements := []string{
-		config.CreateUserTable,
-		config.CreateUserAuthTable,
-		config.CreateSessionsTable,
-		config.CreateCategoriesTable,
-		config.CreatePostsTable,
-		config.CreateCommentsTable,
-		config.CreateReactionsTable,
-		config.CreateNotificationsTable,
-		config.CreateImagesTable,
-		config.CreatePostCategoriesTable,
-		config.CreateOAuthTable,
-		config.CreateMessagesTable,
-		config.CreateChatImagesTable,
-		// Add OAuth state table for new installations
-		`CREATE TABLE IF NOT EXISTS oauth_states (
-			state TEXT PRIMARY KEY,
-			provider TEXT NOT NULL,
-			ip_address TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			expires_at TIMESTAMP NOT NULL
-		)`,
-	}
-
-	for i, stmt := range statements {
-		if _, err := tx.Exec(stmt); err != nil {
-			return fmt.Errorf("statement %d failed: %v\nSQL: %s", i+1, err, stmt)
-		}
-	}
-
-	return tx.Commit()
-}
-
-func createIndexes(db *sql.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin tx: %v", err)
-	}
-	defer tx.Rollback()
-
-	indexes := []string{
-		config.IdxPostsUserID,
-		config.IdxPostCategoriesPostID,
-		config.IdxPostCategoriesCategoryID,
-		config.IdxCommentsPostID,
-		config.IdxCommentsUserID,
-		config.IdxReactionsUserID,
-		config.IdxReactionsPostID,
-		config.IdxReactionsCommentID,
-		config.IdxImagesPostID,
-		config.IdxNotificationsUserID,
-		config.IdxNotificationsFromUserID,
-		config.IdxMessagesSenderID,
-		config.IdxMessagesReceiverID,
-		config.IdxMessagesCreatedAt,
-		config.IdxMessagesConversation,
-		config.IdxMessagesUnread,
-		config.IdxChatImagesMessageID,
-		config.IdxChatImagesUserID,
-		config.IdxChatImagesUploadedAt,
-		// OAuth indexes
-		`CREATE INDEX IF NOT EXISTS idx_oauth_provider_user ON oauth_accounts(provider, provider_user_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_oauth_user_id ON oauth_accounts(user_id)`,
-		// OAuth state indexes
-		`CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at)`,
-		`CREATE INDEX IF NOT EXISTS idx_oauth_states_provider ON oauth_states(provider)`,
-	}
-
-	for _, stmt := range indexes {
-		if _, err := tx.Exec(stmt); err != nil {
-			return fmt.Errorf("failed to create index: %v\nSQL: %s", err, stmt)
-		}
-	}
-
-	return tx.Commit()
-}
-
-func populateCategories(db *sql.DB, categories []string) error {
-	if len(categories) == 0 {
-		return nil
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin tx: %v", err)
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare(`INSERT OR IGNORE INTO categories (name) VALUES (?)`)
-	if err != nil {
-		return fmt.Errorf("prepare stmt: %v", err)
-	}
-	defer stmt.Close()
-
-	for _, c := range categories {
-		if _, err := stmt.Exec(c); err != nil {
-			return fmt.Errorf("insert category '%s': %v", c, err)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit tx: %v", err)
-	}
-
-	fmt.Println("Categories populated (duplicates ignored).")
-	return nil
-}
-
-// CleanupExpiredOAuthStates removes expired OAuth state records
-func CleanupExpiredOAuthStates(db *sql.DB) error {
-	result, err := db.Exec("DELETE FROM oauth_states WHERE expires_at < ?", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to cleanup expired OAuth states: %v", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %v", err)
-	}
-
-	if rowsAffected > 0 {
-		fmt.Printf("Cleaned up %d expired OAuth state(s)\n", rowsAffected)
-	}
-
-	return nil
-}
-
+// RestoreFromBackup restores the database from a backup file.
+// Creates a backup of the current database before restoring.
+// Use this for disaster recovery or rolling back to a previous state.
 func RestoreFromBackup(backupPath string) error {
 	dbPath := filepath.Join("./database", "forum.db")
 
+	// Verify backup file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		return fmt.Errorf("backup does not exist: %s", backupPath)
 	}
 
+	// Create backup of current database before restoring
 	currentBackup, err := createBackup(dbPath)
 	if err == nil {
-		fmt.Printf("Current DB backed up to: %s\n", currentBackup)
+		fmt.Printf("📦 Current DB backed up to: %s\n", currentBackup)
 	}
 
+	// Open and copy backup file
 	src, err := os.Open(backupPath)
 	if err != nil {
 		return fmt.Errorf("open backup: %v", err)
@@ -677,6 +213,8 @@ func RestoreFromBackup(backupPath string) error {
 	return nil
 }
 
+// ListBackups returns a list of available backup files with metadata.
+// Each entry includes file path, size, and modification time.
 func ListBackups() ([]string, error) {
 	backupDir := filepath.Join("./database", "backups")
 
@@ -694,16 +232,46 @@ func ListBackups() ([]string, error) {
 		if entry.IsDir() {
 			continue
 		}
+		// Only list files that match backup naming pattern
 		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "forum_backup" {
 			continue
 		}
+		
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
+		
 		path := filepath.Join(backupDir, entry.Name())
-		backups = append(backups, fmt.Sprintf("%s (size: %d bytes, modified: %s)", path, info.Size(), info.ModTime().Format("2006-01-02 15:04:05")))
+		backups = append(backups, fmt.Sprintf(
+			"%s (size: %d bytes, modified: %s)",
+			path,
+			info.Size(),
+			info.ModTime().Format("2006-01-02 15:04:05"),
+		))
 	}
 
 	return backups, nil
+}
+
+// CleanupExpiredOAuthStates removes expired OAuth state records.
+// Should be called periodically (e.g., via cron job) to prevent
+// the oauth_states table from growing indefinitely.
+// Recommended: Run daily or hourly depending on OAuth usage.
+func CleanupExpiredOAuthStates(db *sql.DB) error {
+	result, err := db.Exec("DELETE FROM oauth_states WHERE expires_at < ?", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to cleanup expired OAuth states: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+
+	if rowsAffected > 0 {
+		fmt.Printf("🧹 Cleaned up %d expired OAuth state(s)\n", rowsAffected)
+	}
+
+	return nil
 }

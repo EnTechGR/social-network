@@ -36,16 +36,16 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 	// Added avatar_url, about_me, and is_private to match the new schema
 	_, err = tx.Exec(
 		`INSERT INTO user (
-			user_id, nickname, email, first_name, last_name, 
-			date_of_birth, gender, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName, 
-		reg.DateOfBirth, reg.Gender, createdAt,
+            user_id, nickname, email, first_name, last_name, 
+            date_of_birth, avatar_url, about_me, gender, is_private, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName,
+		reg.DateOfBirth, reg.AvatarURL, reg.AboutMe, reg.Gender, reg.IsPrivate, createdAt,
 	)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	passwordHash, err := utils.HashPassword(reg.Password)
 	if err != nil {
 		return nil, err
@@ -64,15 +64,18 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 	}
 
 	return &models.User{
-		ID:          userID,
-		Nickname:    reg.Nickname,
-		Email:       reg.Email,
-		FirstName:   reg.FirstName,
-		LastName:    reg.LastName,
-		DateOfBirth: reg.DateOfBirth,
-		Gender:      reg.Gender,
-		CreatedAt:   createdAt,
-	}, nil
+        ID:          userID,
+        Nickname:    reg.Nickname,
+        Email:       reg.Email,
+        FirstName:   reg.FirstName,
+        LastName:    reg.LastName,
+        DateOfBirth: reg.DateOfBirth,
+        AvatarURL:   reg.AvatarURL,
+        AboutMe:     reg.AboutMe,
+        Gender:      reg.Gender,
+        IsPrivate:   reg.IsPrivate,
+        CreatedAt:   createdAt,
+    }, nil
 }
 
 // CreateOAuthUser creates a new user via OAuth with all required fields
@@ -105,7 +108,7 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 			user_id, nickname, email, first_name, last_name, 
 			date_of_birth, avatar_url, gender, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName, 
+		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName,
 		reg.DateOfBirth, avatarURL, reg.Gender, createdAt,
 	)
 	if err != nil {

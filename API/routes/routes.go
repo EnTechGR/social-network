@@ -42,7 +42,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	commentHandler := handlers.NewCommentHandler(commentRepo, postRepo, notificationRepo, hub)
 	reactionHandler := handlers.NewReactionHandler(reactionRepo, postRepo, commentRepo, notificationRepo, hub)
-	imageHandler := handlers.NewImageHandler(imageRepo, postRepo)
+	imageHandler := handlers.NewImageHandler(imageRepo, postRepo, userRepo)
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, hub)
 	messageHandler := handlers.NewMessageHandler(messageRepo, hub) // ✅ Pass hub to handler

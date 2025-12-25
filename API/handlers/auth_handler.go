@@ -22,17 +22,11 @@ type AuthHandler struct {
 }
 
 // NewAuthHandler creates a new AuthHandler
-
 func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository) *AuthHandler {
-
     return &AuthHandler{
-
         UserRepo:    userRepo,
-
         SessionRepo: sessionRepo,
-
     }
-
 }
 
 // Register handles user registration with all required fields
@@ -50,21 +44,24 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Trim and normalize inputs
-	reg.Nickname = strings.TrimSpace(reg.Nickname) // UPDATED: Username -> Nickname
+	reg.Nickname = strings.TrimSpace(reg.Nickname)
 	reg.Email = strings.TrimSpace(strings.ToLower(reg.Email))
 	reg.Password = strings.TrimSpace(reg.Password)
 	reg.FirstName = strings.TrimSpace(reg.FirstName)
 	reg.LastName = strings.TrimSpace(reg.LastName)
 	reg.Gender = strings.TrimSpace(strings.ToLower(reg.Gender))
+	// ✅ ADDED: Normalize new profile fields
+	reg.AboutMe = strings.TrimSpace(reg.AboutMe)
+	reg.AvatarURL = strings.TrimSpace(reg.AvatarURL)
 
-	// ✅ UPDATED: Validation for required fields including DateOfBirth
+	// ✅ UPDATED: Validation for required fields
 	if reg.Nickname == "" || reg.Email == "" || reg.Password == "" ||
 		reg.FirstName == "" || reg.LastName == "" || reg.DateOfBirth.IsZero() || reg.Gender == "" {
 		utils.ErrorResponse(w, "All fields are required: nickname, email, password, first_name, last_name, date_of_birth, gender", http.StatusBadRequest)
 		return
 	}
 
-	// Nickname: 1-50 chars (per schema check constraint)
+	// Nickname: 1-50 chars
 	if len(reg.Nickname) < 1 || len(reg.Nickname) > 50 {
 		utils.ErrorResponse(w, "Nickname must be between 1 and 50 characters", http.StatusBadRequest)
 		return
@@ -84,10 +81,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ UPDATED: Logic to validate Age via DateOfBirth (13-120 years)
+	// ✅ UPDATED: Validate Age via DateOfBirth (13-120 years)
 	now := time.Now()
 	age := now.Year() - reg.DateOfBirth.Year()
-	// Adjust age if birthday hasn't occurred yet this year
 	if now.YearDay() < reg.DateOfBirth.YearDay() {
 		age--
 	}
@@ -109,7 +105,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create user in DB
+	// ✅ ADDED: Validate AboutMe length
+	if len(reg.AboutMe) > 500 {
+		utils.ErrorResponse(w, "About me must be under 500 characters", http.StatusBadRequest)
+		return
+	}
+
+	// ✅ ADDED: Set default avatar if empty
+	if reg.AvatarURL == "" {
+		reg.AvatarURL = "/static/avatars/defaults/default-avatar.png"
+	}
+
+	// Create user in DB (Repo now handles avatar_url, about_me, and is_private)
 	user, err := h.UserRepo.Create(reg)
 	if err != nil {
 		switch err {

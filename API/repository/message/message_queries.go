@@ -57,7 +57,7 @@ func (r *MessageRepository) GetConversation(userID, otherUserID string, limit, o
 		err := rows.Scan(
 			&msg.MessageID,
 			&msg.SenderID,
-			&msg.SenderName,
+			&msg.SenderNickname,
 			&msg.ReceiverID,
 			&msg.ReceiverName,
 			&msg.Content,
@@ -229,7 +229,7 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 
 		err := rows.Scan(
 			&conv.UserID,
-			&conv.Username,
+			&conv.Nickname,
 			&lastMessage,
 			&conv.LastMessageTime,
 			&conv.UnreadCount,
@@ -293,11 +293,11 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 		var u models.User
 		err := rows.Scan(
 			&u.ID,
-			&u.Username,
+			&u.Nickname,
 			&u.Email,
 			&u.FirstName,
 			&u.LastName,
-			&u.Age,
+			&u.DateOfBirth,
 			&u.Gender,
 			&u.CreatedAt,
 		)
@@ -341,11 +341,11 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 		var u models.User
 		err := rows.Scan(
 			&u.ID,
-			&u.Username,
+			&u.Nickname,
 			&u.Email,
 			&u.FirstName,
 			&u.LastName,
-			&u.Age,
+			&u.DateOfBirth,
 			&u.Gender,
 			&u.CreatedAt,
 		)

@@ -144,7 +144,7 @@ func (r *PostRepository) GetPostsByUser(userID string) ([]models.PostWithUser, e
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
@@ -226,7 +226,7 @@ func (r *PostRepository) GetPostsReactedByUser(userID string) ([]models.PostWith
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
@@ -289,7 +289,7 @@ func (r *PostRepository) GetPostsDislikedByUser(userID string) ([]models.PostWit
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
@@ -318,7 +318,7 @@ func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWi
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)

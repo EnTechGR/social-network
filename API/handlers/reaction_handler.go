@@ -98,7 +98,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      notifType,
 						PostID:    post.ID,
 						CommentID: nil,
@@ -130,7 +130,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      notifType,
 						PostID:    comment.PostID,
 						CommentID: &comment.ID,

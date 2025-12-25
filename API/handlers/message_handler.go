@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"forum/middleware"
 	"forum/models"
@@ -88,21 +89,20 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	// 2. Broadcast message via WebSocket to the receiver (Real-time update).
 	if h.Hub != nil {
 		// Construct the enhanced model required for WebSocket transmission.
-		// This includes the sender's username for immediate display on the client side.
+		// This includes the sender's nickname for immediate display on the client side.
 		msgWithUser := models.MessageWithUser{
-			MessageID:  msg.MessageID,
-			SenderID:   msg.SenderID,
-			SenderName: user.Username, // Include SenderName for the broadcast
-			ReceiverID: msg.ReceiverID,
-			Content:    msg.Content,
-			CreatedAt:  msg.CreatedAt,
-			IsRead:     msg.IsRead,
+			MessageID:      msg.MessageID,
+			SenderID:       msg.SenderID,
+			SenderNickname: user.Nickname, // Include SenderNickname for the broadcast
+			ReceiverID:     msg.ReceiverID,
+			Content:        msg.Content,
+			CreatedAt:      msg.CreatedAt,
+			IsRead:         msg.IsRead,
 			// Image field is zero-valued (nil) for standard text messages
 		}
 		// Send the structured message object to the recipient's connection pool.
 		h.Hub.SendChatMessage(req.ReceiverID, msgWithUser)
 	}
-	
 
 	// 3. Send HTTP success response back to the sender.
 	// StatusCreated (201) is appropriate for resource creation.
@@ -266,14 +266,14 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// This approach is used because the base User model likely doesn't have IsOnline.
 	// Defining it locally ensures the handler explicitly controls the output structure.
 	type UserWithOnlineStatus struct {
-		ID        string `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		Age       int    `json:"age"`
-		Gender    string `json:"gender"`
-		IsOnline  bool   `json:"is_online"` // Added real-time status flag
+		ID          string    `json:"id"`
+		Nickname    string    `json:"nickname"`
+		Email       string    `json:"email"`
+		FirstName   string    `json:"first_name"`
+		LastName    string    `json:"last_name"`
+		DateOfBirth time.Time `json:"date_of_birth"`
+		Gender      string    `json:"gender"`
+		IsOnline    bool      `json:"is_online"` // Added real-time status flag
 	}
 
 	// 3. Iterate through retrieved users and add real-time status.
@@ -281,16 +281,16 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	for i, u := range users {
 		// Map repository model to the presentation model.
 		usersWithStatus[i] = UserWithOnlineStatus{
-			ID:        u.ID,
-			Username:  u.Username,
-			Email:     u.Email,
-			FirstName: u.FirstName,
-			LastName:  u.LastName,
-			Age:       u.Age,
-			Gender:    u.Gender,
-			IsOnline:  false, // Default to false
+			ID:          u.ID,
+			Nickname:    u.Nickname,
+			Email:       u.Email,
+			FirstName:   u.FirstName,
+			LastName:    u.LastName,
+			DateOfBirth: u.DateOfBirth,
+			Gender:      u.Gender,
+			IsOnline:    false, // Default to false
 		}
-		
+
 		// Check the WebSocket hub for the user's current connection status.
 		if h.Hub != nil {
 			usersWithStatus[i].IsOnline = h.Hub.IsUserOnline(u.ID)
@@ -510,30 +510,30 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 	// 2. Define the output structure and augment with real-time status.
 	// Using a local struct ensures the JSON output is consistent and includes the 'IsOnline' field.
 	type UserWithOnlineStatus struct {
-		ID        string `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		Age       int    `json:"age"`
-		Gender    string `json:"gender"`
-		IsOnline  bool   `json:"is_online"` // Real-time presence status
+		ID          string    `json:"id"`
+		Nickname    string    `json:"nickname"`
+		Email       string    `json:"email"`
+		FirstName   string    `json:"first_name"`
+		LastName    string    `json:"last_name"`
+		DateOfBirth time.Time `json:"date_of_birth"`
+		Gender      string    `json:"gender"`
+		IsOnline    bool      `json:"is_online"` // Real-time presence status
 	}
 
 	usersWithStatus := make([]UserWithOnlineStatus, len(users))
 	for i, u := range users {
 		// Map user data to the presentation model.
 		usersWithStatus[i] = UserWithOnlineStatus{
-			ID:        u.ID,
-			Username:  u.Username,
-			Email:     u.Email,
-			FirstName: u.FirstName,
-			LastName:  u.LastName,
-			Age:       u.Age,
-			Gender:    u.Gender,
-			IsOnline:  false, // Default status
+			ID:          u.ID,
+			Nickname:    u.Nickname,
+			Email:       u.Email,
+			FirstName:   u.FirstName,
+			LastName:    u.LastName,
+			DateOfBirth: u.DateOfBirth,
+			Gender:      u.Gender,
+			IsOnline:    false, // Default status
 		}
-		
+
 		// Augment with live status from the WebSocket hub.
 		if h.Hub != nil {
 			usersWithStatus[i].IsOnline = h.Hub.IsUserOnline(u.ID)

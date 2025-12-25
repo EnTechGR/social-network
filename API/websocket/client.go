@@ -33,8 +33,8 @@ type Client struct {
 	// User ID of the connected client (used as the key in Hub.Clients map).
 	UserID string
 
-	// Username for display and identification in logs/broadcasts.
-	Username string
+	// Nickname for display and identification in logs/broadcasts.
+	Nickname string
 
 	// The underlying Gorilla WebSocket connection pointer.
 	Conn *websocket.Conn
@@ -268,7 +268,7 @@ func (c *Client) handleTypingIndicator(msg WebSocketMessage) {
 	// NOTE: The 'UserID' in typingData should logically be the *recipient* of the typing notification.
 	// Assuming `typingData.UserID` here refers to the *recipient* and we set the *sender* details.
 	typingData.UserID = c.UserID    // Set the actual sender's ID (the user doing the typing)
-	typingData.Username = c.Username
+	typingData.Username = c.Nickname
 
 	// 3. Re-wrap and serialize the clean message for broadcast.
 	wsMsg := WebSocketMessage{

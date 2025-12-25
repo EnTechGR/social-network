@@ -10,11 +10,18 @@ import (
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	var user models.User
 	var createdAt sql.NullTime
-	// ✅ ADDED: first_name, last_name, age, gender to SELECT
+
+	// UPDATED: Replaced username/age with nickname/date_of_birth and added new profile fields
 	err := r.DB.QueryRow(
-		"SELECT user_id, username, email, first_name, last_name, age, gender, created_at FROM user WHERE email = ?",
+		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
+                avatar_url, about_me, gender, is_private, created_at 
+         FROM user WHERE email = ?`,
 		email,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &createdAt)
+	).Scan(
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
+		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.IsPrivate, &createdAt,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -31,11 +38,17 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 func (r *UserRepository) GetByID(id string) (*models.User, error) {
 	var user models.User
 	var createdAt sql.NullTime
-	// ✅ ADDED: first_name, last_name, age, gender to SELECT
+
 	err := r.DB.QueryRow(
-		"SELECT user_id, username, email, first_name, last_name, age, gender, created_at FROM user WHERE user_id = ?",
+		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
+                avatar_url, about_me, gender, is_private, created_at 
+         FROM user WHERE user_id = ?`,
 		id,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &createdAt)
+	).Scan(
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
+		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.IsPrivate, &createdAt,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -48,15 +61,21 @@ func (r *UserRepository) GetByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-// GetByUsername retrieves a user by username
-func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
+// GetByNickname retrieves a user by nickname (Renamed from GetByUsername)
+func (r *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	var user models.User
 	var createdAt sql.NullTime
-	// ✅ ADDED: first_name, last_name, age, gender to SELECT
+
 	err := r.DB.QueryRow(
-		"SELECT user_id, username, email, first_name, last_name, age, gender, created_at FROM user WHERE username = ?",
-		username,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &createdAt)
+		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
+                avatar_url, about_me, gender, is_private, created_at 
+         FROM user WHERE nickname = ?`,
+		nickname,
+	).Scan(
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
+		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.IsPrivate, &createdAt,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -69,15 +88,21 @@ func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
-// ✅ NEW METHOD: GetByEmailOrUsername retrieves a user by either email or username
-func (r *UserRepository) GetByEmailOrUsername(login string) (*models.User, error) {
+// GetByEmailOrNickname retrieves a user by either email or nickname (Updated name)
+func (r *UserRepository) GetByEmailOrNickname(login string) (*models.User, error) {
 	var user models.User
 	var createdAt sql.NullTime
 
 	err := r.DB.QueryRow(
-		"SELECT user_id, username, email, first_name, last_name, age, gender, created_at FROM user WHERE email = ? OR username = ?",
+		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
+                avatar_url, about_me, gender, is_private, created_at 
+         FROM user WHERE email = ? OR nickname = ?`,
 		login, login,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &createdAt)
+	).Scan(
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
+		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.IsPrivate, &createdAt,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

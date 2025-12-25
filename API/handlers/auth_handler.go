@@ -22,35 +22,26 @@ type AuthHandler struct {
 }
 
 // NewAuthHandler creates a new AuthHandler
+
 func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository) *AuthHandler {
-	return &AuthHandler{
-		UserRepo:    userRepo,
-		SessionRepo: sessionRepo,
-	}
+
+    return &AuthHandler{
+
+        UserRepo:    userRepo,
+
+        SessionRepo: sessionRepo,
+
+    }
+
 }
 
-
-
 // Register handles user registration with all required fields
-// @Summary      Register a new user
-// @Description  Creates a new user account, validates input fields, and establishes a session cookie.
-// @Tags         Authentication
-// @Accept       json
-// @Produce      json
-// @Param        data body models.UserRegistration true "User registration details"
-// @Success      201  {object}  models.LoginResponse "User successfully registered and logged in."
-// @Failure      400  {object}  models.ErrorResponse "Invalid request body or validation failed (e.g., weak password, invalid age)."
-// @Failure      409  {object}  models.ErrorResponse "Conflict: Username or email is already taken."
-// @Failure      500  {object}  models.ErrorResponse "Internal server error."
-// @Router       /forum/api/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST requests
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse request body
 	var reg models.UserRegistration
 	err := json.NewDecoder(r.Body).Decode(&reg)
 	if err != nil {
@@ -59,27 +50,27 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Trim and normalize inputs
-	reg.Username = strings.TrimSpace(reg.Username)
+	reg.Nickname = strings.TrimSpace(reg.Nickname) // UPDATED: Username -> Nickname
 	reg.Email = strings.TrimSpace(strings.ToLower(reg.Email))
 	reg.Password = strings.TrimSpace(reg.Password)
-	reg.FirstName = strings.TrimSpace(reg.FirstName)   // ✅ ADDED
-	reg.LastName = strings.TrimSpace(reg.LastName)     // ✅ ADDED
-	reg.Gender = strings.TrimSpace(strings.ToLower(reg.Gender)) // ✅ ADDED
+	reg.FirstName = strings.TrimSpace(reg.FirstName)
+	reg.LastName = strings.TrimSpace(reg.LastName)
+	reg.Gender = strings.TrimSpace(strings.ToLower(reg.Gender))
 
-	// ✅ UPDATED: Validate ALL required fields
-	if reg.Username == "" || reg.Email == "" || reg.Password == "" ||
-		reg.FirstName == "" || reg.LastName == "" || reg.Age == 0 || reg.Gender == "" {
-		utils.ErrorResponse(w, "All fields are required: username, email, password, first_name, last_name, age, gender", http.StatusBadRequest)
+	// ✅ UPDATED: Validation for required fields including DateOfBirth
+	if reg.Nickname == "" || reg.Email == "" || reg.Password == "" ||
+		reg.FirstName == "" || reg.LastName == "" || reg.DateOfBirth.IsZero() || reg.Gender == "" {
+		utils.ErrorResponse(w, "All fields are required: nickname, email, password, first_name, last_name, date_of_birth, gender", http.StatusBadRequest)
 		return
 	}
 
-	// Username: 3-50 chars, letters/numbers/underscores only
-	if !utils.UsernameRegex.MatchString(reg.Username) {
-		utils.ErrorResponse(w, "Username must be 3-50 characters, letters/numbers/underscores only", http.StatusBadRequest)
+	// Nickname: 1-50 chars (per schema check constraint)
+	if len(reg.Nickname) < 1 || len(reg.Nickname) > 50 {
+		utils.ErrorResponse(w, "Nickname must be between 1 and 50 characters", http.StatusBadRequest)
 		return
 	}
 
-	// Email: trim, lowercase, parse, and enforce ending in .com
+	// Email validation
 	cleanEmail, err := utils.ValidateEmail(reg.Email)
 	if err != nil {
 		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
@@ -87,31 +78,26 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	reg.Email = cleanEmail
 
-	// Password: at least 8 chars, at least one letter and one digit
+	// Password strength
 	if !utils.IsStrongPassword(reg.Password) {
 		utils.ErrorResponse(w, "Password must be at least 8 characters, with at least one letter and one digit", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ ADDED: Validate First Name (1-100 characters)
-	if len(reg.FirstName) < 1 || len(reg.FirstName) > 100 {
-		utils.ErrorResponse(w, "First name must be between 1 and 100 characters", http.StatusBadRequest)
+	// ✅ UPDATED: Logic to validate Age via DateOfBirth (13-120 years)
+	now := time.Now()
+	age := now.Year() - reg.DateOfBirth.Year()
+	// Adjust age if birthday hasn't occurred yet this year
+	if now.YearDay() < reg.DateOfBirth.YearDay() {
+		age--
+	}
+
+	if age < 13 || age > 120 {
+		utils.ErrorResponse(w, "You must be between 13 and 120 years old", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ ADDED: Validate Last Name (1-100 characters)
-	if len(reg.LastName) < 1 || len(reg.LastName) > 100 {
-		utils.ErrorResponse(w, "Last name must be between 1 and 100 characters", http.StatusBadRequest)
-		return
-	}
-
-	// ✅ ADDED: Validate Age (13-120)
-	if reg.Age < 13 || reg.Age > 120 {
-		utils.ErrorResponse(w, "Age must be between 13 and 120", http.StatusBadRequest)
-		return
-	}
-
-	// ✅ ADDED: Validate Gender (must be one of the accepted values)
+	// Validate Gender
 	validGenders := map[string]bool{
 		"male":              true,
 		"female":            true,
@@ -123,14 +109,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create user
+	// Create user in DB
 	user, err := h.UserRepo.Create(reg)
 	if err != nil {
 		switch err {
 		case repository.ErrEmailTaken:
 			utils.ErrorResponse(w, "Email is already taken", http.StatusConflict)
-		case repository.ErrUsernameTaken:
-			utils.ErrorResponse(w, "Username is already taken", http.StatusConflict)
+		case repository.ErrNicknameTaken:
+			utils.ErrorResponse(w, "Nickname is already taken", http.StatusConflict)
 		default:
 			log.Printf("Failed to create user: %v", err)
 			utils.ErrorResponse(w, "Internal server error", http.StatusInternalServerError)
@@ -138,7 +124,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create session after successful registration
+	// Create session
 	session, err := h.createUserSession(w, r, user)
 	if err != nil {
 		log.Printf("Failed to create session: %v", err)
@@ -146,7 +132,6 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ CHANGED: Return 201 Created status for successful registration
 	utils.JSONResponse(w, models.LoginResponse{
 		User:      *user,
 		SessionID: session.SessionID,
@@ -271,7 +256,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
-
 
 // VerifySession handles session verification
 // @Summary      Verify current session status
@@ -401,3 +385,6 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSONResponse(w, user, http.StatusOK)
 }
+
+
+

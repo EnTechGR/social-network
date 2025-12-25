@@ -11,10 +11,10 @@ type Reaction struct {
 }
 
 
-// ReactionWithUser is a reaction along with the username of the user who reacted
+// ReactionWithUser is a reaction along with the nickname of the user who reacted
 type ReactionWithUser struct {
 	UserID       string    `json:"user_id"`
-	Username     string    `json:"username"`
+	Nickname     string    `json:"nickname"`
 	ReactionType int       `json:"reaction_type"`
 	PostID       *string   `json:"post_id,omitempty"`
 	CommentID    *string   `json:"comment_id,omitempty"`

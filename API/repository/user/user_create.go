@@ -16,10 +16,11 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 		return nil, repository.ErrEmailTaken
 	}
 
-	if exists, err := r.isUsernameTaken(reg.Username); err != nil {
+	// Updated: Check for nickname instead of username
+	if exists, err := r.isNicknameTaken(reg.Nickname); err != nil {
 		return nil, err
 	} else if exists {
-		return nil, repository.ErrUsernameTaken
+		return nil, repository.ErrNicknameTaken
 	}
 
 	tx, err := r.DB.Begin()
@@ -31,10 +32,15 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 	userID := utils.GenerateUUID()
 	createdAt := time.Now()
 
-	// ✅ UPDATED: Added first_name, last_name, age, gender to INSERT
+	// UPDATED: Replaced username with nickname and age with date_of_birth
+	// Added avatar_url, about_me, and is_private to match the new schema
 	_, err = tx.Exec(
-		"INSERT INTO user (user_id, username, email, first_name, last_name, age, gender, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		userID, reg.Username, reg.Email, reg.FirstName, reg.LastName, reg.Age, reg.Gender, createdAt,
+		`INSERT INTO user (
+			user_id, nickname, email, first_name, last_name, 
+			date_of_birth, gender, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName, 
+		reg.DateOfBirth, reg.Gender, createdAt,
 	)
 	if err != nil {
 		return nil, err
@@ -57,16 +63,15 @@ func (r *UserRepository) Create(reg models.UserRegistration) (*models.User, erro
 		return nil, err
 	}
 
-	// ✅ UPDATED: Return user with all new fields
 	return &models.User{
-		ID:        userID,
-		Username:  reg.Username,
-		Email:     reg.Email,
-		FirstName: reg.FirstName,
-		LastName:  reg.LastName,
-		Age:       reg.Age,
-		Gender:    reg.Gender,
-		CreatedAt: createdAt,
+		ID:          userID,
+		Nickname:    reg.Nickname,
+		Email:       reg.Email,
+		FirstName:   reg.FirstName,
+		LastName:    reg.LastName,
+		DateOfBirth: reg.DateOfBirth,
+		Gender:      reg.Gender,
+		CreatedAt:   createdAt,
 	}, nil
 }
 
@@ -78,10 +83,11 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 		return nil, repository.ErrEmailTaken
 	}
 
-	if exists, err := r.isUsernameTaken(reg.Username); err != nil {
+	// Updated: Check for nickname instead of username
+	if exists, err := r.isNicknameTaken(reg.Nickname); err != nil {
 		return nil, err
 	} else if exists {
-		return nil, repository.ErrUsernameTaken
+		return nil, repository.ErrNicknameTaken
 	}
 
 	tx, err := r.DB.Begin()
@@ -93,9 +99,14 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 	userID := utils.GenerateUUID()
 	createdAt := time.Now()
 
-	// ✅ UPDATED: Added first_name, last_name, age, gender to INSERT
-	_, err = tx.Exec(`INSERT INTO user (user_id, username, email, first_name, last_name, age, gender, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, reg.Username, reg.Email, reg.FirstName, reg.LastName, reg.Age, reg.Gender, createdAt,
+	// UPDATED: Schema alignment for OAuth user creation
+	_, err = tx.Exec(
+		`INSERT INTO user (
+			user_id, nickname, email, first_name, last_name, 
+			date_of_birth, avatar_url, gender, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, reg.Nickname, reg.Email, reg.FirstName, reg.LastName, 
+		reg.DateOfBirth, avatarURL, reg.Gender, createdAt,
 	)
 	if err != nil {
 		return nil, err
@@ -108,7 +119,7 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		utils.GenerateUUID(),
 		userID, provider, providerUserID,
-		reg.Username, reg.Email,
+		reg.Nickname, reg.Email,
 		avatarURL,
 		accessToken, refreshToken, tokenExpiresAt.Format(time.RFC3339),
 		createdAt, createdAt,
@@ -121,16 +132,16 @@ func (r *UserRepository) CreateOAuthUser(reg models.UserRegistration, provider, 
 		return nil, err
 	}
 
-	// ✅ UPDATED: Return user with all new fields
 	return &models.User{
-		ID:        userID,
-		Username:  reg.Username,
-		Email:     reg.Email,
-		FirstName: reg.FirstName,
-		LastName:  reg.LastName,
-		Age:       reg.Age,
-		Gender:    reg.Gender,
-		CreatedAt: createdAt,
+		ID:          userID,
+		Nickname:    reg.Nickname,
+		Email:       reg.Email,
+		FirstName:   reg.FirstName,
+		LastName:    reg.LastName,
+		DateOfBirth: reg.DateOfBirth,
+		AvatarURL:   avatarURL,
+		Gender:      reg.Gender,
+		CreatedAt:   createdAt,
 	}, nil
 }
 
@@ -140,9 +151,10 @@ func (r *UserRepository) isEmailTaken(email string) (bool, error) {
 	return count > 0, err
 }
 
-func (r *UserRepository) isUsernameTaken(username string) (bool, error) {
+// Updated: Renamed from isUsernameTaken to isNicknameTaken
+func (r *UserRepository) isNicknameTaken(nickname string) (bool, error) {
 	var count int
-	err := r.DB.QueryRow("SELECT COUNT(*) FROM user WHERE username = ?", username).Scan(&count)
+	err := r.DB.QueryRow("SELECT COUNT(*) FROM user WHERE nickname = ?", nickname).Scan(&count)
 	return count > 0, err
 }
 

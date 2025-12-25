@@ -12,12 +12,12 @@ type Comment struct {
 }
 
 
-// CommentWithUser is a comment along with the username of its author
+// CommentWithUser is a comment along with the nickname of its author
 type CommentWithUser struct {
 	ID        string     `json:"id"`
 	PostID    string     `json:"post_id"`
 	UserID    string     `json:"user_id"`
-	Username  string     `json:"username"`
+	Nickname  string     `json:"nickname"`
 	Content   *string    `json:"content"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`

@@ -18,12 +18,12 @@ type Notification struct {
 	Visible    bool      `json:"visible"`
 }
 
-// NotificationView represents a notification with the sender's username
+// NotificationView represents a notification with the sender's nickname
 // instead of their user ID. This is used when returning notifications to the
 // client.
 type NotificationView struct {
 	ID        string    `json:"id"`
-	Username  string    `json:"username"`
+	Nickname  string    `json:"nickname"`
 	Type      string    `json:"type"`
 	PostID    string    `json:"post_id"`
 	CommentID *string   `json:"comment_id,omitempty"`

@@ -33,7 +33,7 @@ type OAuthUserInfo struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`
 	Name      string `json:"name"`
-	Username  string `json:"username,omitempty"`
+	Nickname  string `json:"nickname,omitempty"`
 	AvatarURL string `json:"avatar_url,omitempty"`
 }
 

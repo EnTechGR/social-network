@@ -46,7 +46,7 @@ func (r *NotificationRepository) GetByUser(userID string) ([]models.Notification
 	var notifs []models.NotificationView
 	for rows.Next() {
 		var n models.NotificationView
-		if err := rows.Scan(&n.ID, &n.Username, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read, &n.Visible); err != nil {
+		if err := rows.Scan(&n.ID, &n.Nickname, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read, &n.Visible); err != nil {
 			return nil, err
 		}
 		notifs = append(notifs, n)

@@ -20,7 +20,7 @@ type GuestHandler struct {
 
 type ReactionResponse struct {
 	UserID       string    `json:"user_id"`
-	Username     string    `json:"username"`
+	Nickname     string    `json:"nickname"`
 	ReactionType int       `json:"reaction_type"`
 	CreatedAt    time.Time `json:"created_at"`
 }
@@ -28,7 +28,7 @@ type ReactionResponse struct {
 type CommentResponse struct {
 	ID        string             `json:"id"`
 	UserID    string             `json:"user_id"`
-	Username  string             `json:"username"`
+	Nickname  string             `json:"nickname"`
 	Content   string             `json:"content"`
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
@@ -38,7 +38,7 @@ type CommentResponse struct {
 type PostResponse struct {
 	ID           string             `json:"id"`
 	UserID       string             `json:"user_id"`
-	Username     string             `json:"username"`
+	Nickname     string             `json:"nickname"`
 	CategoryID   int                `json:"category_id"`
 	CategoryName string             `json:"category_name"` // NEW FIELD
 	Title        string             `json:"title"`         // Optional title field
@@ -143,7 +143,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 			postResp := PostResponse{
 				ID:           post.ID,
 				UserID:       post.UserID,
-				Username:     post.Username,
+				Nickname:     post.Nickname,
 				CategoryID:   post.CategoryID,
 				CategoryName: cat.Name,   // ✅ inject category name
 				Title:        utils.DerefString(post.Title), // Optional title field
@@ -173,7 +173,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 				commentResp := CommentResponse{
 					ID:        comment.ID,
 					UserID:    comment.UserID,
-					Username:  comment.Username,
+					Nickname:  comment.Nickname,
 					Content:   utils.DerefString(comment.Content),
 					CreatedAt: comment.CreatedAt,
 					UpdatedAt: comment.UpdatedAt,
@@ -188,7 +188,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 				for _, reaction := range reactions {
 					commentResp.Reactions = append(commentResp.Reactions, ReactionResponse{
 						UserID:       reaction.UserID,
-						Username:     reaction.Username,
+						Nickname:     reaction.Nickname,
 						ReactionType: reaction.ReactionType,
 						CreatedAt:    reaction.CreatedAt,
 					})
@@ -205,7 +205,7 @@ func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 			for _, reaction := range reactions {
 				postResp.Reactions = append(postResp.Reactions, ReactionResponse{
 					UserID:       reaction.UserID,
-					Username:     reaction.Username,
+					Nickname:     reaction.Nickname,
 					ReactionType: reaction.ReactionType,
 					CreatedAt:    reaction.CreatedAt,
 				})

@@ -90,7 +90,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 			if h.Hub != nil {
 				notificationView := models.NotificationView{
 					ID:        n.ID,
-					Username:  user.Username,
+					Nickname:  user.Nickname,
 					Type:      "comment",
 					PostID:    req.PostID,
 					CommentID: &created.ID,
@@ -174,7 +174,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      "edit_comment",
 						PostID:    comment.PostID,
 						CommentID: &comment.ID,
@@ -248,7 +248,7 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      "delete_comment",
 						PostID:    comment.PostID,
 						CommentID: &comment.ID,

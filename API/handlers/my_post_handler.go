@@ -28,7 +28,7 @@ type CategoryInfo struct {
 type MyPostResponse struct {
 	ID           string             `json:"id"`
 	UserID       string             `json:"user_id"`
-	Username     string             `json:"username"`
+	Nickname     string             `json:"nickname"`
 	Categories   []CategoryInfo     `json:"categories"`
 	Title        string             `json:"title"`
 	Content      string             `json:"content"`
@@ -80,7 +80,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 			cr := CommentResponse{
 				ID:        c.ID,
 				UserID:    c.UserID,
-				Username:  c.Username,
+				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
 				UpdatedAt: c.UpdatedAt,
@@ -94,7 +94,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 			for _, r := range reactions {
 				cr.Reactions = append(cr.Reactions, ReactionResponse{
 					UserID:       r.UserID,
-					Username:     r.Username,
+					Nickname:     r.Nickname,
 					ReactionType: r.ReactionType,
 					CreatedAt:    r.CreatedAt,
 				})
@@ -111,7 +111,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 		for _, r := range reactions {
 			reactResp = append(reactResp, ReactionResponse{
 				UserID:       r.UserID,
-				Username:     r.Username,
+				Nickname:     r.Nickname,
 				ReactionType: r.ReactionType,
 				CreatedAt:    r.CreatedAt,
 			})
@@ -131,7 +131,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 		response = append(response, MyPostResponse{
 			ID:           post.ID,
 			UserID:       post.UserID,
-			Username:     post.Username,
+			Nickname:     post.Nickname,
 			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
@@ -187,7 +187,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 			cr := CommentResponse{
 				ID:        c.ID,
 				UserID:    c.UserID,
-				Username:  c.Username,
+				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
 				UpdatedAt: c.UpdatedAt,
@@ -201,7 +201,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 			for _, r := range reactions {
 				cr.Reactions = append(cr.Reactions, ReactionResponse{
 					UserID:       r.UserID,
-					Username:     r.Username,
+					Nickname:     r.Nickname,
 					ReactionType: r.ReactionType,
 					CreatedAt:    r.CreatedAt,
 				})
@@ -218,7 +218,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 		for _, r := range reactions {
 			reactResp = append(reactResp, ReactionResponse{
 				UserID:       r.UserID,
-				Username:     r.Username,
+				Nickname:     r.Nickname,
 				ReactionType: r.ReactionType,
 				CreatedAt:    r.CreatedAt,
 			})
@@ -238,7 +238,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 		response = append(response, MyPostResponse{
 			ID:           post.ID,
 			UserID:       post.UserID,
-			Username:     post.Username,
+			Nickname:     post.Nickname,
 			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),

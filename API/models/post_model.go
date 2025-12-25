@@ -12,11 +12,11 @@ type Post struct {
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 }
 
-// PostWithUser is a post along with the username of its author
+// PostWithUser is a post along with the nickname of its author
 type PostWithUser struct {
 	ID           string     `json:"id"`
 	UserID       string     `json:"user_id"`
-	Username     string     `json:"username"`
+	Nickname     string     `json:"nickname"`
 	CategoryID   int        `json:"category_id"`
 	Title        *string    `json:"title"`
 	Content      *string    `json:"content"`

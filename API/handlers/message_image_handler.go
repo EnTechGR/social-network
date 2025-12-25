@@ -247,7 +247,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	messageWithImage := models.MessageWithUser{
 		MessageID:  message.MessageID,
 		SenderID:   message.SenderID,
-		SenderName: user.Username,
+		SenderNickname: user.Nickname,
 		ReceiverID: message.ReceiverID,
 		Content:    message.Content,
 		CreatedAt:  message.CreatedAt,

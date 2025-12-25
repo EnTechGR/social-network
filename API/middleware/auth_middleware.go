@@ -64,7 +64,7 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		}
 
 		// Scenario 5: Authentication successful!
-		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %d) authenticated for request to %s", user.Username, user.ID, r.URL.Path)
+		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %d) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
 		ctx := context.WithValue(r.Context(), "user", user)
 		ctx = context.WithValue(ctx, "session", session)
 		next.ServeHTTP(w, r.WithContext(ctx))

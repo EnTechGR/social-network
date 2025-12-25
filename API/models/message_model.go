@@ -60,7 +60,7 @@ type MessageWithUser struct {
 	MessageID string `json:"message_id"`
 	SenderID string `json:"sender_id"`
 	// SenderName is the display name of the message sender.
-	SenderName string `json:"sender_name"`
+	SenderNickname string `json:"sender_name"`
 	ReceiverID string `json:"receiver_id"`
 	// ReceiverName is the display name of the message receiver.
 	ReceiverName string `json:"receiver_name"`
@@ -84,8 +84,8 @@ type CreateMessageRequest struct {
 type Conversation struct {
 	// UserID is the ID of the peer user in the conversation (not the current user).
 	UserID string `json:"user_id"`
-	// Username is the display name of the peer user.
-	Username string `json:"username"`
+	// Nickname is the display name of the peer user.
+	Nickname string `json:"nickname"`
 	// LastMessage is the content of the most recent message in the thread.
 	LastMessage string `json:"last_message"`
 	// LastMessageTime is the timestamp of the most recent message.

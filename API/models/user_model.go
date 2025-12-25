@@ -75,6 +75,15 @@ type UserRegistration struct {
     // required: true
     // example: female
     Gender string `json:"gender"`
+    // The URL for the user's avatar.
+	// example: https://example.com/avatar.png
+	AvatarURL string `json:"avatar_url"`
+	// A short bio or description of the user.
+	// example: I love coding and forums!
+	AboutMe string `json:"about_me"`
+    // Indicates if the profile should be private.
+	// example: false
+	IsPrivate bool `json:"is_private"`
 }
 
 // UserLogin is used for login requests

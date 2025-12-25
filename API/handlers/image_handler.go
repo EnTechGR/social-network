@@ -7,6 +7,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"forum/middleware"
 	"forum/models"
 	"forum/repository"
+	"forum/repository/user"
 	"forum/utils"
 )
 
@@ -26,10 +28,11 @@ const uploadBaseDir = "uploads/images"
 type ImageHandler struct {
 	ImageRepo *repository.ImageRepository
 	PostRepo  *repository.PostRepository
+	UserRepo  *user.UserRepository
 }
 
-func NewImageHandler(imageRepo *repository.ImageRepository, postRepo *repository.PostRepository) *ImageHandler {
-	return &ImageHandler{ImageRepo: imageRepo, PostRepo: postRepo}
+func NewImageHandler(imageRepo *repository.ImageRepository, postRepo *repository.PostRepository, userRepo *user.UserRepository) *ImageHandler {
+	return &ImageHandler{ImageRepo: imageRepo, PostRepo: postRepo, UserRepo: userRepo}
 }
 
 func (h *ImageHandler) Upload(w http.ResponseWriter, r *http.Request) {
@@ -352,4 +355,161 @@ func (h *ImageHandler) DeleteImagesByPost(w http.ResponseWriter, r *http.Request
 		return
 	}
 	utils.JSONResponse(w, map[string]string{"status": "images deleted"}, http.StatusOK)
+}
+
+func (h *ImageHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Max 5MB for avatars (typically smaller than post images)
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		utils.ErrorResponse(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		utils.ErrorResponse(w, "Avatar file required", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if header.Size > 5<<20 {
+		utils.ErrorResponse(w, "Image exceeds 5 MB limit", http.StatusBadRequest)
+		return
+	}
+
+	// 1. Detect Content Type
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	var contentType string
+	switch ext {
+	case ".jpg", ".jpeg":
+		contentType = "image/jpeg"
+		ext = ".jpg"
+	case ".png":
+		contentType = "image/png"
+	case ".gif":
+		contentType = "image/gif"
+	default:
+		buf := make([]byte, 512)
+		n, _ := file.Read(buf)
+		contentType = http.DetectContentType(buf[:n])
+		file.Seek(0, 0)
+		switch contentType {
+		case "image/jpeg":
+			ext = ".jpg"
+		case "image/png":
+			ext = ".png"
+		case "image/gif":
+			ext = ".gif"
+		default:
+			utils.ErrorResponse(w, "Unsupported image type", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// 2. Decode Image/GIF
+	var img image.Image
+	var gifData *gif.GIF
+	switch contentType {
+	case "image/jpeg":
+		img, err = jpeg.Decode(file)
+	case "image/png":
+		img, err = png.Decode(file)
+	case "image/gif":
+		gifData, err = gif.DecodeAll(file)
+		if err == nil && len(gifData.Image) > 0 {
+			img = gifData.Image[0]
+		}
+	}
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to decode image", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Create Directories: uploads/avatars/{user_id}/
+	// We use a specific 'avatars' subfolder to keep them separate from post content
+	baseDir := filepath.Join("uploads", "avatars", user.ID)
+	thumbDir := filepath.Join(baseDir, "thumbnails")
+	if err := os.MkdirAll(thumbDir, 0755); err != nil {
+		utils.ErrorResponse(w, "Failed to create directory", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Save original and Thumbnail
+	uuid := utils.GenerateUUID()
+	fileName := uuid + ext
+	filePath := filepath.Join(baseDir, fileName)
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to save image", http.StatusInternalServerError)
+		return
+	}
+
+	if contentType == "image/gif" {
+		if err := gif.EncodeAll(out, gifData); err != nil {
+			out.Close()
+			utils.ErrorResponse(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		if err := encodeImage(out, img, contentType); err != nil {
+			out.Close()
+			utils.ErrorResponse(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+	}
+	out.Close()
+
+	// Create Thumbnail (150x150 as per your createThumbnail logic)
+	thumbPath := filepath.Join(thumbDir, fileName)
+	outT, err := os.Create(thumbPath)
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to save thumbnail", http.StatusInternalServerError)
+		return
+	}
+
+	if contentType == "image/gif" {
+		thumbGIF := createThumbnailGIF(gifData)
+		if err := gif.EncodeAll(outT, thumbGIF); err != nil {
+			outT.Close()
+			utils.ErrorResponse(w, "Failed to save thumbnail", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		thumbImg := createThumbnail(img, contentType != "image/jpeg")
+		if err := encodeImage(outT, thumbImg, contentType); err != nil {
+			outT.Close()
+			utils.ErrorResponse(w, "Failed to save thumbnail", http.StatusInternalServerError)
+			return
+		}
+	}
+	outT.Close()
+
+	// After saving files to disk:
+	// We store the path relative to the "uploads" folder so the static server can find it
+	relPath := filepath.ToSlash(strings.TrimPrefix(filePath, "uploads/"))
+
+	// Update the user table with the new avatar path
+	// Assuming h.UserRepo.DB is your database handle
+	_, err = h.UserRepo.DB.Exec("UPDATE user SET avatar_url = ? WHERE user_id = ?", relPath, user.ID)
+	if err != nil {
+		log.Printf("DB Error updating avatar: %v", err)
+		utils.ErrorResponse(w, "Failed to update profile", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONResponse(w, map[string]string{
+		"avatar_url": relPath,
+		"status":     "avatar updated successfully",
+	}, http.StatusOK)
 }

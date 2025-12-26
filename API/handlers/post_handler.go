@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/middleware"
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
+	"social-network/middleware"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 // PostHandler handles post related endpoints

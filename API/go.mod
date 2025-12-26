@@ -1,4 +1,4 @@
-module forum
+module social-network
 
 go 1.24.1
 
@@ -7,7 +7,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/mattn/go-sqlite3 v1.14.24
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
 	golang.org/x/crypto v0.46.0

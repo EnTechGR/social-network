@@ -81,7 +81,6 @@ type UserRegistration struct {
 	// example: uploads/avatars/1234567890.jpg
 	AvatarPath string `json:"avatar_path"`
     // The thumbnail path for the user's avatar.
-    // example: uploads/avatars/thumbnails/1234567890_thumb.jpg
     AvatarThumbnailPath string `json:"avatar_thumbnail_path"`
 	// A short bio or description of the user.
 	// example: I love coding and forums!

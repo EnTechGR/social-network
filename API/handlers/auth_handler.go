@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"forum/middleware"
-	"forum/models"
-	"forum/repository"
-	"forum/repository/session"
-	"forum/repository/user"
-	"forum/utils"
+	"social-network/middleware"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/repository/session"
+	"social-network/repository/user"
+	"social-network/utils"
 )
 
 // AuthHandler handles authentication-related requests

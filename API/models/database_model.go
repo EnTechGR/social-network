@@ -3,8 +3,8 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"forum/config"
-	dbmigrate "forum/pkg/db/sqlite"
+	"social-network/config"
+	dbmigrate "social-network/pkg/db/sqlite"
 	"io"
 	"os"
 	"path/filepath"

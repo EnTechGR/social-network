@@ -3,9 +3,9 @@ package user
 import (
 	"time"
 
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 // Create creates a new user with all required fields

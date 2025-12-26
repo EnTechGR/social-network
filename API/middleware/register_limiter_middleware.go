@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"forum/utils"
+	"social-network/utils"
 	"net"
 	"net/http"
 	"sync"

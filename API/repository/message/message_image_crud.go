@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"forum/models"
+	"social-network/models"
 )
 
 // CreateMessageAndImage creates a message and the associated chat image within a single database transaction.

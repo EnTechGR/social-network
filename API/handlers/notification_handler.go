@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 
-	"forum/middleware"
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
-	"forum/websocket"
+	"social-network/middleware"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
+	"social-network/websocket"
 )
 
 type NotificationHandler struct {

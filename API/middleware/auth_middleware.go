@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"forum/models"
-	"forum/repository/session"
-	"forum/repository/user"
+	"social-network/models"
+	"social-network/repository/session"
+	"social-network/repository/user"
 )
 
 // Authentication middleware checks if the user is authenticated

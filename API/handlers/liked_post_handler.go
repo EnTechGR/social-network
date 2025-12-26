@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"forum/middleware"
-	"forum/repository"
-	"forum/utils"
+	"social-network/middleware"
+	"social-network/repository"
+	"social-network/utils"
 	"net/http"
 )
 

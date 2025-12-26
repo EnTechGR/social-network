@@ -11,9 +11,9 @@ import (
 	"log"
 	"net/http"
 
-	"forum/models"
-	"forum/routes"
-	"forum/utils"
+	"social-network/models"
+	"social-network/routes"
+	"social-network/utils"
 )
 
 func main() {

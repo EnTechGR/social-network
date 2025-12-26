@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"forum/models"
-	"forum/repository"
-	"forum/repository/session"
-	"forum/repository/user"
-	"forum/utils"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/repository/session"
+	"social-network/repository/user"
+	"social-network/utils"
 )
 
 var (

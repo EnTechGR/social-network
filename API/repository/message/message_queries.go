@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"forum/models"
+	"social-network/models"
 )
 
 // GetConversation retrieves paginated messages between two specified users.

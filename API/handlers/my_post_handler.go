@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"forum/middleware"
-	"forum/repository"
-	"forum/utils"
+	"social-network/middleware"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 type MyPostsHandler struct {

@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"forum/middleware"
+	"social-network/middleware"
 
 	"github.com/gorilla/websocket"
 )

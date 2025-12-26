@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"forum/models"
+	"social-network/models"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"forum/repository/session"
+	"social-network/repository/session"
 	"net/http"
 )
 

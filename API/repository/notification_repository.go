@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"forum/models"
-	"forum/utils"
+	"social-network/models"
+	"social-network/utils"
 )
 
 // NotificationRepository handles CRUD operations for notifications

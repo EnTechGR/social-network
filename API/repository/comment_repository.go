@@ -2,8 +2,8 @@ package repository
 
 import (
 	"database/sql"
-	"forum/models"
-	"forum/utils"
+	"social-network/models"
+	"social-network/utils"
 	"time"
 )
 

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"forum/middleware"
-	"forum/models"
-	"forum/repository/message"
-	"forum/utils"
-	"forum/websocket"
+	"social-network/middleware"
+	"social-network/models"
+	"social-network/repository/message"
+	"social-network/utils"
+	"social-network/websocket"
 )
 
 // MessageHandler handles message-related requests

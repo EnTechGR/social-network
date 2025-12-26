@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"forum/repository"
-	"forum/utils"
+	"social-network/repository"
+	"social-network/utils"
 	"net/http"
 	"time"
 )

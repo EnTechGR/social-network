@@ -4,17 +4,18 @@ import (
 	"database/sql"
 	"net/http"
 
-	"forum/handlers"
-	"forum/middleware"
-	"forum/repository"
-	"forum/repository/message"
-	"forum/repository/session"
-	"forum/repository/user"
-	"forum/websocket"
-	
+	"social-network/handlers"
+	"social-network/middleware"
+	"social-network/repository"
+	"social-network/repository/message"
+	"social-network/repository/session"
+	"social-network/repository/user"
+	"social-network/websocket"
+
 	// IMPORTANT SWAGGER IMPORTS
+	_ "social-network/docs" // <--- Ensure this points to your generated docs package!
+
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "forum/docs" // <--- Ensure this points to your generated docs package!
 )
 
 func SetupRoutes(db *sql.DB) http.Handler {
@@ -42,10 +43,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	commentHandler := handlers.NewCommentHandler(commentRepo, postRepo, notificationRepo, hub)
 	reactionHandler := handlers.NewReactionHandler(reactionRepo, postRepo, commentRepo, notificationRepo, hub)
-	imageHandler := handlers.NewImageHandler(imageRepo, postRepo, userRepo)
+	imageHTTPHandler := handlers.NewImageHTTPHandler(imageRepo, postRepo)
+
 	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, hub)
-	messageHandler := handlers.NewMessageHandler(messageRepo, hub) // ✅ Pass hub to handler
+	messageHandler := handlers.NewMessageHandler(messageRepo, hub)     // ✅ Pass hub to handler
 	chatImageHandler := handlers.NewChatImageHandler(messageRepo, hub) // ✅ Chat image handler
 
 	// Create middleware
@@ -107,10 +109,12 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/comments/edit/", protected(http.HandlerFunc(commentHandler.EditComment)))
 	apiMux.Handle("/api/v1/comments/delete/", protected(http.HandlerFunc(commentHandler.DeleteComment)))
 	apiMux.Handle("/api/v1/react", protected(http.HandlerFunc(reactionHandler.CreateReact)))
-	apiMux.Handle("/api/v1/images/upload", protected(http.HandlerFunc(imageHandler.Upload)))
 	apiMux.Handle("/api/v1/user/commented", protected(http.HandlerFunc(myPostsHandler.GetCommentedPosts)))
-	apiMux.Handle("/api/v1/images/delete/", protected(http.HandlerFunc(imageHandler.DeleteImagesByPost)))
-	apiMux.Handle("/api/v1/user/avatar", protected(http.HandlerFunc(imageHandler.UploadAvatar)))
+	// Image upload endpoints using new centralized handler
+	apiMux.Handle("/api/v1/images/upload", protected(http.HandlerFunc(imageHTTPHandler.UploadPostImages)))
+	apiMux.Handle("/api/v1/images/delete/", protected(http.HandlerFunc(imageHTTPHandler.DeletePostImages)))
+	apiMux.Handle("/api/v1/user/avatar", protected(http.HandlerFunc(imageHTTPHandler.UploadAvatar)))
+	
 	// Additional protected routes for user management
 	apiMux.Handle("/api/v1/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
@@ -135,31 +139,30 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/chat/images/delete/", protected(http.HandlerFunc(chatImageHandler.DeleteChatImage)))
 	apiMux.Handle("/api/v1/chat/images/stats", protected(http.HandlerFunc(chatImageHandler.GetUserImageStats)))
 
-    
-    // =========================================================================
-    // 2. Wrap the API Mux with the authentication middleware
-    apiHandler := authMiddleware.Authenticate(apiMux)
+	// =========================================================================
+	// 2. Wrap the API Mux with the authentication middleware
+	apiHandler := authMiddleware.Authenticate(apiMux)
 
-    // 3. Create the Root Mux (the final router that combines everything)
-    rootMux := http.NewServeMux()
+	// 3. Create the Root Mux (the final router that combines everything)
+	rootMux := http.NewServeMux()
 
-    // 4. Register the Swagger Routes (NOT WRAPPED by AuthMiddleware)
-    // The Swagger UI needs to load static files and the doc.json file without auth checks.
-    swaggerHandler := httpSwagger.Handler(
-        httpSwagger.URL("/swagger/doc.json"), // Pointer to where the JSON spec is served
-    )
-    
-    // Handle the Swagger UI and static files
-    rootMux.Handle("/swagger/", swaggerHandler)
-    // Handle the JSON specification file
-    rootMux.Handle("/swagger/doc.json", httpSwagger.WrapHandler)
-    
-    // 5. Register the Main API Handler
-    // All requests not starting with /swagger/ are directed to the API handler,
-    // which includes your authentication and CORS middlewares.
-    rootMux.Handle("/", apiHandler) 
+	// 4. Register the Swagger Routes (NOT WRAPPED by AuthMiddleware)
+	// The Swagger UI needs to load static files and the doc.json file without auth checks.
+	swaggerHandler := httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"), // Pointer to where the JSON spec is served
+	)
 
-    // 6. Return the final root handler
+	// Handle the Swagger UI and static files
+	rootMux.Handle("/swagger/", swaggerHandler)
+	// Handle the JSON specification file
+	rootMux.Handle("/swagger/doc.json", httpSwagger.WrapHandler)
+
+	// 5. Register the Main API Handler
+	// All requests not starting with /swagger/ are directed to the API handler,
+	// which includes your authentication and CORS middlewares.
+	rootMux.Handle("/", apiHandler)
+
+	// 6. Return the final root handler
 	return rootMux
-    // =========================================================================
+	// =========================================================================
 }

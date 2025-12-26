@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 // SessionRepository handles session-related database operations

@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
-	"forum/models" // Added import
+	"social-network/models" // Added import
 	"log"
 	"sync"
 	"time"

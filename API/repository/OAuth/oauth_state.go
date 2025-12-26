@@ -3,7 +3,7 @@ package oauth
 import (
 	"database/sql"
 	"errors"
-	"forum/repository"
+	"social-network/repository"
 	"time"
 )
 

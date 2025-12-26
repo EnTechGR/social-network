@@ -3,9 +3,9 @@ package user
 import (
 	"strings"
 
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 // Authenticate verifies user credentials using nickname OR email

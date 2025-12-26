@@ -3,7 +3,7 @@ package repository
 
 import (
 	"database/sql"
-	"forum/models"
+	"social-network/models"
 )
 
 type CategoryRepository struct {

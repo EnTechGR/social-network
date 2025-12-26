@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"forum/models"
+	"social-network/models"
 	"net/http"
 	"strings"
 )

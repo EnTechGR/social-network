@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"forum/models"
-	"forum/utils"
+	"social-network/models"
+	"social-network/utils"
 )
 
 // Create sends a new message and persists it to the database.

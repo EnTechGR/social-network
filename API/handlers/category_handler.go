@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 // CategoryHandler handles category related requests

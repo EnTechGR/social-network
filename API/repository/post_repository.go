@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"forum/models"
-	"forum/utils"
+	"social-network/models"
+	"social-network/utils"
 )
 
 type PostRepository struct {

@@ -23,8 +23,10 @@ type User struct {
     // The date of birth of the user.
     // example: 1990-01-01
     DateOfBirth time.Time `json:"date_of_birth"`
-    // The URL for the user's avatar.
-    AvatarURL string `json:"avatar_url"`
+    // The path for the user's avatar.
+    AvatarPath string `json:"avatar_path"`
+    // 
+    AvatarThumbnailPath string `json:"avatar_thumbnail_path"`
     // A short bio or description of the user.
     AboutMe string `json:"about_me"`
     // The gender of the user (male, female, other, prefer_not_to_say).
@@ -75,9 +77,12 @@ type UserRegistration struct {
     // required: true
     // example: female
     Gender string `json:"gender"`
-    // The URL for the user's avatar.
-	// example: https://example.com/avatar.png
-	AvatarURL string `json:"avatar_url"`
+    // The path for the user's avatar.
+	// example: uploads/avatars/1234567890.jpg
+	AvatarPath string `json:"avatar_path"`
+    // The thumbnail path for the user's avatar.
+    // example: uploads/avatars/thumbnails/1234567890_thumb.jpg
+    AvatarThumbnailPath string `json:"avatar_thumbnail_path"`
 	// A short bio or description of the user.
 	// example: I love coding and forums!
 	AboutMe string `json:"about_me"`

@@ -498,10 +498,14 @@ func (h *ImageHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	// After saving files to disk:
 	// We store the path relative to the "uploads" folder so the static server can find it
 	relPath := filepath.ToSlash(strings.TrimPrefix(filePath, "uploads/"))
+	thumbRelPath := filepath.ToSlash(strings.TrimPrefix(thumbPath, "uploads/"))
 
 	// Update the user table with the new avatar path
 	// Assuming h.UserRepo.DB is your database handle
-	_, err = h.UserRepo.DB.Exec("UPDATE user SET avatar_url = ? WHERE user_id = ?", relPath, user.ID)
+	_, err = h.UserRepo.DB.Exec(
+		"UPDATE user SET avatar_path = ?, avatar_thumbnail_path = ? WHERE user_id = ?",
+		relPath, thumbRelPath, user.ID,
+	)
 	if err != nil {
 		log.Printf("DB Error updating avatar: %v", err)
 		utils.ErrorResponse(w, "Failed to update profile", http.StatusInternalServerError)
@@ -509,7 +513,8 @@ func (h *ImageHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.JSONResponse(w, map[string]string{
-		"avatar_url": relPath,
-		"status":     "avatar updated successfully",
+		"avatar_path":           relPath,
+		"avatar_thumbnail_path": thumbRelPath,
+		"status":                "avatar updated successfully",
 	}, http.StatusOK)
 }

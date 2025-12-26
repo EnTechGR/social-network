@@ -14,12 +14,12 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	// UPDATED: Replaced username/age with nickname/date_of_birth and added new profile fields
 	err := r.DB.QueryRow(
 		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
-                avatar_url, about_me, gender, is_private, created_at 
-         FROM user WHERE email = ?`,
+            avatar_path, avatar_thumbnail_path, about_me, gender, is_private, created_at 
+     	FROM user WHERE email = ?`,
 		email,
 	).Scan(
-		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
-		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName,
+		&user.DateOfBirth, &user.AvatarPath, &user.AvatarThumbnailPath, &user.AboutMe, &user.Gender,
 		&user.IsPrivate, &createdAt,
 	)
 
@@ -41,12 +41,12 @@ func (r *UserRepository) GetByID(id string) (*models.User, error) {
 
 	err := r.DB.QueryRow(
 		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
-                avatar_url, about_me, gender, is_private, created_at 
-         FROM user WHERE user_id = ?`,
+            avatar_path, avatar_thumbnail_path, about_me, gender, is_private, created_at 
+     FROM user WHERE user_id = ?`,
 		id,
 	).Scan(
-		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
-		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName,
+		&user.DateOfBirth, &user.AvatarPath, &user.AvatarThumbnailPath, &user.AboutMe, &user.Gender,
 		&user.IsPrivate, &createdAt,
 	)
 
@@ -68,12 +68,12 @@ func (r *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 
 	err := r.DB.QueryRow(
 		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
-                avatar_url, about_me, gender, is_private, created_at 
-         FROM user WHERE nickname = ?`,
+            avatar_path, avatar_thumbnail_path, about_me, gender, is_private, created_at 
+     FROM user WHERE nickname = ?`,
 		nickname,
 	).Scan(
-		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
-		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName,
+		&user.DateOfBirth, &user.AvatarPath, &user.AvatarThumbnailPath, &user.AboutMe, &user.Gender,
 		&user.IsPrivate, &createdAt,
 	)
 
@@ -95,12 +95,12 @@ func (r *UserRepository) GetByEmailOrNickname(login string) (*models.User, error
 
 	err := r.DB.QueryRow(
 		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth, 
-                avatar_url, about_me, gender, is_private, created_at 
-         FROM user WHERE email = ? OR nickname = ?`,
+            avatar_path, avatar_thumbnail_path, about_me, gender, is_private, created_at 
+     	FROM user WHERE email = ? OR nickname = ?`,
 		login, login,
 	).Scan(
-		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName, 
-		&user.DateOfBirth, &user.AvatarURL, &user.AboutMe, &user.Gender, 
+		&user.ID, &user.Nickname, &user.Email, &user.FirstName, &user.LastName,
+		&user.DateOfBirth, &user.AvatarPath, &user.AvatarThumbnailPath, &user.AboutMe, &user.Gender,
 		&user.IsPrivate, &createdAt,
 	)
 

@@ -262,20 +262,20 @@ func drawBackground(img *image.RGBA, c color.Color) {
 	}
 }
 
-func resizeImage(src image.Image, w, h int) *image.RGBA {
-	dst := image.NewRGBA(image.Rect(0, 0, w, h))
-	sb := src.Bounds()
-	sw := sb.Dx()
-	sh := sb.Dy()
-	for y := 0; y < h; y++ {
-		sy := sb.Min.Y + int(float64(y)*float64(sh)/float64(h))
-		for x := 0; x < w; x++ {
-			sx := sb.Min.X + int(float64(x)*float64(sw)/float64(w))
-			dst.Set(x, y, src.At(sx, sy))
-		}
-	}
-	return dst
-}
+// func resizeImage(src image.Image, w, h int) *image.RGBA {
+// 	dst := image.NewRGBA(image.Rect(0, 0, w, h))
+// 	sb := src.Bounds()
+// 	sw := sb.Dx()
+// 	sh := sb.Dy()
+// 	for y := 0; y < h; y++ {
+// 		sy := sb.Min.Y + int(float64(y)*float64(sh)/float64(h))
+// 		for x := 0; x < w; x++ {
+// 			sx := sb.Min.X + int(float64(x)*float64(sw)/float64(w))
+// 			dst.Set(x, y, src.At(sx, sy))
+// 		}
+// 	}
+// 	return dst
+// }
 
 func createThumbnailGIF(src *gif.GIF) *gif.GIF {
 	const size = 150

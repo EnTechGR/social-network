@@ -19,77 +19,111 @@ import (
 type AuthHandler struct {
 	UserRepo    *user.UserRepository
 	SessionRepo *session.SessionRepository
+	ImageRepo   *repository.ImageRepository // ✅ ADDED: Image repository for avatar handling
 }
 
 // NewAuthHandler creates a new AuthHandler
-func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository) *AuthHandler {
+func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository, imageRepo *repository.ImageRepository) *AuthHandler {
 	return &AuthHandler{
 		UserRepo:    userRepo,
 		SessionRepo: sessionRepo,
+		ImageRepo:   imageRepo,
 	}
 }
 
-// Register handles user registration with all required fields
+// Register handles user registration with optional avatar upload
+// @Summary      Register a new user
+// @Description  Creates a new user account with optional avatar upload. Accepts multipart/form-data.
+// @Tags         Authentication
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        email formData string true "User email"
+// @Param        password formData string true "User password (min 8 chars, 1 letter, 1 digit)"
+// @Param        first_name formData string true "User first name"
+// @Param        last_name formData string true "User last name"
+// @Param        date_of_birth formData string true "User date of birth (YYYY-MM-DD)"
+// @Param        gender formData string true "User gender (male/female/other/prefer_not_to_say)"
+// @Param        nickname formData string false "User nickname (optional, defaults to email prefix)"
+// @Param        about_me formData string false "User bio (optional, max 500 chars)"
+// @Param        is_private formData boolean false "Profile privacy (optional, default false)"
+// @Param        avatar formData file false "User avatar image (optional, JPEG/PNG/GIF, max 5MB)"
+// @Success      201  {object}  models.LoginResponse "User successfully created and logged in"
+// @Failure      400  {object}  models.ErrorResponse "Invalid request data"
+// @Failure      409  {object}  models.ErrorResponse "Email or nickname already taken"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var reg models.UserRegistration
-	err := json.NewDecoder(r.Body).Decode(&reg)
-	if err != nil {
-		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+	// Parse multipart form (max 10MB to accommodate avatar uploads)
+	const maxFormSize = 10 << 20 // 10MB
+	if err := r.ParseMultipartForm(maxFormSize); err != nil {
+		utils.ErrorResponse(w, "Invalid form data or file too large", http.StatusBadRequest)
 		return
 	}
 
-	// Trim and normalize inputs
-	reg.Nickname = strings.TrimSpace(reg.Nickname)
-	reg.Email = strings.TrimSpace(strings.ToLower(reg.Email))
-	reg.Password = strings.TrimSpace(reg.Password)
-	reg.FirstName = strings.TrimSpace(reg.FirstName)
-	reg.LastName = strings.TrimSpace(reg.LastName)
-	reg.Gender = strings.TrimSpace(strings.ToLower(reg.Gender))
-	// ✅ ADDED: Normalize new profile fields
-	reg.AboutMe = strings.TrimSpace(reg.AboutMe)
-	reg.AvatarPath = strings.TrimSpace(reg.AvatarPath)
+	// Extract form fields
+	email := strings.TrimSpace(strings.ToLower(r.FormValue("email")))
+	password := strings.TrimSpace(r.FormValue("password"))
+	firstName := strings.TrimSpace(r.FormValue("first_name"))
+	lastName := strings.TrimSpace(r.FormValue("last_name"))
+	dobStr := strings.TrimSpace(r.FormValue("date_of_birth"))
+	gender := strings.TrimSpace(strings.ToLower(r.FormValue("gender")))
+	nickname := strings.TrimSpace(r.FormValue("nickname"))
+	aboutMe := strings.TrimSpace(r.FormValue("about_me"))
+	isPrivateStr := strings.TrimSpace(r.FormValue("is_private"))
 
-	// ✅ UPDATED: Validation for required fields
-	if reg.Email == "" || reg.Password == "" ||
-		reg.FirstName == "" || reg.LastName == "" || reg.DateOfBirth.IsZero() || reg.Gender == "" {
+	// Parse date of birth
+	dateOfBirth, err := time.Parse("2006-01-02", dobStr)
+	if err != nil {
+		utils.ErrorResponse(w, "Invalid date_of_birth format. Use YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	// Parse is_private (defaults to false)
+	isPrivate := false
+	if isPrivateStr == "true" || isPrivateStr == "1" {
+		isPrivate = true
+	}
+
+	// Validate required fields
+	if email == "" || password == "" || firstName == "" || lastName == "" || dobStr == "" || gender == "" {
 		utils.ErrorResponse(w, "Required fields: email, password, first_name, last_name, date_of_birth, gender", http.StatusBadRequest)
 		return
 	}
 
-	// Nickname: 1-50 chars
-	if reg.Nickname != "" && len(reg.Nickname) > 50 {
+	// Set default nickname if not provided
+	if nickname == "" {
+		nickname = strings.Split(email, "@")[0]
+	}
+
+	// Validate nickname length
+	if len(nickname) > 50 {
 		utils.ErrorResponse(w, "Nickname must be at most 50 characters", http.StatusBadRequest)
 		return
 	}
 
-	if reg.Nickname == "" {
-		// Use first part of email as default nickname
-		reg.Nickname = strings.Split(reg.Email, "@")[0]
-	}
-
 	// Email validation
-	cleanEmail, err := utils.ValidateEmail(reg.Email)
+	cleanEmail, err := utils.ValidateEmail(email)
 	if err != nil {
 		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	reg.Email = cleanEmail
+	email = cleanEmail
 
 	// Password strength
-	if !utils.IsStrongPassword(reg.Password) {
+	if !utils.IsStrongPassword(password) {
 		utils.ErrorResponse(w, "Password must be at least 8 characters, with at least one letter and one digit", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ UPDATED: Validate Age via DateOfBirth (13-120 years)
+	// Validate age (13-120 years)
 	now := time.Now()
-	age := now.Year() - reg.DateOfBirth.Year()
-	if now.YearDay() < reg.DateOfBirth.YearDay() {
+	age := now.Year() - dateOfBirth.Year()
+	if now.YearDay() < dateOfBirth.YearDay() {
 		age--
 	}
 
@@ -98,30 +132,38 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate Gender
+	// Validate gender
 	validGenders := map[string]bool{
 		"male":              true,
 		"female":            true,
 		"other":             true,
 		"prefer_not_to_say": true,
 	}
-	if !validGenders[reg.Gender] {
+	if !validGenders[gender] {
 		utils.ErrorResponse(w, "Gender must be one of: male, female, other, prefer_not_to_say", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ ADDED: Validate AboutMe length
-	if len(reg.AboutMe) > 500 {
+	// Validate about_me length
+	if len(aboutMe) > 500 {
 		utils.ErrorResponse(w, "About me must be under 500 characters", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ ADDED: Set default avatar if empty
-	if reg.AvatarPath == "" {
-		reg.AvatarPath = "avatars/defaults/default-avatar.png"
+	// Create user registration model
+	reg := models.UserRegistration{
+		Nickname:    nickname,
+		Email:       email,
+		Password:    password,
+		FirstName:   firstName,
+		LastName:    lastName,
+		DateOfBirth: dateOfBirth,
+		Gender:      gender,
+		AboutMe:     aboutMe,
+		IsPrivate:   isPrivate,
 	}
 
-	// Create user in DB (Repo now handles avatar_url, about_me, and is_private)
+	// Create user in DB (without avatar - that's handled separately now)
 	user, err := h.UserRepo.Create(reg)
 	if err != nil {
 		switch err {
@@ -135,6 +177,31 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	// ✅ Handle avatar upload if provided
+	file, header, err := r.FormFile("avatar")
+	if err == nil {
+		// Avatar was provided
+		defer file.Close()
+
+		// Validate avatar size (max 5MB)
+		const maxAvatarSize = 5 << 20 // 5MB
+		if header.Size > maxAvatarSize {
+			// Delete the created user since avatar upload failed
+			h.UserRepo.DeleteByID(user.ID)
+			utils.ErrorResponse(w, "Avatar exceeds 5 MB limit", http.StatusBadRequest)
+			return
+		}
+
+		// Upload avatar using ImageRepository
+		if err := h.ImageRepo.UploadUserAvatar(file, header, user.ID); err != nil {
+			log.Printf("Failed to upload avatar for user %s: %v", user.ID, err)
+			// Don't fail registration, just log the error
+			// User can upload avatar later via profile update
+			log.Printf("Warning: User %s created but avatar upload failed", user.ID)
+		}
+	}
+	// If no avatar provided (err != nil), that's fine - avatar is optional
 
 	// Create session
 	session, err := h.createUserSession(w, r, user)
@@ -162,15 +229,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  models.ErrorResponse "Invalid request body or missing credentials."
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized: Invalid username/email or password."
 // @Failure      500  {object}  models.ErrorResponse "Internal server error."
-// @Router       /forum/api/session/login [post]
+// @Router       /api/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST requests
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse request body
 	var login models.UserLogin
 	err := json.NewDecoder(r.Body).Decode(&login)
 	if err != nil {
@@ -178,21 +243,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ UPDATED: Trim the login field (now accepts username OR email)
 	login.Login = strings.TrimSpace(login.Login)
 	login.Password = strings.TrimSpace(login.Password)
 
-	// ✅ UPDATED: Validate request (now checks login instead of email)
 	if login.Login == "" || login.Password == "" {
 		utils.ErrorResponse(w, "Username/email and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Authenticate user (now supports both username and email)
 	user, err := h.UserRepo.Authenticate(login)
 	if err != nil {
 		if err == repository.ErrInvalidCredentials {
-			// ✅ UPDATED: Generic error message for security
 			utils.ErrorResponse(w, "Invalid username/email or password", http.StatusUnauthorized)
 		} else {
 			log.Printf("Authentication error: %v", err)
@@ -201,7 +262,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create session after successful authentication
 	session, err := h.createUserSession(w, r, user)
 	if err != nil {
 		log.Printf("Failed to create session: %v", err)
@@ -217,52 +277,40 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout handles user logout
-// @Summary      Log out a user
-// @Description  Deletes the current user session from the database and clears the session and CSRF cookies.
-// @Tags         Authentication
-// @Produce      plain
-// @Success      200 "Successfully logged out (session cookie cleared)."
-// @Router       /forum/api/session/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Get the session cookie
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		// If no cookie, nothing to do
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Delete the session from database
 	err = h.SessionRepo.Delete(cookie.Value)
 	if err != nil {
 		log.Printf("Failed to delete session: %v", err)
-		// Continue with clearing cookie even if DB delete fails
 	}
 
-	// Clear the session cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false, // true in production
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	// Clear the CSRF token cookie (if used on the client)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
-		HttpOnly: false, // false if your frontend JS needs to read it
-		Secure:   false, // true in production
+		HttpOnly: false,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -270,15 +318,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifySession handles session verification
-// @Summary      Verify current session status
-// @Description  Checks if the session cookie is valid, active, and not expired. Returns user data if session is valid.
-// @Tags         Authentication
-// @Produce      json
-// @Success      200  {object}  object "Session is valid."
-// @Success      200  {object}  object{user=models.User,csrf_token=string}
-// @Failure      401  {object}  models.ErrorResponse "Unauthorized: Session cookie not found, invalid, or expired."
-// @Failure      500  {object}  models.ErrorResponse "Internal server error."
-// @Router       /forum/api/session/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -292,7 +331,6 @@ func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if session is expired
 	if session.ExpiresAt.Before(time.Now()) {
 		h.SessionRepo.Delete(session.SessionID)
 		http.Error(w, "Session expired", http.StatusUnauthorized)
@@ -305,7 +343,6 @@ func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return user data + csrf token
 	utils.JSONResponse(w, struct {
 		User      *models.User `json:"user"`
 		CSRFToken string       `json:"csrf_token"`
@@ -330,7 +367,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 		Path:     "/",
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   false, // true in prod
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -338,14 +375,6 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 }
 
 // LogoutAll handles logout from all devices
-// @Summary      Log out from all devices
-// @Description  Deletes all active sessions for the currently authenticated user and clears the current session cookie.
-// @Tags         Authentication
-// @Produce      plain
-// @Success      200 "Successfully logged out from all devices."
-// @Failure      401  "Unauthorized: User not authenticated." // NOTE: We cannot use models.ErrorResponse here unless the handler uses utils.ErrorResponse()
-// @Failure      500  {object}  models.ErrorResponse "Internal server error."
-// @Router       /forum/api/session/logout-all [post]
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -358,7 +387,6 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete all sessions for this user
 	err := h.SessionRepo.DeleteAllUserSessions(user.ID)
 	if err != nil {
 		log.Printf("Failed to delete all user sessions: %v", err)
@@ -366,7 +394,6 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Clear current session cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
 		Value:    "",
@@ -381,13 +408,6 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProfile returns the current user's profile
-// @Summary      Get current user profile
-// @Description  Returns the profile data for the user associated with the active session.
-// @Tags         User Profile
-// @Produce      json
-// @Success      200  {object}  models.User "Successful response."
-// @Failure      401  "Unauthorized: User not authenticated."
-// @Router       /forum/api/user/profile [get]
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetCurrentUser(r)
 	if user == nil {

@@ -11,3 +11,5 @@ go tool pprof -http=:8080 cpu.prof
 
 # Or view in terminal
 go tool pprof -top cpu.prof
+
+go tool pprof -top cpu.prof

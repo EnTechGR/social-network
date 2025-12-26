@@ -35,7 +35,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	go hub.Run()
 
 	// Create handlers
-	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo)
+	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo, postRepo, imageRepo)
 	postHandler := handlers.NewPostHandler(postRepo)

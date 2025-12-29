@@ -35,15 +35,18 @@ func NewImageHTTPHandler(imageRepo *repository.ImageRepository, postRepo *reposi
 	}
 }
 
-// ============================================================================
-// 1. AVATAR UPLOAD ENDPOINT
-// ============================================================================
-// POST /api/v1/user/avatar
-// Content-Type: multipart/form-data
-// Body: avatar=<file>
-//
-// Uploads a user avatar image. Replaces any existing avatar.
-
+// UploadAvatar uploads a user avatar image
+// @Summary      Upload user avatar
+// @Description  Uploads a new avatar image for the authenticated user. Replaces any existing avatar. Max size 5MB.
+// @Tags         Images
+// @Security     CookieAuth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        avatar  formData  file  true  "Avatar image file (JPEG, PNG, GIF)"
+// @Success      200     {object}  map[string]interface{} "status: success, message: Avatar uploaded successfully"
+// @Failure      400     {object}  models.ErrorResponse   "Invalid file or too large"
+// @Failure      401     {object}  models.ErrorResponse   "Unauthorized"
+// @Router       /api/v1/user/avatar [post]
 func (h *ImageHTTPHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -92,15 +95,18 @@ func (h *ImageHTTPHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) 
 	}, http.StatusOK)
 }
 
-// ============================================================================
-// 2. POST IMAGE UPLOAD ENDPOINT
-// ============================================================================
-// POST /api/v1/images/upload
-// Content-Type: multipart/form-data
-// Body: post_id=<id>, image=<file> (can have multiple image files)
-//
-// Uploads one or more images for a post. Only the post owner can upload images.
-
+// UploadPostImages uploads images for a specific post
+// @Summary      Upload post images
+// @Description  Uploads one or more images and associates them with a post. Max total size 20MB.
+// @Tags         Images
+// @Security     CookieAuth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        post_id  formData  string  true  "ID of the post"
+// @Param        image    formData  file    true  "Image file(s) to upload" collectionFormat(multi)
+// @Success      200      {object}  ImageUploadResponse
+// @Failure      403      {object}  models.ErrorResponse
+// @Router       /api/v1/images/upload [post]
 func (h *ImageHTTPHandler) UploadPostImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -174,13 +180,16 @@ func (h *ImageHTTPHandler) UploadPostImages(w http.ResponseWriter, r *http.Reque
 	}, http.StatusOK)
 }
 
-// ============================================================================
-// 3. DELETE POST IMAGES ENDPOINT
-// ============================================================================
-// DELETE /api/v1/images/delete/:postId
-//
-// Deletes all images associated with a post. Only the post owner can delete images.
-
+// DeletePostImages deletes all images associated with a post
+// @Summary      Delete post images
+// @Description  Removes all image associations for a post. Only the post owner can perform this.
+// @Tags         Images
+// @Security     CookieAuth
+// @Produce      json
+// @Param        postId   path      string  true  "Post ID"
+// @Success      200      {object}  SimpleSuccessResponse
+// @Failure      401      {object}  models.ErrorResponse
+// @Router       /api/v1/images/delete/{postId} [delete]
 func (h *ImageHTTPHandler) DeletePostImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

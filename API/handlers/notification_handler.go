@@ -25,6 +25,16 @@ func NewNotificationHandler(
 	}
 }
 
+// GetNotifications retrieves all active notifications for the user
+// @Summary      Get notifications
+// @Description  Returns a list of notifications for the authenticated user, including the total count of active notifications.
+// @Tags         Notifications
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {object}  NotificationListResponse
+// @Failure      401      {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/notifications [get]
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -58,7 +68,16 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 	utils.JSONResponse(w, resp, http.StatusOK)
 }
 
-// HideNotification marks a notification as not visible for the current user.
+// HideNotification marks a notification as hidden or deleted
+// @Summary      Hide notification
+// @Description  Soft-deletes or hides a specific notification from the user's view. Requires the notification ID as a path parameter.
+// @Tags         Notifications
+// @Security     CookieAuth
+// @Param        id       path      string  true  "Notification ID"
+// @Success      200      {object}  map[string]string "status: deleted"
+// @Failure      400      {object}  models.ErrorResponse "Missing notification ID"
+// @Failure      401      {object}  models.ErrorResponse "Unauthorized"
+// @Router       /api/notifications/{id} [delete]
 func (h *NotificationHandler) HideNotification(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

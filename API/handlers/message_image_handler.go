@@ -55,14 +55,20 @@ func NewChatImageHandler(messageRepo *message.MessageRepository, hub *websocket.
 	}
 }
 
-// UploadChatImage handles the multipart form upload for a new message with an image
-//
-// This function performs critical tasks:
-// 1. Authorization and Input Validation (user IDs, caption length, file size).
-// 2. Security Checks: Server-side content-based MIME type validation (anti-spoofing).
-// 3. Metadata Extraction: Decodes image config to get width/height.
-// 4. Persistence: Saves the file to disk and the message/image metadata to the database transactionally.
-// 5. Real-time Notification: Broadcasts the new message via WebSocket.
+// UploadChatImage handles sending an image in a private message
+// @Summary      Upload chat image
+// @Description  Sends an image message to another user. Validates file type (JPEG, PNG, GIF), saves to disk, and broadcasts via WebSocket.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        receiver_id  formData  string  true  "ID of the message recipient"
+// @Param        content      formData  string  false "Optional text caption (max 1000 chars)"
+// @Param        chat_image   formData  file    true  "Image file to send (max 5MB)"
+// @Success      201          {object}  map[string]interface{} "Returns {message: models.MessageWithUser}"
+// @Failure      400          {object}  models.ErrorResponse   "Invalid file, too large, or messaging self"
+// @Failure      401          {object}  models.ErrorResponse   "Unauthorized"
+// @Router       /api/chat/images/upload [post]
 func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -276,8 +282,17 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	}, http.StatusCreated)
 }
 
-// ServeChatImage handles serving the uploaded image file (requires access check)
-// ServeChatImage handles serving the image file, but only after an access check.
+// ServeChatImage serves the raw image file with access control
+// @Summary      Serve chat image
+// @Description  Serves the image file from disk. **Crucial**: Validates that the requester is either the sender or receiver of the message before serving.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      image/jpeg,image/png,image/gif
+// @Param        imagePath  path      string  true  "The relative path to the image"
+// @Success      200        {file}    binary
+// @Failure      403        {object}  models.ErrorResponse "Forbidden - You don't have access to this image"
+// @Failure      404        {object}  models.ErrorResponse "Image not found"
+// @Router       /api/chat/images/serve/{imagePath} [get]
 func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request) {
 	// 1. Get authenticated user from context (Set by protected middleware)
 	user := middleware.GetCurrentUser(r)
@@ -338,16 +353,15 @@ func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request
 	http.ServeFile(w, r, fullFilePath)
 }
 
-// DeleteChatImage deletes an image file, its metadata record, and the associated message record.
-//
-// This operation is critical and requires three steps of cleanup:
-// 1. Database lookups and **sender authorization check**.
-// 2. Filesystem deletion.
-// 3. Database record deletion (image then message).
-// 4. WebSocket notification.
-//
-// Note: This function is not executed within a single database transaction,
-// but relies on sequential repository calls and filesystem operations.
+// DeleteChatImage removes an image and its associated message
+// @Summary      Delete chat image
+// @Description  Deletes the image file, the image metadata, and the original message record. Only the sender can perform this.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Param        imageID  path      string  true  "ID of the image to delete"
+// @Success      200      {object}  map[string]bool "success: true"
+// @Failure      403      {object}  models.ErrorResponse "Unauthorized: Only sender can delete"
+// @Router       /api/chat/images/{imageID} [delete]
 func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -433,11 +447,14 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 	}, http.StatusOK)
 }
 
-// GetUserImageStats retrieves the total number of images and the aggregated
-// total file size (in bytes) of all images uploaded by the authenticated user.
-//
-// This endpoint is read-only (GET) and is typically used for displaying user quotas
-// or storage usage statistics on a profile or settings page.
+// GetUserImageStats retrieves storage statistics for the user
+// @Summary      Get user image stats
+// @Description  Returns total count and total byte size of all images uploaded by the authenticated user.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {object}  map[string]interface{} "image_count (int), total_size_bytes (int64)"
+// @Router       /api/chat/images/stats [get]
 func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -474,16 +491,15 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 	}, http.StatusOK)
 }
 
-// GetMessageImages retrieves all image metadata associated with a specific message ID.
-//
-// This function is currently a placeholder and needs to be fully implemented.
-// The intended workflow is:
-// 1. Authenticate the user.
-// 2. Extract the `messageID` from URL path parameters or query parameters.
-// 3. **Authorization Check**: Verify that the authenticated user is either the sender or receiver
-//    of the message associated with the `messageID` (using CanAccessImage or similar logic).
-// 4. Call `h.MessageRepo.GetChatImagesByMessageID(messageID)`.
-// 5. Return the list of image metadata as a JSON response.
+// GetMessageImages retrieves image metadata for a specific message
+// @Summary      Get images by message
+// @Description  Returns metadata for all images attached to a single message ID. Requires sender/receiver permission.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Param        messageID  query    string  true  "ID of the message"
+// @Success      200        {object} MessageImagesResponse
+// @Router       /api/chat/images [get]
 func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -502,20 +518,15 @@ func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Reque
 	}, http.StatusOK)
 }
 
-// GetConversationGallery retrieves a paginated list of all image metadata shared
-// between the authenticated user and a specific conversation partner.
-//
-// This function is currently a placeholder and needs to be fully implemented.
-//
-// Required Implementation Steps:
-// 1. **Authentication**: Get the currently authenticated user (`userID`).
-// 2. **Parameter Extraction**: Retrieve the `otherUserID` from URL query parameters (e.g., "?partner=...")
-//    and extract optional pagination parameters (`limit` and `offset`).
-// 3. **Authorization**: No explicit authorization check is strictly needed beyond authentication,
-//    as the underlying repository call (`GetChatImagesInConversation`) implicitly filters results
-//    based on *both* `userID` and `otherUserID`.
-// 4. **Data Retrieval**: Call `h.MessageRepo.GetChatImagesInConversation(userID, otherUserID, limit, offset)`.
-// 5. **Response**: Return the retrieved list of image metadata, or an empty list if none are found.
+// GetConversationGallery retrieves all images from a chat
+// @Summary      Get chat gallery
+// @Description  Returns a list of image metadata shared between the user and a partner. (Placeholder implementation).
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Param        partner  query     string  true  "User ID of the chat partner"
+// @Success      200      {object}  map[string]interface{} "gallery: []"
+// @Router       /api/chat/gallery [get]
 func (h *ChatImageHandler) GetConversationGallery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

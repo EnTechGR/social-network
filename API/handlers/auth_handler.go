@@ -33,24 +33,23 @@ func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionR
 
 // Register handles user registration with optional avatar upload
 // @Summary      Register a new user
-// @Description  Creates a new user account with optional avatar upload. Accepts multipart/form-data.
+// @Description  Creates a new user account. Accepts multipart/form-data for avatar uploads.
 // @Tags         Authentication
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        email formData string true "User email"
-// @Param        password formData string true "User password (min 8 chars, 1 letter, 1 digit)"
-// @Param        first_name formData string true "User first name"
-// @Param        last_name formData string true "User last name"
-// @Param        date_of_birth formData string true "User date of birth (YYYY-MM-DD)"
-// @Param        gender formData string true "User gender (male/female/other/prefer_not_to_say)"
-// @Param        nickname formData string false "User nickname (optional, defaults to email prefix)"
-// @Param        about_me formData string false "User bio (optional, max 500 chars)"
-// @Param        is_private formData boolean false "Profile privacy (optional, default false)"
-// @Param        avatar formData file false "User avatar image (optional, JPEG/PNG/GIF, max 5MB)"
-// @Success      201  {object}  models.LoginResponse "User successfully created and logged in"
-// @Failure      400  {object}  models.ErrorResponse "Invalid request data"
-// @Failure      409  {object}  models.ErrorResponse "Email or nickname already taken"
-// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Param        email          formData  string  true   "User email"
+// @Param        password       formData  string  true   "User password (min 8 chars, 1 letter, 1 digit)"
+// @Param        first_name     formData  string  true   "User first name"
+// @Param        last_name      formData  string  true   "User last name"
+// @Param        date_of_birth  formData  string  true   "User date of birth (YYYY-MM-DD)"
+// @Param        gender         formData  string  true   "male, female, other, or prefer_not_to_say"
+// @Param        nickname       formData  string  false  "Optional: defaults to email prefix"
+// @Param        about_me       formData  string  false  "Optional: Max 500 chars"
+// @Param        is_private     formData  string  false  "Set to 'true' or '1' for private profile"
+// @Param        avatar         formData  file    false  "JPEG/PNG/GIF, max 5MB"
+// @Success      201  {object}  models.LoginResponse
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      409  {object}  models.ErrorResponse
 // @Router       /api/auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -277,6 +276,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout handles user logout
+// @Summary      Log out a user
+// @Description  Invalidates the user's session and clears authentication cookies.
+// @Tags         Authentication
+// @Produce      json
+// @Success      200  {string}  string "Successfully logged out"
+// @Router       /api/auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -318,6 +323,14 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifySession handles session verification
+// @Summary      Verify current session
+// @Description  Checks if the session cookie is valid and returns the current user's info and a fresh CSRF token.
+// @Tags         Authentication
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  SessionVerifyResponse "Current user and CSRF token"
+// @Failure      401  {object}  models.ErrorResponse
+// @Router       /api/auth/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -375,6 +388,14 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 }
 
 // LogoutAll handles logout from all devices
+// @Summary      Log out from all devices
+// @Description  Deletes all active sessions for the current user across all devices.
+// @Tags         Authentication
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {string}  string "Successfully logged out from all devices"
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Router       /api/auth/logout-all [post]
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -408,6 +429,14 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProfile returns the current user's profile
+// @Summary      Get current user profile
+// @Description  Returns the full profile details of the currently authenticated user.
+// @Tags         Authentication
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  models.User "User profile data"
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Router       /api/auth/profile [get]
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetCurrentUser(r)
 	if user == nil {

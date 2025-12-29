@@ -18,6 +18,8 @@ type GuestHandler struct {
 	imageRepo    *repository.ImageRepository
 }
 
+// ReactionResponse represents a simplified reaction for guest views
+// swagger:model ReactionResponse
 type ReactionResponse struct {
 	UserID       string    `json:"user_id"`
 	Nickname     string    `json:"nickname"`
@@ -25,6 +27,8 @@ type ReactionResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+// CommentResponse represents a simplified comment for guest views
+// swagger:model CommentResponse
 type CommentResponse struct {
 	ID        string             `json:"id"`
 	UserID    string             `json:"user_id"`
@@ -35,6 +39,8 @@ type CommentResponse struct {
 	Reactions []ReactionResponse `json:"reactions,omitempty"`
 }
 
+// PostResponse represents a post with its full context for guests
+// swagger:model PostResponse
 type PostResponse struct {
 	ID           string             `json:"id"`
 	UserID       string             `json:"user_id"`
@@ -57,6 +63,8 @@ type CategoryResponse struct {
 	Posts []PostResponse `json:"posts"`
 }
 
+// GuestResponse is the top-level envelope for the guest data tree
+// swagger:model GuestResponse
 type GuestResponse struct {
 	Categories []CategoryResponse `json:"categories"`
 }
@@ -77,6 +85,13 @@ func NewGuestHandler(
 	}
 }
 
+// @Summary      Get raw guest view data
+// @Description  Retrieves all public posts, comments, and reactions in separate flat lists.
+// @Tags         Guest
+// @Produce      json
+// @Success      200  {object}  handlers.GuestViewResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /api/guest/view [get]
 func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		//http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -112,6 +127,13 @@ func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, response, http.StatusOK)
 }
 
+// @Summary      Get structured guest data
+// @Description  Retrieves a full hierarchical tree of categories, including their posts, comments, and reactions.
+// @Tags         Guest
+// @Produce      json
+// @Success      200  {object}  handlers.GuestResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /api/guest/data [get]
 func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

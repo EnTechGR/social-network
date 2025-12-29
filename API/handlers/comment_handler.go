@@ -35,7 +35,20 @@ func NewCommentHandler(
 	}
 }
 
-// CreateComment creates a new comment on a post for the authenticated user
+
+// CreateComment creates a new comment on a post
+// @Summary      Create a comment
+// @Description  Adds a new comment to a specific post. Triggers a real-time notification for the post owner via WebSocket.
+// @Tags         Comments
+// @Security     CookieAuth
+// @Accept       json
+// @Produce      json
+// @Param        comment  body      handlers.CreateCommentRequest  true  "Comment details"
+// @Success      201      {object}  models.Comment
+// @Failure      400      {object}  models.ErrorResponse "Missing PostID or Content"
+// @Failure      401      {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500      {object}  models.ErrorResponse "Database error"
+// @Router       /api/comments [post]
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -108,7 +121,19 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, created, http.StatusCreated)
 }
 
-// EditComment edits a comment's content
+// EditComment updates an existing comment
+// @Summary      Edit a comment
+// @Description  Updates the text content of an existing comment. Only the author can perform this action.
+// @Tags         Comments
+// @Security     CookieAuth
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                        true  "Comment ID"
+// @Param        content  body      handlers.EditCommentRequest   true  "New content"
+// @Success      200      {object}  map[string]string             "status: updated"
+// @Failure      403      {object}  models.ErrorResponse          "Forbidden - not the owner"
+// @Failure      404      {object}  models.ErrorResponse          "Comment not found"
+// @Router       /api/comments/{id} [put]
 func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -193,6 +218,16 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteComment soft-deletes a comment
+// @Summary      Delete a comment
+// @Description  Performs a soft-delete on a comment. Only the author can perform this action.
+// @Tags         Comments
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id   path      string  true  "Comment ID"
+// @Success      200  {object}  map[string]string "status: deleted"
+// @Failure      403  {object}  models.ErrorResponse "Forbidden"
+// @Failure      404  {object}  models.ErrorResponse "Comment not found"
+// @Router       /api/comments/{id} [delete]
 func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

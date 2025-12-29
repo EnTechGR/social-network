@@ -20,11 +20,15 @@ func NewMyPostsHandler(postRepo *repository.PostRepository, commentRepo *reposit
 	return &MyPostsHandler{PostRepo: postRepo, CommentRepo: commentRepo, ReactionRepo: reactionRepo, ImageRepo: imageRepo}
 }
 
+// CategoryInfo represents a simplified category object
+// swagger:model CategoryInfo
 type CategoryInfo struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
+// MyPostResponse represents a post with full context for the user's engagement view
+// swagger:model MyPostResponse
 type MyPostResponse struct {
 	ID           string             `json:"id"`
 	UserID       string             `json:"user_id"`
@@ -40,6 +44,16 @@ type MyPostResponse struct {
 	Reactions    []ReactionResponse `json:"reactions,omitempty"`
 }
 
+// GetMyPosts retrieves all posts created by the authenticated user
+// @Summary      Get own posts
+// @Description  Retrieves a full list of posts created by the logged-in user, including nested categories, comments, and reactions.
+// @Tags         User Activity
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {array}   handlers.MyPostResponse
+// @Failure      401      {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500      {object}  models.ErrorResponse "Failed to load posts or associated data"
+// @Router       /api/my-posts [get]
 func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -147,6 +161,16 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, response, http.StatusOK)
 }
 
+// GetCommentedPosts retrieves posts where the authenticated user has left a comment
+// @Summary      Get posts commented on
+// @Description  Retrieves a list of posts that the current user has interacted with via comments. Useful for activity history.
+// @Tags         User Activity
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {array}   handlers.MyPostResponse
+// @Failure      401      {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/my-commented-posts [get]
 func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

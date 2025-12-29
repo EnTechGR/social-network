@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"net/http"
 	"social-network/middleware"
 	"social-network/repository"
 	"social-network/utils"
-	"net/http"
 )
 
 type LikedPostsHandler struct {
@@ -18,6 +18,16 @@ func NewLikedPostsHandler(postRepo *repository.PostRepository, commentRepo *repo
 	return &LikedPostsHandler{PostRepo: postRepo, CommentRepo: commentRepo, ReactionRepo: reactionRepo, ImageRepo: imageRepo}
 }
 
+// GetLikedPosts retrieves all posts liked by the current user
+// @Summary      Get liked posts
+// @Description  Returns a list of all posts the authenticated user has reacted to positively (liked).
+// @Tags         User Engagement
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {array}   handlers.MyPostResponse
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/posts/liked [get]
 func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -123,6 +133,16 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 	utils.JSONResponse(w, response, http.StatusOK)
 }
 
+// GetDislikedPosts retrieves all posts disliked by the current user
+// @Summary      Get disliked posts
+// @Description  Returns a list of all posts the authenticated user has reacted to negatively (disliked).
+// @Tags         User Engagement
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {array}   handlers.MyPostResponse
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/posts/disliked [get]
 func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -29,11 +29,18 @@ func NewMessageHandler(messageRepo *message.MessageRepository, hub *websocket.Hu
 	}
 }
 
-// SendMessage handles sending a new text message from the authenticated user
-// to a specified receiver via an HTTP POST request.
-//
-// The message is persisted in the database and then broadcast in real-time
-// to the receiver via WebSocket.
+// SendMessage sends a new message
+// @Summary      Send a private message
+// @Description  Persists a message to the database and broadcasts it via WebSocket to the receiver in real-time.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Accept       json
+// @Produce      json
+// @Param        message  body      models.CreateMessageRequest  true  "Message content and receiver ID"
+// @Success      201      {object}  map[string]interface{} "Returns {message: models.Message}"
+// @Failure      400      {object}  models.ErrorResponse   "Validation error (e.g., messaging yourself)"
+// @Failure      401      {object}  models.ErrorResponse   "Unauthorized"
+// @Router       /api/messages [post]
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -111,13 +118,18 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusCreated)
 }
 
-// GetConversation retrieves a paginated list of messages exchanged between the
-// authenticated user and a specified conversation partner.
-//
-// Query Parameters:
-//   - user_id (required): The ID of the other user in the conversation.
-//   - limit (optional): Max number of messages to return (default 10, max 50).
-//   - offset (optional): Starting point for pagination (default 0).
+// GetConversation retrieves messages with a specific user
+// @Summary      Get conversation history
+// @Description  Retrieves a paginated list of messages between current user and partner. Marks messages as read.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Param        user_id  query     string  true   "ID of the partner"
+// @Param        limit    query     int     false  "Max messages (default 10, max 50)"
+// @Param        offset   query     int     false  "Pagination offset"
+// @Success      200      {object}  models.MessagesResponse
+// @Failure      400      {object}  models.ErrorResponse
+// @Router       /api/messages/conversation [get]
 func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -196,11 +208,14 @@ func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request)
 	}, http.StatusOK)
 }
 
-// GetConversations retrieves a list of all chat partners (conversations) for the
-// currently authenticated user.
-//
-// Each conversation object includes metadata about the last message and the
-// total count of unread messages with that partner.
+// GetConversations lists all active chats
+// @Summary      List conversations
+// @Description  Retrieves all chat partners, last messages, unread counts, and real-time online status.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {object}  models.ConversationsResponse
+// @Router       /api/messages/conversations [get]
 func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -239,8 +254,15 @@ func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request
 	}, http.StatusOK)
 }
 
-// GetAllUsers retrieves a list of all registered users, excluding the currently
-// authenticated user, typically for display in a "new chat" or "users online" list.
+// GetAllUsers retrieves all users with their current online status
+// @Summary      List all users
+// @Description  Retrieves all registered users (except current) and checks their real-time connection status via the Hub.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  UserListResponse
+// @Failure      401  {object}  models.ErrorResponse
+// @Router       /api/messages/users [get]
 func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -303,12 +325,14 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// GetUnreadCount retrieves total unread message count
-// GetUnreadCount retrieves the total number of unread messages for the
-// currently authenticated user across all their conversations.
-//
-// This is a lightweight, high-frequency endpoint typically used to display
-// a notification badge or count in the UI.
+// GetUnreadCount gets total unread messages
+// @Summary      Unread message count
+// @Description  Returns the total count of unread messages across all conversations. Useful for badges.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200      {object}  map[string]int "unread_count"
+// @Router       /api/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -337,10 +361,16 @@ func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) 
 	}, http.StatusOK)
 }
 
-// MarkAsRead updates the 'is_read' status of a specific message to true.
-//
-// This endpoint supports both PUT (for idempotent updates) and POST methods.
-// Crucially, it must ensure that only the intended receiver can mark the message as read.
+// MarkAsRead marks a specific message as read
+// @Summary      Mark message read
+// @Description  Updates a single message status to read. Only the receiver can perform this.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Param        messageID  path      string  true  "ID of the message"
+// @Success      200        {object}  map[string]bool "success: true"
+// @Failure      403        {object}  models.ErrorResponse "Not the receiver"
+// @Failure      404        {object}  models.ErrorResponse "Message not found"
+// @Router       /api/messages/read/{messageID} [put]
 func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	// Allow both PUT (semantically correct for update) and POST (common for simple actions).
 	if r.Method != http.MethodPut && r.Method != http.MethodPost {
@@ -398,11 +428,14 @@ func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// DeleteMessage handles the deletion of a specific message by its ID.
-//
-// This operation is protected and requires the authenticated user to be the
-// original sender of the message. It also triggers a real-time notification
-// to the receiver.
+// DeleteMessage deletes a specific message
+// @Summary      Delete a message
+// @Description  Deletes a message and notifies the receiver via WebSocket. Only the sender can delete.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Param        messageID  path      string  true  "ID of the message"
+// @Success      200        {object}  map[string]bool "success: true"
+// @Router       /api/messages/{messageID} [delete]
 func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -468,11 +501,16 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// GetUsersForChat retrieves a list of potential chat partners for the authenticated user.
-//
-// Behavior is conditional based on the 'all' query parameter:
-// - ?all=true: Retrieves ALL users (excluding the current user).
-// - Default/Omitted: Retrieves only users with whom the current user has NO existing conversations.
+// GetUsersForChat retrieves potential chat partners
+// @Summary      Search chat partners
+// @Description  Retrieves users. If all=true, returns everyone. Otherwise, returns only users you haven't chatted with yet.
+// @Tags         Messaging
+// @Security     CookieAuth
+// @Produce      json
+// @Param        all   query    bool  false  "Set to true to include users with existing chats"
+// @Success      200   {object}  UserListResponse
+// @Failure      401   {object}  models.ErrorResponse
+// @Router       /api/messages/search-users [get]
 func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -507,8 +545,8 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// 2. Define the output structure and augment with real-time status.
-	// Using a local struct ensures the JSON output is consistent and includes the 'IsOnline' field.
+	// UserWithOnlineStatus represents a user with their live presence
+	// swagger:model UserWithOnlineStatus
 	type UserWithOnlineStatus struct {
 		ID          string    `json:"id"`
 		Nickname    string    `json:"nickname"`

@@ -46,7 +46,14 @@ func NewOAuthHandler(userRepo *user.UserRepository, sessionRepo *session.Session
 	}
 }
 
-// Google OAuth handlers
+// GoogleLogin redirects the user to Google's OAuth2 consent page
+// @Summary      Initiate Google Login
+// @Description  Generates a state token for CSRF protection and redirects the browser to Google's OAuth 2.0 authorization server.
+// @Tags         Authentication
+// @Produce      html
+// @Success      307      {string}  string "Temporary Redirect to Google"
+// @Header       307      {string}  Location "URL to Google Accounts"
+// @Router       /auth/google/login [get]
 func (h *OAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	state := h.generateState()
 
@@ -77,6 +84,16 @@ func (h *OAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
+// GoogleCallback handles the redirection from Google after authorization
+// @Summary      Google OAuth Callback
+// @Description  Exchanges the authorization code for an access token, retrieves user info, creates/links a user record, and establishes a session.
+// @Tags         Authentication
+// @Param        code     query     string  true  "Authorization code from Google"
+// @Param        state    query     string  true  "State token for CSRF validation"
+// @Success      302      {string}  string "Redirect to application feed"
+// @Failure      400      {object}  models.ErrorResponse "Invalid state or missing code"
+// @Failure      500      {object}  models.ErrorResponse "Token exchange or session creation failure"
+// @Router       /auth/google/callback [get]
 func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Verify state parameter
 	if !h.verifyState(r) {
@@ -129,7 +146,14 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "http://localhost:8081/user/feed", http.StatusFound)
 }
 
-// GitHub OAuth handlers
+// GitHubLogin redirects the user to GitHub's OAuth consent page
+// @Summary      Initiate GitHub Login
+// @Description  Generates a state token and redirects the browser to GitHub's authorization server.
+// @Tags         Authentication
+// @Produce      html
+// @Success      307      {string}  string "Temporary Redirect to GitHub"
+// @Header       307      {string}  Location "URL to GitHub Login"
+// @Router       /auth/github/login [get]
 func (h *OAuthHandler) GitHubLogin(w http.ResponseWriter, r *http.Request) {
 	state := h.generateState()
 
@@ -155,6 +179,16 @@ func (h *OAuthHandler) GitHubLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
+// GitHubCallback handles the redirection from GitHub after authorization
+// @Summary      GitHub OAuth Callback
+// @Description  Exchanges the GitHub code for a token, fetches user emails and profile, and logs the user in.
+// @Tags         Authentication
+// @Param        code     query     string  true  "Authorization code from GitHub"
+// @Param        state    query     string  true  "State token for validation"
+// @Success      302      {string}  string "Redirect to application feed"
+// @Failure      400      {object}  models.ErrorResponse "Bad Request"
+// @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /auth/github/callback [get]
 func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	// Verify state parameter
 	if !h.verifyState(r) {

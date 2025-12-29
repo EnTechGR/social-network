@@ -27,6 +27,13 @@ func NewCategoryHandler(catRepo *repository.CategoryRepository, postRepo *reposi
 }
 
 // GetCategories returns all categories as JSON
+// @Summary      Get all categories
+// @Description  Retrieves a list of all discussion categories available on the platform.
+// @Tags         Categories
+// @Produce      json
+// @Success      200  {array}   models.Category
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/categories [get]
 func (h *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -42,6 +49,17 @@ func (h *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request) 
 	utils.JSONResponse(w, categories, http.StatusOK)
 }
 
+// GetCategoryByID returns a specific category and its associated posts
+// @Summary      Get category by ID
+// @Description  Retrieves a specific category's details along with a list of posts belonging to it.
+// @Tags         Categories
+// @Produce      json
+// @Param        id   query     int  true  "Category ID"
+// @Success      200  {object}  CategoryWithPostsResponse
+// @Failure      400  {object}  models.ErrorResponse "Invalid or missing ID"
+// @Failure      404  {object}  models.ErrorResponse "Category not found"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/categories/detail [get]
 func (h *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

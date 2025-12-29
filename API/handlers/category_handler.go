@@ -115,3 +115,11 @@ func (h *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request
 
 	utils.JSONResponse(w, categoryByID, http.StatusOK)
 }
+
+// CategoryWithPostsResponse represents the structure of a category and its posts
+// @Description Response containing category info and its associated post list
+type CategoryWithPostsResponse struct {
+	ID    int           `json:"id" example:"1"`
+	Name  string        `json:"name" example:"Technology"`
+	Posts []models.Post `json:"posts"`
+}

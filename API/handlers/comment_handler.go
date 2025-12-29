@@ -43,7 +43,7 @@ func NewCommentHandler(
 // @Security     CookieAuth
 // @Accept       json
 // @Produce      json
-// @Param        comment  body      handlers.CreateCommentRequest  true  "Comment details"
+// @Param        comment  body      handlers.CreateComment  true  "Comment details"
 // @Success      201      {object}  models.Comment
 // @Failure      400      {object}  models.ErrorResponse "Missing PostID or Content"
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
@@ -129,7 +129,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string                        true  "Comment ID"
-// @Param        content  body      handlers.EditCommentRequest   true  "New content"
+// @Param        content  body      handlers.EditComment   true  "New content"
 // @Success      200      {object}  map[string]string             "status: updated"
 // @Failure      403      {object}  models.ErrorResponse          "Forbidden - not the owner"
 // @Failure      404      {object}  models.ErrorResponse          "Comment not found"

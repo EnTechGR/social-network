@@ -103,7 +103,6 @@ func (h *ImageHTTPHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) 
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        post_id  formData  string  true  "ID of the post"
-// @Param        image    formData  file    true  "Image file(s) to upload" collectionFormat(multi)
 // @Success      200      {object}  ImageUploadResponse
 // @Failure      403      {object}  models.ErrorResponse
 // @Router       /api/v1/images/upload [post]

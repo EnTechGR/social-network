@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"forum/middleware"
-	"forum/models"
-	"forum/repository"
-	"forum/utils"
-	"forum/websocket"
+	"social-network/middleware"
+	"social-network/models"
+	"social-network/repository"
+	"social-network/utils"
+	"social-network/websocket"
 )
 
 // ReactionHandler handles like/dislike reactions
@@ -37,7 +37,19 @@ func NewReactionHandler(
 	}
 }
 
-// React toggles a reaction on a post or comment for the authenticated user
+// CreateReact toggles a reaction (like/dislike/love) on a post or comment
+// @Summary      React to content
+// @Description  Allows an authenticated user to toggle a reaction. If the reaction exists, it is removed; if a different one exists, it is updated. Triggers a real-time notification to the content owner.
+// @Tags         Reactions
+// @Security     CookieAuth
+// @Accept       json
+// @Produce      json
+// @Param        reaction  body      handlers.ReactionRequest  true  "Reaction Details"
+// @Success      200       {array}   models.ReactionWithUser   "Returns the updated list of all reactions for the target"
+// @Failure      400       {object}  models.ErrorResponse      "Invalid target_id, target_type, or reaction_type"
+// @Failure      401       {object}  models.ErrorResponse      "Unauthorized"
+// @Failure      500       {object}  models.ErrorResponse      "Internal Server Error"
+// @Router       /api/reactions [post]
 func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -98,7 +110,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      notifType,
 						PostID:    post.ID,
 						CommentID: nil,
@@ -130,7 +142,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				if h.Hub != nil {
 					notificationView := models.NotificationView{
 						ID:        n.ID,
-						Username:  user.Username,
+						Nickname:  user.Nickname,
 						Type:      notifType,
 						PostID:    comment.PostID,
 						CommentID: &comment.ID,

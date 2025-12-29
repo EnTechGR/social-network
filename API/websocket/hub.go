@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
-	"forum/models" // Added import
+	"social-network/models" // Added import
 	"log"
 	"sync"
 	"time"
@@ -128,7 +128,7 @@ func (h *Hub) registerClient(client *Client) {
 
 	// 5. Broadcast status updates (performed outside the lock).
 	// Notify all other connected clients that this user is now online.
-	h.broadcastOnlineStatus(client.UserID, client.Username, true)
+	h.broadcastOnlineStatus(client.UserID, client.Nickname, true)
 
 	// Send list of online users to the newly connected client for initial state synchronization.
 	h.sendOnlineUsersList(client)
@@ -159,7 +159,7 @@ func (h *Hub) unregisterClient(client *Client) {
 
 		// 4. Broadcast status update (performed outside the lock).
 		// Notify all remaining connected clients that this user is now offline.
-		h.broadcastOnlineStatus(client.UserID, client.Username, false)
+		h.broadcastOnlineStatus(client.UserID, client.Nickname, false)
 	} else {
 		// The client was already replaced by a newer connection or never fully registered.
 		// Simply unlock and do nothing.
@@ -321,7 +321,7 @@ func (h *Hub) sendOnlineUsersList(client *Client) {
 		if userID != client.UserID {
 			onlineUsers = append(onlineUsers, OnlineStatusData{
 				UserID:   c.UserID,
-				Username: c.Username,
+				Username: c.Nickname,
 				IsOnline: true, // They are currently online
 			})
 		}
@@ -463,7 +463,7 @@ func (h *Hub) SendNotification(userID string, notification models.NotificationVi
     }
 
     log.Printf("[Hub] Sending notification to user %s: Type=%s, From=%s", 
-        userID, notification.Type, notification.Username)
+        userID, notification.Type, notification.Nickname)
 
     h.BroadcastToUser(userID, message)
 }

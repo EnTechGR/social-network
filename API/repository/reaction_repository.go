@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"forum/models"
+	"social-network/models"
 	"time"
 )
 
@@ -91,7 +91,7 @@ func (r *ReactionRepository) GetReactionsByPostWithUser(postID string) ([]models
 	var reactions []models.ReactionWithUser
 	for rows.Next() {
 		var rr models.ReactionWithUser
-		if err := rows.Scan(&rr.UserID, &rr.Username, &rr.ReactionType, &rr.PostID, &rr.CreatedAt); err != nil {
+		if err := rows.Scan(&rr.UserID, &rr.Nickname, &rr.ReactionType, &rr.PostID, &rr.CreatedAt); err != nil {
 			return nil, err
 		}
 		reactions = append(reactions, rr)
@@ -113,7 +113,7 @@ func (r *ReactionRepository) GetReactionsByCommentWithUser(commentID string) ([]
 	var reactions []models.ReactionWithUser
 	for rows.Next() {
 		var rr models.ReactionWithUser
-		if err := rows.Scan(&rr.UserID, &rr.Username, &rr.ReactionType, &rr.CommentID, &rr.CreatedAt); err != nil {
+		if err := rows.Scan(&rr.UserID, &rr.Nickname, &rr.ReactionType, &rr.CommentID, &rr.CreatedAt); err != nil {
 			return nil, err
 		}
 		reactions = append(reactions, rr)

@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"forum/middleware"
-	"forum/repository"
-	"forum/utils"
 	"net/http"
+	"social-network/middleware"
+	"social-network/repository"
+	"social-network/utils"
 )
 
 type LikedPostsHandler struct {
@@ -18,6 +18,16 @@ func NewLikedPostsHandler(postRepo *repository.PostRepository, commentRepo *repo
 	return &LikedPostsHandler{PostRepo: postRepo, CommentRepo: commentRepo, ReactionRepo: reactionRepo, ImageRepo: imageRepo}
 }
 
+// GetLikedPosts retrieves all posts liked by the current user
+// @Summary      Get liked posts
+// @Description  Returns a list of all posts the authenticated user has reacted to positively (liked).
+// @Tags         User Engagement
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {array}   handlers.MyPostResponse
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/posts/liked [get]
 func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -58,7 +68,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 			cr := CommentResponse{
 				ID:        c.ID,
 				UserID:    c.UserID,
-				Username:  c.Username,
+				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
 				Reactions: []ReactionResponse{},
@@ -71,7 +81,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 			for _, r := range reactions {
 				cr.Reactions = append(cr.Reactions, ReactionResponse{
 					UserID:       r.UserID,
-					Username:     r.Username,
+					Nickname:     r.Nickname,
 					ReactionType: r.ReactionType,
 					CreatedAt:    r.CreatedAt,
 				})
@@ -88,7 +98,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 		for _, r := range reactions {
 			reactResp = append(reactResp, ReactionResponse{
 				UserID:       r.UserID,
-				Username:     r.Username,
+				Nickname:     r.Nickname,
 				ReactionType: r.ReactionType,
 				CreatedAt:    r.CreatedAt,
 			})
@@ -108,7 +118,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 		response = append(response, MyPostResponse{
 			ID:           post.ID,
 			UserID:       post.UserID,
-			Username:     post.Username,
+			Nickname:     post.Nickname,
 			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
@@ -123,6 +133,16 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 	utils.JSONResponse(w, response, http.StatusOK)
 }
 
+// GetDislikedPosts retrieves all posts disliked by the current user
+// @Summary      Get disliked posts
+// @Description  Returns a list of all posts the authenticated user has reacted to negatively (disliked).
+// @Tags         User Engagement
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {array}   handlers.MyPostResponse
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/posts/disliked [get]
 func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -163,7 +183,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 			cr := CommentResponse{
 				ID:        c.ID,
 				UserID:    c.UserID,
-				Username:  c.Username,
+				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
 				Reactions: []ReactionResponse{},
@@ -176,7 +196,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 			for _, r := range reactions {
 				cr.Reactions = append(cr.Reactions, ReactionResponse{
 					UserID:       r.UserID,
-					Username:     r.Username,
+					Nickname:     r.Nickname,
 					ReactionType: r.ReactionType,
 					CreatedAt:    r.CreatedAt,
 				})
@@ -193,7 +213,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 		for _, r := range reactions {
 			reactResp = append(reactResp, ReactionResponse{
 				UserID:       r.UserID,
-				Username:     r.Username,
+				Nickname:     r.Nickname,
 				ReactionType: r.ReactionType,
 				CreatedAt:    r.CreatedAt,
 			})
@@ -213,7 +233,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 		response = append(response, MyPostResponse{
 			ID:           post.ID,
 			UserID:       post.UserID,
-			Username:     post.Username,
+			Nickname:     post.Nickname,
 			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),

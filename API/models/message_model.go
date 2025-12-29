@@ -2,119 +2,140 @@ package models
 
 import "time"
 
-// --- Core Data Models ---
-
-// Message represents a private message record as stored in the database.
-// This structure is primarily used for CRUD operations against the 'messages' table.
+// Message represents a private message record
+// swagger:model Message
 type Message struct {
-	// MessageID is the unique primary key for the message record (e.g., a UUID).
+	// The unique identifier for the message (UUID)
+	// example: m1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
 	MessageID string `json:"message_id"`
-	// SenderID is the unique identifier of the user who sent the message.
+	// The ID of the user who sent the message
+	// example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
 	SenderID string `json:"sender_id"`
-	// ReceiverID is the unique identifier of the user intended to receive the message.
+	// The ID of the user intended to receive the message
+	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
 	ReceiverID string `json:"receiver_id"`
-	// Content holds the text body of the message.
+	// The text body of the message
+	// example: Hey, did you see the new documentation?
 	Content string `json:"content"`
-	// CreatedAt records the timestamp when the message was persisted.
+	// example: 2025-12-29T18:00:00Z
 	CreatedAt time.Time `json:"created_at"`
-	// IsRead indicates the read status from the receiver's perspective (true if read).
+	// Indicates if the receiver has read the message
+	// example: false
 	IsRead bool `json:"is_read"`
-	// Image is an optional field containing metadata for an attached image, if present.
+	// Optional image attachment metadata
 	Image *ChatImage `json:"image,omitempty"`
 }
 
-// ChatImage represents the metadata for an image file attached to a chat message.
-// This corresponds directly to the 'chat_images' database table.
+// ChatImage represents metadata for an image attached to a chat
+// swagger:model ChatImage
 type ChatImage struct {
-	// ImageID is the unique primary key for the image metadata record.
+	// example: img_987654321
 	ImageID string `json:"image_id"`
-	// MessageID is the Foreign Key linking this image to its parent message.
+	// example: m1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
 	MessageID string `json:"message_id"`
-	// UserID is the ID of the user who uploaded the image (should match Message.SenderID).
+	// example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
 	UserID string `json:"user_id"`
-	// Filename is the unique, server-side generated name of the stored file.
+	// Internal server filename
+	// example: 20251229_chat_xyz.png
 	Filename string `json:"filename"`
-	// OriginalFilename is the name the user originally used for the file.
+	// Original filename provided by the user
+	// example: screenshot.png
 	OriginalFilename string `json:"original_filename"`
-	// FilePath is the full storage path to the original image file.
+	// example: /uploads/chat_images/20251229_chat_xyz.png
 	FilePath string `json:"file_path"`
-	// ThumbnailPath is the storage path to the optimized thumbnail version.
+	// example: /uploads/chat_images/thumbnails/20251229_chat_xyz.png
 	ThumbnailPath string `json:"thumbnail_path"`
-	// FileSize is the size of the original file in bytes.
+	// example: 1048576
 	FileSize int64 `json:"file_size"`
-	// MimeType specifies the file format (e.g., image/jpeg).
+	// example: image/png
 	MimeType string `json:"mime_type"`
-	// Width is the image width in pixels.
+	// example: 1920
 	Width int `json:"width"`
-	// Height is the image height in pixels.
+	// example: 1080
 	Height int `json:"height"`
-	// UploadedAt records the timestamp when the image metadata was created.
+	// example: 2025-12-29T18:00:00Z
 	UploadedAt time.Time `json:"uploaded_at"`
 }
 
-// --- Request and Response Models ---
-
-// MessageWithUser is the payload used for API responses, including the sender's/receiver's display information.
-// This is typically the result of a database JOIN between 'messages' and 'users'.
+// MessageWithUser is the payload for API responses including nicknames
+// swagger:model MessageWithUser
 type MessageWithUser struct {
+	// example: m1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
 	MessageID string `json:"message_id"`
+	// example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
 	SenderID string `json:"sender_id"`
-	// SenderName is the display name of the message sender.
-	SenderName string `json:"sender_name"`
+	// example: gopher_king
+	SenderNickname string `json:"sender_name"`
+	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
 	ReceiverID string `json:"receiver_id"`
-	// ReceiverName is the display name of the message receiver.
+	// example: tech_lead
 	ReceiverName string `json:"receiver_name"`
+	// example: Hey, did you see the new documentation?
 	Content string `json:"content"`
+	// example: 2025-12-29T18:00:00Z
 	CreatedAt time.Time `json:"created_at"`
+	// example: true
 	IsRead bool `json:"is_read"`
-	// Image is an optional field containing attached image metadata.
-	Image *ChatImage `json:"image,omitempty"`
+	Image  *ChatImage `json:"image,omitempty"`
 }
 
-// CreateMessageRequest defines the structure for an incoming API request to send a new message.
+// CreateMessageRequest defines the body for sending a new message
+// swagger:model CreateMessageRequest
 type CreateMessageRequest struct {
-	// ReceiverID is the ID of the intended recipient (required field).
+	// ID of the recipient
+	// required: true
+	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
 	ReceiverID string `json:"receiver_id" binding:"required"`
-	// Content is the text body of the message (required field).
+	// Message content
+	// required: true
+	// example: Hello there!
 	Content string `json:"content" binding:"required"`
 }
 
-// Conversation represents a single chat conversation thread in a list view.
-// It summarizes the interaction with one specific peer user.
+// Conversation summarizes a chat thread with another user
+// swagger:model Conversation
 type Conversation struct {
-	// UserID is the ID of the peer user in the conversation (not the current user).
+	// The peer user's ID
+	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
 	UserID string `json:"user_id"`
-	// Username is the display name of the peer user.
-	Username string `json:"username"`
-	// LastMessage is the content of the most recent message in the thread.
+	// The peer user's nickname
+	// example: tech_lead
+	Nickname string `json:"nickname"`
+	// The last message sent in this thread
+	// example: Sounds good, see you then.
 	LastMessage string `json:"last_message"`
-	// LastMessageTime is the timestamp of the most recent message.
+	// example: 2025-12-29T18:05:00Z
 	LastMessageTime time.Time `json:"last_message_time"`
-	// UnreadCount is the total number of unread messages in this thread for the current user.
+	// Count of unread messages for the current user
+	// example: 3
 	UnreadCount int `json:"unread_count"`
-	// IsOnline indicates the current online status of the peer user.
+	// Real-time online status of the peer user
+	// example: true
 	IsOnline bool `json:"is_online"`
 }
 
-// MessageResponse defines the standard API response after a successful message sending operation.
+// MessageResponse is the envelope for a single message result
+// swagger:model MessageResponse
 type MessageResponse struct {
-	// Message contains the full details of the newly created message, including user names.
 	Message MessageWithUser `json:"message"`
-	// Success indicates the outcome of the operation (true for successful creation).
+	// example: true
 	Success bool `json:"success"`
 }
 
-// ConversationsResponse contains the list of conversation summaries for the current user.
+// ConversationsResponse is the envelope for the conversation list
+// swagger:model ConversationsResponse
 type ConversationsResponse struct {
 	Conversations []Conversation `json:"conversations"`
 }
 
-// MessagesResponse contains a paginated list of messages for a specific conversation.
+// MessagesResponse is the envelope for a conversation history
+// swagger:model MessagesResponse
 type MessagesResponse struct {
-	// Messages is the slice of messages returned for the current page.
 	Messages []MessageWithUser `json:"messages"`
-	// HasMore indicates if there are more pages of messages available.
+	// True if more messages can be loaded (pagination)
+	// example: true
 	HasMore bool `json:"has_more"`
-	// Total is the total count of messages in the conversation.
+	// Total messages in this specific conversation
+	// example: 150
 	Total int `json:"total"`
 }

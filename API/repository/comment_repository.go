@@ -2,8 +2,8 @@ package repository
 
 import (
 	"database/sql"
-	"forum/models"
-	"forum/utils"
+	"social-network/models"
+	"social-network/utils"
 	"time"
 )
 
@@ -77,7 +77,7 @@ func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.C
 	var comments []models.CommentWithUser
 	for rows.Next() {
 		var c models.CommentWithUser
-		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Username, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Nickname, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		comments = append(comments, c)

@@ -3,7 +3,7 @@ package repository
 
 import (
 	"database/sql"
-	"forum/models"
+	"social-network/models"
 )
 
 type CategoryRepository struct {
@@ -86,7 +86,7 @@ func (r *CategoryRepository) GetPostsByCategoryWithUser(categoryID int) ([]model
 	var posts []models.PostWithUser
 	for rows.Next() {
 		var post models.PostWithUser
-		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.CategoryID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Nickname, &post.CategoryID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

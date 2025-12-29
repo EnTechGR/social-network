@@ -3,8 +3,8 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"forum/config"
-	dbmigrate "forum/pkg/db/sqlite"
+	"social-network/config"
+	dbmigrate "social-network/pkg/db/sqlite"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,7 +16,7 @@ import (
 // InitDB initializes the database and returns a connection.
 // It applies migrations via golang-migrate and seeds default categories.
 func InitDB() (*sql.DB, error) {
-	dbPath := filepath.Join("./database", "forum.db")
+	dbPath := filepath.Join("./database", "social-network.db")
 
 	// Ensure database directory exists before opening the SQLite file
 	if err := os.MkdirAll("./database", 0755); err != nil {
@@ -101,7 +101,7 @@ func createBackup(dbPath string) (string, error) {
 	}
 
 	timestamp := time.Now().Format("20060102_150405")
-	backupName := fmt.Sprintf("forum_backup_%s.db", timestamp)
+	backupName := fmt.Sprintf("social_network_backup_%s.db", timestamp)
 	backupPath := filepath.Join(backupDir, backupName)
 
 	sourceFile, err := os.Open(dbPath)
@@ -148,7 +148,7 @@ func cleanupOldBackups(maxAgeDays int) error {
 			continue
 		}
 		// Only process files that match backup naming pattern
-		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "forum_backup" {
+		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "social_network_backup" {
 			continue
 		}
 		
@@ -175,7 +175,7 @@ func cleanupOldBackups(maxAgeDays int) error {
 // Creates a backup of the current database before restoring.
 // Use this for disaster recovery or rolling back to a previous state.
 func RestoreFromBackup(backupPath string) error {
-	dbPath := filepath.Join("./database", "forum.db")
+	dbPath := filepath.Join("./database", "social-network.db")
 
 	// Verify backup file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
@@ -233,7 +233,7 @@ func ListBackups() ([]string, error) {
 			continue
 		}
 		// Only list files that match backup naming pattern
-		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "forum_backup" {
+		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "social_network_backup" {
 			continue
 		}
 		

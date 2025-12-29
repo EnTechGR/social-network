@@ -2,8 +2,8 @@ package oauth
 
 import (
 	"database/sql"
-	"forum/models"
-	"forum/repository"
+	"social-network/models"
+	"social-network/repository"
 	"time"
 )
 

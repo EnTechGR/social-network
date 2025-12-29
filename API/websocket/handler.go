@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"forum/middleware"
+	"social-network/middleware"
 
 	"github.com/gorilla/websocket"
 )
@@ -47,7 +47,7 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// 3. Client Creation: Construct a new Client object associated with the user and the connection.
 	client := &Client{
 		UserID:   user.ID,
-		Username: user.Username,
+		Nickname: user.Nickname,
 		Conn:     conn,
 		// Send channel is buffered to handle messages arriving faster than the socket can write them.
 		Send: make(chan []byte, 256),
@@ -63,5 +63,5 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	go client.writePump() // Handles messages from the Hub to the WebSocket.
 	go client.readPump()  // Handles incoming messages from the WebSocket to the Hub/Broadcast channel.
 
-	log.Printf("WebSocket connection established for user %s (%s)", user.Username, user.ID)
+	log.Printf("WebSocket connection established for user %s (%s)", user.Nickname, user.ID)
 }

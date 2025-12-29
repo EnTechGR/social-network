@@ -288,7 +288,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := r.Cookie("session_id")
+	cookie, err := r.Cookie("id")
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -300,7 +300,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
@@ -332,7 +332,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  models.ErrorResponse
 // @Router       /api/auth/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, err := r.Cookie("session_id")
+	sessionCookie, err := r.Cookie("id")
 	if err != nil {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)
 		return
@@ -381,7 +381,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    session.SessionID,
 		Path:     "/",
 		Expires:  session.ExpiresAt,

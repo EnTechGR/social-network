@@ -16,7 +16,7 @@ func CSRFMiddleware(sessionRepo *session.SessionRepository) func(http.Handler) h
 
 			// Only protect modifying methods and only if path is not excluded
 			if (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete) && !excludePaths[r.URL.Path] {
-				cookie, err := r.Cookie("session_id")
+				cookie, err := r.Cookie("id")
 				if err != nil || cookie.Value == "" {
 					http.Error(w, "Unauthorized - no session", http.StatusUnauthorized)
 					return

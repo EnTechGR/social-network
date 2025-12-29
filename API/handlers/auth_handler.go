@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -367,13 +368,18 @@ func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 
 // SessionVerifyResponse represents the specific response for session verification
 type SessionVerifyResponse struct {
-    User      models.User `json:"user"`
-    CSRFToken string      `json:"csrf_token"`
+	User      models.User `json:"user"`
+	CSRFToken string      `json:"csrf_token"`
 }
 
 // createUserSession creates a session and sets the session cookie
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
-	csrfToken := utils.GenerateCSRFToken()
+	csrfToken, err := utils.GenerateCSRFToken()
+	if err != nil {
+		log.Printf("Failed to generate CSRF token: %v", err)
+		return nil, fmt.Errorf("token generation failed: %w", err)
+	}
+	
 	session, err := h.SessionRepo.Create(user.ID, r.RemoteAddr, csrfToken)
 	if err != nil {
 		log.Printf("Failed to create session: %v", err)
@@ -422,7 +428,7 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,

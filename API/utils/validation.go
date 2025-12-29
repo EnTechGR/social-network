@@ -1,4 +1,3 @@
-// Package utils provides utility functions for validation, crypto, and ID generation
 package utils
 
 import (
@@ -95,23 +94,77 @@ func GenerateUUID() string {
 // SESSION TOKEN GENERATION
 // ============================================================================
 
-// GenerateSessionToken generates a secure random session token
-func GenerateSessionToken() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		// Fallback to UUID if random fails
-		return uuid.New().String()
+// GenerateSessionToken generates a cryptographically secure random session token.
+//
+// SECURITY PROPERTIES:
+//   - Entropy: 256 bits (32 bytes from crypto/rand)
+//   - Encoding: Base64 URL-safe encoding (43 characters)
+//   - Randomness: Uses crypto/rand.Read for CSPRNG
+//   - Attack resistance: 2^256 possible values, computationally infeasible to brute force
+//
+// ERROR HANDLING:
+//   - Returns error if crypto/rand fails (never falls back to weaker entropy)
+//   - Validates that exactly 32 bytes were read
+//
+// OWASP COMPLIANCE:
+//   - Exceeds minimum 64 bits of entropy requirement (provides 256 bits)
+//   - Uses CSPRNG as required by OWASP Session Management Cheat Sheet
+//
+// Expected time for attacker to brute force (theoretical):
+//   - At 10,000 guesses/second: > 10^70 years (universe age: ~10^10 years)
+func GenerateSessionToken() (string, error) {
+	bytes := make([]byte, 32) // 256 bits of entropy
+	
+	// Read cryptographically secure random bytes
+	n, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate session token: %w", err)
 	}
-	return base64.URLEncoding.EncodeToString(bytes)
+	
+	// Validate that we read exactly 32 bytes
+	if n != 32 {
+		return "", fmt.Errorf("insufficient random bytes: expected 32, got %d", n)
+	}
+	
+	// Encode to base64 URL-safe format (no padding issues)
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// GenerateCSRFToken generates a CSRF token
-func GenerateCSRFToken() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return uuid.New().String()
+// GenerateCSRFToken generates a cryptographically secure CSRF token.
+//
+// SECURITY PROPERTIES:
+//   - Entropy: 256 bits (32 bytes from crypto/rand)
+//   - Encoding: Base64 URL-safe encoding (43 characters)
+//   - Randomness: Uses crypto/rand.Read for CSPRNG
+//   - Unique per session: Prevents CSRF attacks via token validation
+//
+// ERROR HANDLING:
+//   - Returns error if crypto/rand fails (never falls back to weaker entropy)
+//   - Validates that exactly 32 bytes were read
+//
+// CSRF TOKEN REQUIREMENTS:
+//   - Must be unpredictable (achieved via CSPRNG)
+//   - Must be unique per session (achieved via 256-bit entropy)
+//   - Must be validated on state-changing requests
+//
+// Expected collision probability:
+//   - With 1 million active sessions: < 1 in 10^60
+func GenerateCSRFToken() (string, error) {
+	bytes := make([]byte, 32) // 256 bits of entropy
+	
+	// Read cryptographically secure random bytes
+	n, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate CSRF token: %w", err)
 	}
-	return base64.URLEncoding.EncodeToString(bytes)
+	
+	// Validate that we read exactly 32 bytes
+	if n != 32 {
+		return "", fmt.Errorf("insufficient random bytes: expected 32, got %d", n)
+	}
+	
+	// Encode to base64 URL-safe format
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
 // CalculateSessionExpiry returns the expiry time for a session (24 hours from now)

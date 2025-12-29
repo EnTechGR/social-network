@@ -229,7 +229,7 @@ func TestAuthHandler_Register_Success_NoAvatar(t *testing.T) {
 		t.Errorf("Expected first name John, got %s", response.User.FirstName)
 	}
 	if response.SessionID == "" {
-		t.Error("Expected session_id to be set")
+		t.Error("Expected id to be set")
 	}
 	if response.CSRFToken == "" {
 		t.Error("Expected csrf_token to be set")

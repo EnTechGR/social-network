@@ -28,7 +28,7 @@ func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.Us
 // Authenticate middleware verifies authentication and sets user in context
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_id")
+		cookie, err := r.Cookie("id")
 		if err != nil {
 			// Scenario 1: No session cookie found in the request.
 			log.Printf("AuthMiddleware [DEBUG]: No session cookie found for request to %s: %v", r.URL.Path, err)
@@ -112,7 +112,7 @@ func (m *AuthMiddleware) RequireGuest(next http.Handler) http.Handler {
 // clearSessionCookie helper function to clear session cookie
 func (m *AuthMiddleware) clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
@@ -120,7 +120,7 @@ func (m *AuthMiddleware) clearSessionCookie(w http.ResponseWriter) {
 		Secure:   true, // Enable in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
 	})
-	log.Printf("AuthMiddleware [DEBUG]: Cleared session_id cookie.")
+	log.Printf("AuthMiddleware [DEBUG]: Cleared id cookie.")
 }
 
 // GetCurrentUser returns the authenticated user from the context

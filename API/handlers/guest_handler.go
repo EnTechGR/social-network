@@ -89,7 +89,7 @@ func NewGuestHandler(
 // @Description  Retrieves all public posts, comments, and reactions in separate flat lists.
 // @Tags         Guest
 // @Produce      json
-// @Success      200  {object}  handlers.GuestViewResponse
+// @Success      200  
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /api/guest/view [get]
 func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {

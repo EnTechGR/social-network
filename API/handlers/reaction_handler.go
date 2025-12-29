@@ -44,7 +44,6 @@ func NewReactionHandler(
 // @Security     CookieAuth
 // @Accept       json
 // @Produce      json
-// @Param        reaction  body      handlers.ReactionRequest  true  "Reaction Details"
 // @Success      200       {array}   models.ReactionWithUser   "Returns the updated list of all reactions for the target"
 // @Failure      400       {object}  models.ErrorResponse      "Invalid target_id, target_type, or reaction_type"
 // @Failure      401       {object}  models.ErrorResponse      "Unauthorized"

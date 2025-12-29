@@ -365,6 +365,12 @@ func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
+// SessionVerifyResponse represents the specific response for session verification
+type SessionVerifyResponse struct {
+    User      models.User `json:"user"`
+    CSRFToken string      `json:"csrf_token"`
+}
+
 // createUserSession creates a session and sets the session cookie
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
 	csrfToken := utils.GenerateCSRFToken()

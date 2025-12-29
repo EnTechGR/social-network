@@ -1,8 +1,8 @@
-// @title           Forum Application API
+// @title           Social-network Application API
 // @version         1.0
-// @description     This is the API documentation for the forum application.
-// @host      localhost:8080 
-// @BasePath  /forum/api
+// @description     This is the API documentation for the social-network application.
+// @host            localhost:8080 
+// @BasePath        /api/v1
 
 package main
 

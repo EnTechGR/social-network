@@ -289,7 +289,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 // @Security     CookieAuth
 // @Produce      image/jpeg,image/png,image/gif
 // @Param        imagePath  path      string  true  "The relative path to the image"
-// @Success      200        {file}    binary
+// @Success      200
 // @Failure      403        {object}  models.ErrorResponse "Forbidden - You don't have access to this image"
 // @Failure      404        {object}  models.ErrorResponse "Image not found"
 // @Router       /api/chat/images/serve/{imagePath} [get]
@@ -359,7 +359,7 @@ func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Param        imageID  path      string  true  "ID of the image to delete"
-// @Success      200      {object}  map[string]bool "success: true"
+// @Success      200
 // @Failure      403      {object}  models.ErrorResponse "Unauthorized: Only sender can delete"
 // @Router       /api/chat/images/{imageID} [delete]
 func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Request) {
@@ -453,7 +453,7 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {object}  map[string]interface{} "image_count (int), total_size_bytes (int64)"
+// @Success      200
 // @Router       /api/chat/images/stats [get]
 func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -498,7 +498,7 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 // @Security     CookieAuth
 // @Produce      json
 // @Param        messageID  query    string  true  "ID of the message"
-// @Success      200        {object} MessageImagesResponse
+// @Success      200
 // @Router       /api/chat/images [get]
 func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -525,7 +525,7 @@ func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Reque
 // @Security     CookieAuth
 // @Produce      json
 // @Param        partner  query     string  true  "User ID of the chat partner"
-// @Success      200      {object}  map[string]interface{} "gallery: []"
+// @Success      200
 // @Router       /api/chat/gallery [get]
 func (h *ChatImageHandler) GetConversationGallery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

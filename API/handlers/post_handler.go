@@ -84,7 +84,7 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id    path      string  true  "Post ID"
 // @Param        title body      object  true  "New Title"
-// @Success      200   {object}  map[string]string "status: title updated"
+// @Success      200
 // @Failure      403   {object}  models.ErrorResponse "Forbidden: Not the owner"
 // @Failure      404   {object}  models.ErrorResponse "Post not found"
 // @Router       /api/posts/{id}/title [put]
@@ -146,7 +146,7 @@ func (h *PostHandler) EditPostTitle(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id      path      string  true  "Post ID"
 // @Param        content body      object  true  "New Content"
-// @Success      200     {object}  map[string]string "status: content updated"
+// @Success      200
 // @Failure      403     {object}  models.ErrorResponse "Forbidden: Not the owner"
 // @Failure      404     {object}  models.ErrorResponse "Post not found"
 // @Router       /api/posts/{id}/content [put]
@@ -205,7 +205,7 @@ func (h *PostHandler) EditPostContent(w http.ResponseWriter, r *http.Request) {
 // @Tags         Posts
 // @Security     CookieAuth
 // @Param        id    path      string  true  "Post ID"
-// @Success      200   {object}  map[string]string "status: deleted"
+// @Success      200
 // @Failure      403   {object}  models.ErrorResponse "Forbidden"
 // @Failure      404   {object}  models.ErrorResponse "Post not found"
 // @Router       /api/posts/{id} [delete]

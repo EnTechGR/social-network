@@ -127,7 +127,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 // @Param        user_id  query     string  true   "ID of the partner"
 // @Param        limit    query     int     false  "Max messages (default 10, max 50)"
 // @Param        offset   query     int     false  "Pagination offset"
-// @Success      200      {object}  models.MessagesResponse
+// @Success      200
 // @Failure      400      {object}  models.ErrorResponse
 // @Router       /api/messages/conversation [get]
 func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +214,7 @@ func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request)
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {object}  models.ConversationsResponse
+// @Success      200 
 // @Router       /api/messages/conversations [get]
 func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -260,7 +260,7 @@ func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200  {object}  UserListResponse
+// @Success      200 
 // @Failure      401  {object}  models.ErrorResponse
 // @Router       /api/messages/users [get]
 func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -331,7 +331,7 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {object}  map[string]int "unread_count"
+// @Success      200
 // @Router       /api/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -367,7 +367,7 @@ func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) 
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Param        messageID  path      string  true  "ID of the message"
-// @Success      200        {object}  map[string]bool "success: true"
+// @Success      200
 // @Failure      403        {object}  models.ErrorResponse "Not the receiver"
 // @Failure      404        {object}  models.ErrorResponse "Message not found"
 // @Router       /api/messages/read/{messageID} [put]
@@ -434,7 +434,7 @@ func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Param        messageID  path      string  true  "ID of the message"
-// @Success      200        {object}  map[string]bool "success: true"
+// @Success      200
 // @Router       /api/messages/{messageID} [delete]
 func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
@@ -508,7 +508,7 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Produce      json
 // @Param        all   query    bool  false  "Set to true to include users with existing chats"
-// @Success      200   {object}  UserListResponse
+// @Success      200
 // @Failure      401   {object}  models.ErrorResponse
 // @Router       /api/messages/search-users [get]
 func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request) {

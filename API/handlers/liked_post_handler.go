@@ -24,7 +24,7 @@ func NewLikedPostsHandler(postRepo *repository.PostRepository, commentRepo *repo
 // @Tags         User Engagement
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200  {array}   handlers.MyPostResponse
+// @Success      200  
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
 // @Router       /api/posts/liked [get]

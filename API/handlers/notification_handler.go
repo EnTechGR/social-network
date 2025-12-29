@@ -31,7 +31,7 @@ func NewNotificationHandler(
 // @Tags         Notifications
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {object}  NotificationListResponse
+// @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
 // @Router       /api/notifications [get]
@@ -74,7 +74,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 // @Tags         Notifications
 // @Security     CookieAuth
 // @Param        id       path      string  true  "Notification ID"
-// @Success      200      {object}  map[string]string "status: deleted"
+// @Success      200
 // @Failure      400      {object}  models.ErrorResponse "Missing notification ID"
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Router       /api/notifications/{id} [delete]

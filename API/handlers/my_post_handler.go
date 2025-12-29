@@ -50,7 +50,7 @@ type MyPostResponse struct {
 // @Tags         User Activity
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {array}   handlers.MyPostResponse
+// @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Failed to load posts or associated data"
 // @Router       /api/my-posts [get]
@@ -167,7 +167,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 // @Tags         User Activity
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200      {array}   handlers.MyPostResponse
+// @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
 // @Router       /api/my-commented-posts [get]

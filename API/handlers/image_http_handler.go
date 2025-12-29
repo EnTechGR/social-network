@@ -186,7 +186,7 @@ func (h *ImageHTTPHandler) UploadPostImages(w http.ResponseWriter, r *http.Reque
 // @Security     CookieAuth
 // @Produce      json
 // @Param        postId   path      string  true  "Post ID"
-// @Success      200      {object}  SimpleSuccessResponse
+// @Success      200      
 // @Failure      401      {object}  models.ErrorResponse
 // @Router       /api/v1/images/delete/{postId} [delete]
 func (h *ImageHTTPHandler) DeletePostImages(w http.ResponseWriter, r *http.Request) {

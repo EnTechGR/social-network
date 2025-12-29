@@ -267,7 +267,7 @@ curl -X POST http://localhost:8080/forum/api/register \
 #   -d '{"username": "user4", "email": "user4@example.com", "password": "Pass1234", "first_name": "User", "last_name": "Four", "age": 35, "gender": "prefer_not_to_say"}'
 # ```
 
- curl -X POST http://localhost:8080/api/v1/register \
+curl -X POST http://localhost:8080/api/v1/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "testuser@example.com",

@@ -2,6 +2,7 @@ package session
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -21,14 +22,19 @@ func NewSessionRepository(db *sql.DB) *SessionRepository {
 }
 
 // Create creates a new session for a user
+// Create creates a new session for a user
 func (r *SessionRepository) Create(userID, ipAddress, csrfToken string) (*models.Session, error) {
 	// Generate a new session ID
-	sessionID := utils.GenerateSessionToken()
+	sessionID, err := utils.GenerateSessionToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate session ID: %w", err)
+	}
+	
 	createdAt := time.Now().UTC()
 	expiresAt := utils.CalculateSessionExpiry()
 
 	// Insert or replace the session atomically
-	_, err := r.DB.Exec(`INSERT INTO sessions (user_id, session_id, ip_address, created_at, expires_at, csrf_token)
+	_, err = r.DB.Exec(`INSERT INTO sessions (user_id, session_id, ip_address, created_at, expires_at, csrf_token)
 			VALUES (?, ?, ?, ?, ?, ?)
 			ON CONFLICT(user_id) DO UPDATE SET
 				session_id = excluded.session_id,

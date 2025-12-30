@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"social-network/repository/session"
 	"net/http"
+	"social-network/repository/session"
+	"social-network/utils"
 )
 
 func CSRFMiddleware(sessionRepo *session.SessionRepository) func(http.Handler) http.Handler {
@@ -16,7 +17,7 @@ func CSRFMiddleware(sessionRepo *session.SessionRepository) func(http.Handler) h
 
 			// Only protect modifying methods and only if path is not excluded
 			if (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete) && !excludePaths[r.URL.Path] {
-				cookie, err := r.Cookie("id")
+				cookie, err := r.Cookie(utils.GetSessionCookieName())
 				if err != nil || cookie.Value == "" {
 					http.Error(w, "Unauthorized - no session", http.StatusUnauthorized)
 					return

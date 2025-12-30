@@ -203,3 +203,44 @@ func (r *SessionRepository) RenewSession(sessionID string, absoluteExpiresAt tim
 	
 	return newExpiresAt, true, nil
 }
+
+// RotateCSRFToken generates a new CSRF token and updates it in the session
+// Returns the new CSRF token
+// This should be called after sensitive operations to limit attack window
+func (r *SessionRepository) RotateCSRFToken(sessionID string) (string, error) {
+	// Generate new CSRF token
+	newCSRFToken, err := utils.GenerateCSRFToken()
+	if err != nil {
+		return "", err
+	}
+	
+	// Update in database
+	_, err = r.DB.Exec(`
+		UPDATE sessions 
+		SET csrf_token = ? 
+		WHERE session_id = ?
+	`, newCSRFToken, sessionID)
+	
+	if err != nil {
+		return "", err
+	}
+	
+	log.Printf("[CSRF ROTATION] Rotated CSRF token for session %s", sessionID)
+	return newCSRFToken, nil
+}
+
+// UpdateCSRFToken updates the CSRF token for a session
+// Used when you already have a new token generated
+func (r *SessionRepository) UpdateCSRFToken(sessionID, newCSRFToken string) error {
+	_, err := r.DB.Exec(`
+		UPDATE sessions 
+		SET csrf_token = ? 
+		WHERE session_id = ?
+	`, newCSRFToken, sessionID)
+	
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}

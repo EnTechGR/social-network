@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -373,26 +372,43 @@ type SessionVerifyResponse struct {
 }
 
 // createUserSession creates a session and sets the session cookie
+// SECURITY: Implements session regeneration to prevent session fixation attacks
+// by explicitly invalidating any existing session before creating a new one
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
+	// STEP 1: Invalidate any existing session (session fixation prevention)
+	// Check if there's an old session cookie in the request
+	if oldCookie, err := r.Cookie("session_id"); err == nil {
+		log.Printf("[SECURITY] Session regeneration: Invalidating old session %s for user %s", oldCookie.Value, user.ID)
+
+		// Delete the old session from the database
+		if err := h.SessionRepo.DeleteBySessionID(oldCookie.Value); err != nil {
+			// Log but don't fail - the old session might already be expired/deleted
+			log.Printf("[SECURITY] Warning: Failed to delete old session during regeneration: %v", err)
+		}
+	}
+
+	// STEP 2: Generate a completely new session with new ID and CSRF token
 	csrfToken, err := utils.GenerateCSRFToken()
 	if err != nil {
 		log.Printf("Failed to generate CSRF token: %v", err)
-		return nil, fmt.Errorf("token generation failed: %w", err)
+		return nil, err
 	}
-	
 	session, err := h.SessionRepo.Create(user.ID, r.RemoteAddr, csrfToken)
 	if err != nil {
 		log.Printf("Failed to create session: %v", err)
 		return nil, err
 	}
 
+	log.Printf("[SECURITY] Session regeneration: Created new session %s for user %s", session.SessionID, user.ID)
+
+	// STEP 3: Set the new session cookie with the new session ID
 	http.SetCookie(w, &http.Cookie{
-		Name:     "id",
+		Name:     "session_id",
 		Value:    session.SessionID,
 		Path:     "/",
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   false, // TODO: Set to true in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
 	})
 

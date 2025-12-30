@@ -20,34 +20,35 @@ func NewSessionRepository(db *sql.DB) *SessionRepository {
 	return &SessionRepository{DB: db}
 }
 
-// Updated Create method for SessionRepository
+// Updated Create method for SessionRepository with User-Agent support
 // Replace your existing Create method in API/repository/session/session.go
 
-// Create creates a new session for a user with both idle and absolute timeouts
-func (r *SessionRepository) Create(userID, ipAddress, csrfToken string) (*models.Session, error) {
+// Create creates a new session for a user with IP address, User-Agent, and timeouts
+func (r *SessionRepository) Create(userID, ipAddress, userAgent, csrfToken string) (*models.Session, error) {
 	// Generate a new session ID
 	sessionID, err := utils.GenerateSessionToken()
 	if err != nil {
 		return nil, err
 	}
 	createdAt := time.Now().UTC()
-	expiresAt := utils.CalculateSessionExpiry()                 // Idle timeout (30 min)
+	expiresAt := utils.CalculateSessionExpiry()              // Idle timeout (30 min)
 	absoluteExpiresAt := utils.CalculateAbsoluteSessionExpiry() // Absolute timeout (12 hours)
 
 	// Insert or replace the session atomically
 	_, err = r.DB.Exec(`INSERT INTO sessions (
-			user_id, session_id, ip_address, created_at, expires_at, absolute_expires_at, csrf_token
+			user_id, session_id, ip_address, user_agent, created_at, expires_at, absolute_expires_at, csrf_token
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET
 			session_id = excluded.session_id,
 			ip_address = excluded.ip_address,
+			user_agent = excluded.user_agent,
 			created_at = excluded.created_at,
 			expires_at = excluded.expires_at,
 			absolute_expires_at = excluded.absolute_expires_at,
 			csrf_token = excluded.csrf_token`,
-		userID, sessionID, ipAddress,
-		createdAt.Format(time.RFC3339),
+		userID, sessionID, ipAddress, userAgent,
+		createdAt.Format(time.RFC3339), 
 		expiresAt.Format(time.RFC3339),
 		absoluteExpiresAt.Format(time.RFC3339),
 		csrfToken)
@@ -55,11 +56,12 @@ func (r *SessionRepository) Create(userID, ipAddress, csrfToken string) (*models
 		return nil, err
 	}
 
-	// Return the session object including both timeouts
+	// Return the session object including User-Agent
 	session := &models.Session{
 		UserID:            userID,
 		SessionID:         sessionID,
 		IPAddress:         ipAddress,
+		UserAgent:         userAgent,
 		CreatedAt:         createdAt,
 		ExpiresAt:         expiresAt,
 		AbsoluteExpiresAt: absoluteExpiresAt,
@@ -69,7 +71,7 @@ func (r *SessionRepository) Create(userID, ipAddress, csrfToken string) (*models
 	return session, nil
 }
 
-// Updated GetBySessionID method for SessionRepository
+// Updated GetBySessionID method for SessionRepository with User-Agent retrieval
 // Replace your existing GetBySessionID method in API/repository/session/session.go
 
 // GetBySessionID retrieves a session by its ID and validates both idle and absolute timeouts
@@ -79,13 +81,14 @@ func (r *SessionRepository) GetBySessionID(sessionID string) (*models.Session, e
 	var createdStr, expiresStr, absoluteExpiresStr string
 
 	err := r.DB.QueryRow(
-		`SELECT user_id, session_id, ip_address, created_at, expires_at, absolute_expires_at, csrf_token 
+		`SELECT user_id, session_id, ip_address, user_agent, created_at, expires_at, absolute_expires_at, csrf_token 
 		 FROM sessions WHERE session_id = ?`,
 		sessionID,
 	).Scan(
 		&session.UserID,
 		&session.SessionID,
 		&session.IPAddress,
+		&session.UserAgent,
 		&createdStr,
 		&expiresStr,
 		&absoluteExpiresStr,

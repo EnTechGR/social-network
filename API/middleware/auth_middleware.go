@@ -26,11 +26,12 @@ func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.Us
 	}
 }
 
-// Updated Authenticate middleware with Session Renewal (Sliding Window)
-// Replace your existing Authenticate method in API/middleware/auth_middleware.go
+// Updated Authenticate middleware with User-Agent validation
+// Replace the session validation section in your Authenticate method in API/middleware/auth_middleware.go
 
 // Authenticate middleware verifies authentication and sets user in context
 // SECURITY: Implements session renewal (sliding window) to extend idle timeout for active users
+// SECURITY: Validates User-Agent to detect session hijacking attempts
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session_id")
@@ -59,6 +60,41 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		// ============================================================================
+		// USER-AGENT VALIDATION - NEW CODE
+		// ============================================================================
+		// Validate that the User-Agent matches the one stored at session creation
+		// This helps detect session hijacking attempts
+		
+		currentUserAgent := r.Header.Get("User-Agent")
+		isValid, suspicionLevel, reason := utils.ValidateUserAgent(session.UserAgent, currentUserAgent)
+		
+		if !isValid {
+			// CRITICAL: User-Agent mismatch detected - possible session hijacking
+			log.Printf("[SECURITY ALERT] Session hijacking suspected for session %s (User: %s): %s", 
+				session.SessionID, session.UserID, reason)
+			log.Printf("[SECURITY ALERT] Stored UA: %s", session.UserAgent)
+			log.Printf("[SECURITY ALERT] Current UA: %s", currentUserAgent)
+			log.Printf("[SECURITY ALERT] Request from IP: %s to %s", r.RemoteAddr, r.URL.Path)
+			
+			// Terminate the session immediately
+			m.SessionRepo.DeleteBySessionID(session.SessionID)
+			m.clearSessionCookie(w)
+			
+			// Return 401 Unauthorized
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "session_invalid", "message": "Session validation failed for security reasons"}`))
+			return
+		}
+		
+		// Log suspicious but allowed User-Agent variations
+		if suspicionLevel != "none" {
+			log.Printf("[SECURITY] User-Agent validation (Level: %s) for session %s: %s", 
+				suspicionLevel, session.SessionID, reason)
+		}
+		// ============================================================================
+
 		user, err := m.UserRepo.GetByID(session.UserID)
 		if err != nil {
 			// Scenario 4: Session is valid, but the user it points to cannot be found.
@@ -72,39 +108,39 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %s) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
 
 		// ============================================================================
-		// SESSION RENEWAL (SLIDING WINDOW) - NEW CODE
+		// SESSION RENEWAL (SLIDING WINDOW)
 		// ============================================================================
 		// Extend idle timeout for active users, but only if:
 		// 1. Session is within renewal window (optimization - avoid DB writes on every request)
 		// 2. Won't extend past absolute timeout (security - force re-auth after max time)
-
+		
 		if utils.ShouldRenewSession(session.ExpiresAt) {
 			// Session is close to expiring (within renewal window)
 			// Attempt to renew it to keep active user logged in
-
+			
 			newExpiresAt, renewed, err := m.SessionRepo.RenewSession(session.SessionID, session.AbsoluteExpiresAt)
 			if err != nil {
 				// Log but don't fail the request - session is still valid for now
 				log.Printf("AuthMiddleware [WARN]: Failed to renew session %s: %v", session.SessionID, err)
 			} else if renewed {
 				// Session was successfully renewed
-				log.Printf("[SESSION RENEWAL] Extended session %s from %v to %v (user: %s)",
-					session.SessionID,
-					session.ExpiresAt.Format("15:04:05"),
+				log.Printf("[SESSION RENEWAL] Extended session %s from %v to %v (user: %s)", 
+					session.SessionID, 
+					session.ExpiresAt.Format("15:04:05"), 
 					newExpiresAt.Format("15:04:05"),
 					user.Nickname)
-
+				
 				// Update the session object in context with new expiry time
 				session.ExpiresAt = newExpiresAt
 			} else {
 				// Renewal was skipped (would extend past absolute timeout)
-				log.Printf("[SESSION RENEWAL] Skipped renewal for session %s - would exceed absolute timeout at %v",
-					session.SessionID,
+				log.Printf("[SESSION RENEWAL] Skipped renewal for session %s - would exceed absolute timeout at %v", 
+					session.SessionID, 
 					session.AbsoluteExpiresAt.Format("15:04:05"))
 			}
 		}
 		// ============================================================================
-
+		
 		ctx := context.WithValue(r.Context(), "user", user)
 		ctx = context.WithValue(ctx, "session", session)
 		next.ServeHTTP(w, r.WithContext(ctx))

@@ -371,15 +371,17 @@ type SessionVerifyResponse struct {
 	CSRFToken string      `json:"csrf_token"`
 }
 
+
 // createUserSession creates a session and sets the session cookie
 // SECURITY: Implements session regeneration to prevent session fixation attacks
 // by explicitly invalidating any existing session before creating a new one
+// SECURITY: Stores User-Agent for session hijacking detection
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
 	// STEP 1: Invalidate any existing session (session fixation prevention)
 	// Check if there's an old session cookie in the request
 	if oldCookie, err := r.Cookie("session_id"); err == nil {
 		log.Printf("[SECURITY] Session regeneration: Invalidating old session %s for user %s", oldCookie.Value, user.ID)
-
+		
 		// Delete the old session from the database
 		if err := h.SessionRepo.DeleteBySessionID(oldCookie.Value); err != nil {
 			// Log but don't fail - the old session might already be expired/deleted
@@ -388,18 +390,27 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 	}
 
 	// STEP 2: Generate a completely new session with new ID and CSRF token
+	// SECURITY: Capture User-Agent for session hijacking detection
+	userAgent := r.Header.Get("User-Agent")
+	if userAgent == "" {
+		log.Printf("[SECURITY] Warning: Session created without User-Agent for user %s", user.ID)
+	}
+	
 	csrfToken, err := utils.GenerateCSRFToken()
 	if err != nil {
 		log.Printf("Failed to generate CSRF token: %v", err)
 		return nil, err
 	}
-	session, err := h.SessionRepo.Create(user.ID, r.RemoteAddr, csrfToken)
+
+	session, err := h.SessionRepo.Create(user.ID, r.RemoteAddr, userAgent, csrfToken)
 	if err != nil {
 		log.Printf("Failed to create session: %v", err)
 		return nil, err
 	}
 
-	log.Printf("[SECURITY] Session regeneration: Created new session %s for user %s", session.SessionID, user.ID)
+	log.Printf("[SECURITY] Session created: ID=%s, User=%s, IP=%s, UA=%s", 
+		session.SessionID, user.ID, session.IPAddress, 
+		utils.ParseUserAgent(userAgent).Browser+" "+utils.ParseUserAgent(userAgent).OS)
 
 	// STEP 3: Set the new session cookie with the new session ID
 	http.SetCookie(w, &http.Cookie{

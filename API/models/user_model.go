@@ -133,7 +133,7 @@ type LoginResponse struct {
 	User User `json:"user"`
 	// The session ID.
 	// example: d2e9f8a7-b6c5-d4e3-f2a1-b0c9d8e7f6a5
-	SessionID string `json:"session_id"`
+	SessionID string `json:"id"`
 	// The CSRF token required for subsequent protected requests.
 	// example: XyZ123AbC456DeF789GhI0JkL
 	CSRFToken string `json:"csrf_token"`

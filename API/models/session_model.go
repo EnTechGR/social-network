@@ -10,7 +10,7 @@ type Session struct {
 	UserID string `json:"user_id"`
 	// The unique session identifier (usually stored in a secure cookie)
 	// example: sess_8f2d9a1b3c4e
-	SessionID string `json:"session_id"`
+	SessionID string `json:"id"`
 	// The CSRF token required for state-changing operations
 	// example: csrf_9b8a7c6d5e4f
 	CSRFToken string `json:"csrf_token"`

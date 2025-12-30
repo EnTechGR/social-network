@@ -231,47 +231,45 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router       /api/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var login models.UserLogin
-	err := json.NewDecoder(r.Body).Decode(&login)
+	var loginData models.UserLogin
+	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Authenticate user
+	user, err := h.UserRepo.Authenticate(loginData)
 	if err != nil {
-		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	login.Login = strings.TrimSpace(login.Login)
-	login.Password = strings.TrimSpace(login.Password)
-
-	if login.Login == "" || login.Password == "" {
-		utils.ErrorResponse(w, "Username/email and password are required", http.StatusBadRequest)
-		return
-	}
-
-	user, err := h.UserRepo.Authenticate(login)
-	if err != nil {
-		if err == repository.ErrInvalidCredentials {
-			utils.ErrorResponse(w, "Invalid username/email or password", http.StatusUnauthorized)
-		} else {
-			log.Printf("Authentication error: %v", err)
-			utils.ErrorResponse(w, "Internal server error", http.StatusInternalServerError)
-		}
-		return
-	}
-
+	// Create session (generates initial CSRF token)
 	session, err := h.createUserSession(w, r, user)
 	if err != nil {
-		log.Printf("Failed to create session: %v", err)
-		utils.ErrorResponse(w, "Failed to create session", http.StatusInternalServerError)
+		http.Error(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
 
-	utils.JSONResponse(w, models.LoginResponse{
-		User:      *user,
-		SessionID: session.SessionID,
-		CSRFToken: session.CSRFToken,
+	// ============================================================================
+	// CSRF TOKEN ROTATION ON LOGIN
+	// ============================================================================
+	// CRITICAL: Rotate CSRF token on authentication change
+	// This ensures that any pre-login CSRF token can't be used post-login
+	csrfToken := h.RotateCSRFToken(session, "login")
+	// ============================================================================
+
+	log.Printf("User %s logged in successfully", user.ID)
+
+	// Return response with NEW CSRF token
+	utils.JSONResponse(w, map[string]interface{}{
+		"user":       user,
+		"csrf_token": csrfToken,  // Send new token to frontend
+		"message":    "Login successful",
 	}, http.StatusOK)
 }
 
@@ -288,7 +286,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := r.Cookie("id")
+	cookie, err := r.Cookie(utils.GetSessionCookieName())
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -332,7 +330,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  models.ErrorResponse
 // @Router       /api/auth/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, err := r.Cookie("id")
+	sessionCookie, err := r.Cookie(utils.GetSessionCookieName())
 	if err != nil {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)
 		return
@@ -414,7 +412,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 
 	// STEP 3: Set the new session cookie with the new session ID
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    session.SessionID,
 		Path:     "/",
 		Expires:  session.ExpiresAt,
@@ -484,4 +482,45 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.JSONResponse(w, user, http.StatusOK)
+}
+
+
+// RotateCSRFTokenIfNeeded checks if CSRF token should be rotated and does so
+// Returns the (possibly new) CSRF token and whether it was rotated
+func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger utils.RotationTrigger) (string, bool) {
+	// Check if this trigger should cause rotation
+	if !utils.ShouldRotateForTrigger(trigger) {
+		return session.CSRFToken, false
+	}
+	
+	// Rotate the token
+	newToken, err := h.SessionRepo.RotateCSRFToken(session.SessionID)
+	if err != nil {
+		log.Printf("[CSRF ROTATION] Failed to rotate token for session %s: %v", session.SessionID, err)
+		// Return old token on error
+		return session.CSRFToken, false
+	}
+	
+	log.Printf("[CSRF ROTATION] Token rotated for session %s (trigger: %s)", session.SessionID, trigger)
+	return newToken, true
+}
+
+// RotateCSRFToken unconditionally rotates the CSRF token
+// Used for critical operations where rotation is mandatory
+func (h *AuthHandler) RotateCSRFToken(session *models.Session, reason string) string {
+	newToken, err := h.SessionRepo.RotateCSRFToken(session.SessionID)
+	if err != nil {
+		log.Printf("[CSRF ROTATION] Failed to rotate token for session %s: %v", session.SessionID, err)
+		return session.CSRFToken
+	}
+	
+	log.Printf("[CSRF ROTATION] Token rotated for session %s (reason: %s)", session.SessionID, reason)
+	return newToken
+}
+
+// IncludeCSRFToken adds CSRF token to response (helper for consistent responses)
+// Use this to include the current (or newly rotated) CSRF token in API responses
+func IncludeCSRFToken(response map[string]interface{}, csrfToken string) map[string]interface{} {
+	response["csrf_token"] = csrfToken
+	return response
 }

@@ -17,6 +17,10 @@ type Session struct {
 	// The IP address from which the session was initiated
 	// example: 192.168.1.50
 	IPAddress string `json:"ip_address"`
+	// The User-Agent string from the browser/client that created the session
+	// Used for session hijacking detection
+	// example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
+	UserAgent string `json:"user_agent"`
 	// The timestamp when the session was created
 	// example: 2025-12-29T18:00:00Z
 	CreatedAt time.Time `json:"created_at"`

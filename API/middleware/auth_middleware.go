@@ -107,6 +107,57 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		// Scenario 5: Authentication successful!
 		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %s) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
 
+
+		// IP ADDRESS VALIDATION - NEW CODE
+		// ============================================================================
+		// Validate that the IP address hasn't changed drastically
+		// This helps detect session hijacking from different networks
+		// More flexible than User-Agent (allows same-subnet changes for DHCP/mobile)
+		
+		currentIP := utils.GetClientIP(r.RemoteAddr, r.Header)
+		isValidIP, ipSuspicionLevel, ipReason := utils.ValidateIPAddress(session.IPAddress, currentIP)
+		
+		if !isValidIP {
+			// CRITICAL: IP changed to different subnet - possible session hijacking
+			log.Printf("[SECURITY ALERT] Suspicious IP change for session %s (User: %s): %s", 
+				session.SessionID, session.UserID, ipReason)
+			log.Printf("[SECURITY ALERT] Stored IP: %s", session.IPAddress)
+			log.Printf("[SECURITY ALERT] Current IP: %s", currentIP)
+			log.Printf("[SECURITY ALERT] Request to %s", r.URL.Path)
+			
+			// Analyze both IPs for detailed logging
+			storedInfo := utils.AnalyzeIP(session.IPAddress)
+			currentInfo := utils.AnalyzeIP(currentIP)
+			log.Printf("[SECURITY ALERT] Stored subnet: %s (private: %v)", storedInfo.Subnet24, storedInfo.IsPrivate)
+			log.Printf("[SECURITY ALERT] Current subnet: %s (private: %v)", currentInfo.Subnet24, currentInfo.IsPrivate)
+			
+			// For IP validation, we might want to be more lenient than User-Agent
+			// Consider this a WARNING rather than immediate termination
+			// Option 1: Terminate session (strict security)
+			// Option 2: Allow but log heavily (better UX for mobile users)
+			
+			// STRICT MODE (uncomment to terminate session on IP mismatch):
+			/*
+			m.SessionRepo.DeleteBySessionID(session.SessionID)
+			m.clearSessionCookie(w)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "session_invalid", "message": "Session validation failed for security reasons"}`))
+			return
+			*/
+			
+			// LENIENT MODE (current): Allow but log heavily
+			// Mobile users and users behind rotating proxies will trigger this
+			log.Printf("[SECURITY WARNING] Allowing request despite IP change - monitor for abuse")
+		}
+		
+		// Log suspicious but allowed IP changes
+		if ipSuspicionLevel != "none" {
+			log.Printf("[SECURITY] IP validation (Level: %s) for session %s: %s (stored: %s, current: %s)", 
+				ipSuspicionLevel, session.SessionID, ipReason, session.IPAddress, currentIP)
+		}
+		// ============================================================================
+
 		// ============================================================================
 		// SESSION RENEWAL (SLIDING WINDOW)
 		// ============================================================================

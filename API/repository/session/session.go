@@ -168,3 +168,35 @@ func (r *SessionRepository) DeleteAllUserSessions(userID string) error {
 	_, err := r.DB.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 	return err
 }
+
+// Add this method to your SessionRepository in API/repository/session/session.go
+
+// RenewSession extends the idle timeout for an active session (sliding window)
+// Returns the new expires_at time and whether renewal was performed
+// Will NOT extend past the absolute timeout - returns false if renewal would exceed it
+func (r *SessionRepository) RenewSession(sessionID string, absoluteExpiresAt time.Time) (time.Time, bool, error) {
+	// Calculate the new idle timeout expiry
+	newExpiresAt := utils.CalculateSessionExpiry()
+	
+	// SECURITY CHECK: Never extend past absolute timeout
+	// Even if user is very active, they must re-authenticate after absolute timeout
+	if newExpiresAt.After(absoluteExpiresAt) {
+		// Renewal would extend past absolute timeout - don't renew
+		// Session will expire naturally when it hits absolute timeout
+		log.Printf("[SESSION RENEWAL] Session %s renewal blocked - would exceed absolute timeout", sessionID)
+		return time.Time{}, false, nil
+	}
+	
+	// Safe to renew - update the expires_at in database
+	_, err := r.DB.Exec(`
+		UPDATE sessions 
+		SET expires_at = ? 
+		WHERE session_id = ?
+	`, newExpiresAt.Format(time.RFC3339), sessionID)
+	
+	if err != nil {
+		return time.Time{}, false, err
+	}
+	
+	return newExpiresAt, true, nil
+}

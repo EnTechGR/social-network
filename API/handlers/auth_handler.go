@@ -379,7 +379,7 @@ type SessionVerifyResponse struct {
 func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, user *models.User) (*models.Session, error) {
 	// STEP 1: Invalidate any existing session (session fixation prevention)
 	// Check if there's an old session cookie in the request
-	if oldCookie, err := r.Cookie("session_id"); err == nil {
+	if oldCookie, err := r.Cookie(utils.GetSessionCookieName()); err == nil {
 		log.Printf("[SECURITY] Session regeneration: Invalidating old session %s for user %s", oldCookie.Value, user.ID)
 		
 		// Delete the old session from the database

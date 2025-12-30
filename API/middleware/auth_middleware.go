@@ -34,7 +34,7 @@ func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.Us
 // SECURITY: Validates User-Agent to detect session hijacking attempts
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_id")
+		cookie, err := r.Cookie(utils.GetSessionCookieName())
 		if err != nil {
 			// Scenario 1: No session cookie found in the request.
 			log.Printf("AuthMiddleware [DEBUG]: No session cookie found for request to %s: %v", r.URL.Path, err)

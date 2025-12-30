@@ -167,11 +167,6 @@ func GenerateCSRFToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// CalculateSessionExpiry returns the expiry time for a session (24 hours from now)
-func CalculateSessionExpiry() time.Time {
-	return time.Now().Add(24 * time.Hour)
-}
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -182,4 +177,34 @@ func GetLastPathParam(r interface{}) string {
 	// This is a placeholder - implement based on your router
 	// For standard http, you might parse r.URL.Path manually
 	return ""
+}
+
+// Add these constants and functions to your utils/validation.go file
+// They should be added after the existing CalculateSessionExpiry function
+
+// ============================================================================
+// SESSION TIMEOUT CONFIGURATION
+// ============================================================================
+
+const (
+	// SessionIdleTimeout is how long a session can be inactive before expiring
+	// OWASP recommends 15-30 minutes for general applications
+	SessionIdleTimeout = 30 * time.Minute
+	
+	// SessionAbsoluteTimeout is the maximum lifetime of a session regardless of activity
+	// OWASP recommends 12 hours maximum, forces re-authentication
+	SessionAbsoluteTimeout = 12 * time.Hour
+)
+
+// CalculateSessionExpiry returns the expiry time for a session (idle timeout)
+// This is updated on each request to implement sliding window
+func CalculateSessionExpiry() time.Time {
+	return time.Now().Add(SessionIdleTimeout)
+}
+
+// CalculateAbsoluteSessionExpiry returns the absolute expiry time for a session
+// This is set once at session creation and never updated
+// Forces re-authentication after absolute timeout regardless of activity
+func CalculateAbsoluteSessionExpiry() time.Time {
+	return time.Now().Add(SessionAbsoluteTimeout)
 }

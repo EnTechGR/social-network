@@ -20,7 +20,11 @@ type Session struct {
 	// The timestamp when the session was created
 	// example: 2025-12-29T18:00:00Z
 	CreatedAt time.Time `json:"created_at"`
-	// The timestamp when the session will automatically expire
+	// The timestamp when the session will expire due to inactivity (idle timeout)
 	// example: 2025-12-30T18:00:00Z
 	ExpiresAt time.Time `json:"expires_at"`
+	// The timestamp when the session will absolutely expire regardless of activity (absolute timeout)
+	// This enforces re-authentication even for active users after a maximum period
+	// example: 2025-12-30T06:00:00Z
+	AbsoluteExpiresAt time.Time `json:"absolute_expires_at"`
 }

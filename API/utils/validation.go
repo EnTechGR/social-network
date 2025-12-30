@@ -167,6 +167,7 @@ func GenerateCSRFToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -194,6 +195,11 @@ const (
 	// SessionAbsoluteTimeout is the maximum lifetime of a session regardless of activity
 	// OWASP recommends 12 hours maximum, forces re-authentication
 	SessionAbsoluteTimeout = 12 * time.Hour
+
+	// SessionRenewalWindow defines how close to expiry we can extend a session
+	// Used to optimize database writes - only update expires_at if within this window
+	// Prevents updating database on every single request
+	SessionRenewalWindow = 5 * time.Minute
 )
 
 // CalculateSessionExpiry returns the expiry time for a session (idle timeout)
@@ -207,4 +213,15 @@ func CalculateSessionExpiry() time.Time {
 // Forces re-authentication after absolute timeout regardless of activity
 func CalculateAbsoluteSessionExpiry() time.Time {
 	return time.Now().Add(SessionAbsoluteTimeout)
+}
+
+// ShouldRenewSession determines if a session should have its idle timeout extended
+// Returns true if the session is within the renewal window of expiring
+// This optimizes database performance by avoiding updates on every request
+//
+// Example: If expires_at is 2 minutes away and renewal window is 5 minutes,
+// this returns true, indicating we should extend expires_at
+func ShouldRenewSession(expiresAt time.Time) bool {
+	timeUntilExpiry := time.Until(expiresAt)
+	return timeUntilExpiry <= SessionRenewalWindow && timeUntilExpiry > 0
 }

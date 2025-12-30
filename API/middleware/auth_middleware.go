@@ -9,6 +9,7 @@ import (
 	"social-network/models"
 	"social-network/repository/session"
 	"social-network/repository/user"
+	"social-network/utils"
 )
 
 // Authentication middleware checks if the user is authenticated
@@ -25,10 +26,14 @@ func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.Us
 	}
 }
 
+// Updated Authenticate middleware with Session Renewal (Sliding Window)
+// Replace your existing Authenticate method in API/middleware/auth_middleware.go
+
 // Authenticate middleware verifies authentication and sets user in context
+// SECURITY: Implements session renewal (sliding window) to extend idle timeout for active users
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("id")
+		cookie, err := r.Cookie("session_id")
 		if err != nil {
 			// Scenario 1: No session cookie found in the request.
 			log.Printf("AuthMiddleware [DEBUG]: No session cookie found for request to %s: %v", r.URL.Path, err)
@@ -47,7 +52,7 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 
 		if session.ExpiresAt.Before(time.Now()) {
 			// Scenario 3: Session found in DB, but its expiration time is in the past.
-			log.Printf("AuthMiddleware [DEBUG]: Session ID '%s' expired (UserID: %d) for request to %s", session.SessionID, session.UserID, r.URL.Path)
+			log.Printf("AuthMiddleware [DEBUG]: Session ID '%s' expired (UserID: %s) for request to %s", session.SessionID, session.UserID, r.URL.Path)
 			m.SessionRepo.DeleteBySessionID(session.SessionID)
 			m.clearSessionCookie(w) // Clear expired cookie
 			next.ServeHTTP(w, r)    // Proceed as unauthenticated
@@ -57,14 +62,49 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		user, err := m.UserRepo.GetByID(session.UserID)
 		if err != nil {
 			// Scenario 4: Session is valid, but the user it points to cannot be found.
-			log.Printf("AuthMiddleware [DEBUG]: User not found for session ID '%s' (UserID %d) for request to %s: %v", session.SessionID, session.UserID, r.URL.Path, err)
+			log.Printf("AuthMiddleware [DEBUG]: User not found for session ID '%s' (UserID %s) for request to %s: %v", session.SessionID, session.UserID, r.URL.Path, err)
 			m.clearSessionCookie(w) // Clear cookie, as session is invalid without a user
 			next.ServeHTTP(w, r)    // Proceed as unauthenticated
 			return
 		}
 
 		// Scenario 5: Authentication successful!
-		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %d) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
+		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %s) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
+
+		// ============================================================================
+		// SESSION RENEWAL (SLIDING WINDOW) - NEW CODE
+		// ============================================================================
+		// Extend idle timeout for active users, but only if:
+		// 1. Session is within renewal window (optimization - avoid DB writes on every request)
+		// 2. Won't extend past absolute timeout (security - force re-auth after max time)
+
+		if utils.ShouldRenewSession(session.ExpiresAt) {
+			// Session is close to expiring (within renewal window)
+			// Attempt to renew it to keep active user logged in
+
+			newExpiresAt, renewed, err := m.SessionRepo.RenewSession(session.SessionID, session.AbsoluteExpiresAt)
+			if err != nil {
+				// Log but don't fail the request - session is still valid for now
+				log.Printf("AuthMiddleware [WARN]: Failed to renew session %s: %v", session.SessionID, err)
+			} else if renewed {
+				// Session was successfully renewed
+				log.Printf("[SESSION RENEWAL] Extended session %s from %v to %v (user: %s)",
+					session.SessionID,
+					session.ExpiresAt.Format("15:04:05"),
+					newExpiresAt.Format("15:04:05"),
+					user.Nickname)
+
+				// Update the session object in context with new expiry time
+				session.ExpiresAt = newExpiresAt
+			} else {
+				// Renewal was skipped (would extend past absolute timeout)
+				log.Printf("[SESSION RENEWAL] Skipped renewal for session %s - would exceed absolute timeout at %v",
+					session.SessionID,
+					session.AbsoluteExpiresAt.Format("15:04:05"))
+			}
+		}
+		// ============================================================================
+
 		ctx := context.WithValue(r.Context(), "user", user)
 		ctx = context.WithValue(ctx, "session", session)
 		next.ServeHTTP(w, r.WithContext(ctx))

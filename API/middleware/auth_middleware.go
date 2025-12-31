@@ -303,7 +303,7 @@ func (m *AuthMiddleware) CSRF(next http.Handler) http.Handler {
 		session := GetCurrentSession(r)
 		if session == nil {
 			log.Printf("AuthMiddleware [WARN]: CSRF check failed: No session in context for %s", r.URL.Path)
-			http.Error(w, "Forbidden: No active session for CSRF check", http.StatusForbidden)
+			utils.ErrorResponse(w, "Forbidden: No active session for CSRF check", http.StatusForbidden)
 			return
 		}
 
@@ -314,11 +314,11 @@ func (m *AuthMiddleware) CSRF(next http.Handler) http.Handler {
 			// You might want to error out here in a real implementation if a session must always have a CSRF token
 		} else if token == "" {
 			log.Printf("AuthMiddleware [WARN]: CSRF check failed for path %s: No token provided in request.", r.URL.Path)
-			http.Error(w, "Forbidden: CSRF token missing", http.StatusForbidden)
+			utils.ErrorResponse(w, "Forbidden: CSRF token missing", http.StatusForbidden)
 			return
 		} else if token != session.CSRFToken {
 			log.Printf("AuthMiddleware [WARN]: CSRF check failed for path %s: Mismatched token. Expected: '%s', Got: '%s'", r.URL.Path, session.CSRFToken, token)
-			http.Error(w, "Forbidden: Invalid CSRF token", http.StatusForbidden)
+			utils.ErrorResponse(w, "Forbidden: Invalid CSRF token", http.StatusForbidden)
 			return
 		}
 

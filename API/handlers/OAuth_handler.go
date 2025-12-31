@@ -97,13 +97,13 @@ func (h *OAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Verify state parameter
 	if !h.verifyState(r) {
-		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+		utils.ErrorResponse(w, "Invalid state parameter", http.StatusBadRequest)
 		return
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		http.Error(w, "Authorization code not provided", http.StatusBadRequest)
+		utils.ErrorResponse(w, "Authorization code not provided", http.StatusBadRequest)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	tokenResp, err := h.exchangeGoogleCode(code)
 	if err != nil {
 		log.Printf("OAuth Error (GoogleCallback): Failed to exchange Google code: %v", err)
-		http.Error(w, "Failed to exchange authorization code", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to exchange authorization code", http.StatusInternalServerError)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := h.getGoogleUserInfo(tokenResp.AccessToken) // Pass the access token for user info
 	if err != nil {
 		log.Printf("OAuth Error (GoogleCallback): Failed to get Google user info: %v", err)
-		http.Error(w, "Failed to get user information", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to get user information", http.StatusInternalServerError)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		// --- VERBOSE LOGGING ADDED HERE ---
 		log.Printf("OAuth Error (GoogleCallback): Failed to process user (Database/UserRepo failure). Underlying cause: %v", err)
 		// ----------------------------------
-		http.Error(w, "Failed to process user", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
 
@@ -192,13 +192,13 @@ func (h *OAuthHandler) GitHubLogin(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	// Verify state parameter
 	if !h.verifyState(r) {
-		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+		utils.ErrorResponse(w, "Invalid state parameter", http.StatusBadRequest)
 		return
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		http.Error(w, "Authorization code not provided", http.StatusBadRequest)
+		utils.ErrorResponse(w, "Authorization code not provided", http.StatusBadRequest)
 		return
 	}
 
@@ -206,7 +206,7 @@ func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	tokenResp, err := h.exchangeGitHubCode(code)
 	if err != nil {
 		log.Printf("Failed to exchange GitHub code: %v", err)
-		http.Error(w, "Failed to exchange authorization code", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to exchange authorization code", http.StatusInternalServerError)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := h.getGitHubUserInfo(tokenResp.AccessToken) // Pass the access token for user info
 	if err != nil {
 		log.Printf("Failed to get GitHub user info: %v", err)
-		http.Error(w, "Failed to get user information", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to get user information", http.StatusInternalServerError)
 		return
 	}
 
@@ -224,7 +224,7 @@ func (h *OAuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := h.handleOAuthUser(userInfo, "github", tokenResp.AccessToken, tokenResp.RefreshToken, tokenExpiresAt)
 	if err != nil {
 		log.Printf("OAuth Error (GitHubCallback): Failed to process user (Database/UserRepo failure). Underlying cause: %v", err)
-		http.Error(w, "Failed to process user", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
 

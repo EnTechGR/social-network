@@ -36,7 +36,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

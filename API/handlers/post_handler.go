@@ -41,7 +41,7 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *PostHandler) EditPostTitle(w http.ResponseWriter, r *http.Request) {
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	postID := utils.GetLastPathParam(r)
@@ -157,7 +157,7 @@ func (h *PostHandler) EditPostContent(w http.ResponseWriter, r *http.Request) {
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	postID := utils.GetLastPathParam(r)
@@ -216,7 +216,7 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	postID := utils.GetLastPathParam(r)

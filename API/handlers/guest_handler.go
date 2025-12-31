@@ -94,7 +94,6 @@ func NewGuestHandler(
 // @Router       /api/guest/view [get]
 func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		//http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		utils.ErrorResponse(w, "Only POST requests are allowed for registration.", http.StatusMethodNotAllowed)
 		return
 	}

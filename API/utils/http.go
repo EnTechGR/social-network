@@ -9,7 +9,7 @@ import (
 // HTTP RESPONSE UTILITIES
 // ============================================================================
 
-//ErrorResponse represents an error response
+// ErrorResponse represents an error response
 type ErrorResp struct {
 	Error string `json:"error"`
 }
@@ -18,10 +18,10 @@ type ErrorResp struct {
 func JSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		// If encoding fails, send a plain text error
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		ErrorResponse(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
@@ -29,14 +29,14 @@ func JSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 func ErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	response := ErrorResp{
 		Error: message,
 	}
-	
+
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		// If encoding fails, send a plain text error
-		http.Error(w, message, statusCode)
+		ErrorResponse(w, message, statusCode)
 	}
 }
 

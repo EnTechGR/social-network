@@ -11,19 +11,19 @@ import (
 	"social-network/models"
 	"social-network/repository"
 	"social-network/repository/session"
-	"social-network/repository/user"
+	"social-network/repository/user_repository"
 	"social-network/utils"
 )
 
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
-	UserRepo    *user.UserRepository
+	UserRepo    *user_repository.UserRepository
 	SessionRepo *session.SessionRepository
 	ImageRepo   *repository.ImageRepository // ✅ ADDED: Image repository for avatar handling
 }
 
 // NewAuthHandler creates a new AuthHandler
-func NewAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository, imageRepo *repository.ImageRepository) *AuthHandler {
+func NewAuthHandler(userRepo *user_repository.UserRepository, sessionRepo *session.SessionRepository, imageRepo *repository.ImageRepository) *AuthHandler {
 	return &AuthHandler{
 		UserRepo:    userRepo,
 		SessionRepo: sessionRepo,
@@ -474,15 +474,15 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}  models.User "User profile data"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Router       /api/auth/profile [get]
-func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	user := middleware.GetCurrentUser(r)
-	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+// func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+// 	user := middleware.GetCurrentUser(r)
+// 	if user == nil {
+// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+// 		return
+// 	}
 
-	utils.JSONResponse(w, user, http.StatusOK)
-}
+// 	utils.JSONResponse(w, user, http.StatusOK)
+// }
 
 
 // RotateCSRFTokenIfNeeded checks if CSRF token should be rotated and does so

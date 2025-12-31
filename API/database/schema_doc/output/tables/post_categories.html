@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>post_categories - ../forum.db.main</title>
+        <title>post_categories - ../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="../index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>post_categories</h1><p><span id="recordNumber">6</span> rows</p><br />
+                    <h1>post_categories</h1><p><span id="recordNumber">0</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -189,13 +189,13 @@
                                     <td>post_id + category_id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_post_categories_category_id</td>
+                                    <td title='Indexed'>idx_post_categories_cat</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>category_id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_post_categories_post_id</td>
+                                    <td title='Indexed'>idx_post_categories_post</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>post_id</td>
@@ -225,28 +225,57 @@
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
                                     <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
+                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
+                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
-<area shape="rect" id="node1" href="post_categories.html" target="_top" title="post_categories" alt="" coords="228,71,587,199">
-<area shape="rect" id="node2" href="categories.html" target="_top" title="categories" alt="" coords="5,169,184,292">
-<area shape="rect" id="node3" href="posts.html" target="_top" title="posts" alt="" coords="19,5,170,152">
+<area shape="rect" id="node1" href="post_categories.html" target="_top" title="post_categories" alt="" coords="228,100,587,228">
+<area shape="rect" id="node2" href="categories.html" target="_top" title="categories" alt="" coords="5,228,184,351">
+<area shape="rect" id="node3" href="posts.html" target="_top" title="posts" alt="" coords="19,5,170,211">
 </map>
                                         <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/post_categories.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="twoDegreesRelationshipsDiagram" name="twoDegreesRelationshipsDiagram">
-<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="505,79,681,167">
-<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="205,131,355,277">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,211,147,299">
-<area shape="rect" id="node4" href="images.html" target="_top" title="images" alt="" coords="519,220,667,308">
-<area shape="rect" id="node5" href="notifications.html" target="_top" title="notifications" alt="" coords="816,295,1012,383">
-<area shape="rect" id="node6" href="post_categories.html" target="_top" title="post_categories" alt="" coords="413,325,772,453">
-<area shape="rect" id="node7" href="categories.html" target="_top" title="categories" alt="" coords="191,331,369,453">
-<area shape="rect" id="node8" href="reactions.html" target="_top" title="reactions" alt="" coords="830,5,998,93">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="697,115,873,203">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="397,131,547,336">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,57,147,145">
+<area shape="rect" id="node4" href="groups.html" target="_top" title="groups" alt="" coords="191,131,339,219">
+<area shape="rect" id="node5" href="notifications.html" target="_top" title="notifications" alt="" coords="1008,5,1204,93">
+<area shape="rect" id="node6" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="656,361,913,449">
+<area shape="rect" id="node7" href="post_categories.html" target="_top" title="post_categories" alt="" coords="605,467,964,595">
+<area shape="rect" id="node8" href="categories.html" target="_top" title="categories" alt="" coords="383,472,561,595">
+<area shape="rect" id="node9" href="post_images.html" target="_top" title="post_images" alt="" coords="687,220,883,308">
+<area shape="rect" id="node10" href="reactions.html" target="_top" title="reactions" alt="" coords="1022,288,1190,376">
 </map>
                                         <a name='diagram'><img id="twodegreesDegreeImg" src="../diagrams/tables/post_categories.2degrees.png" usemap="#twoDegreesRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="oneDegreeRelationshipsDiagramImplied" name="oneDegreeRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="post_categories.html" target="_top" title="post_categories" alt="" coords="228,100,587,228">
+<area shape="rect" id="node2" href="categories.html" target="_top" title="categories" alt="" coords="5,228,184,351">
+<area shape="rect" id="node3" href="posts.html" target="_top" title="posts" alt="" coords="19,5,170,211">
+</map>
+                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/post_categories.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="twoDegreesRelationshipsDiagramImplied" name="twoDegreesRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="697,337,873,425">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="397,203,547,408">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,287,147,375">
+<area shape="rect" id="node4" href="groups.html" target="_top" title="groups" alt="" coords="191,287,339,375">
+<area shape="rect" id="node5" href="notifications.html" target="_top" title="notifications" alt="" coords="1038,5,1234,93">
+<area shape="rect" id="node6" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="656,479,913,567">
+<area shape="rect" id="node7" href="post_categories.html" target="_top" title="post_categories" alt="" coords="605,584,964,712">
+<area shape="rect" id="node8" href="categories.html" target="_top" title="categories" alt="" coords="383,589,561,712">
+<area shape="rect" id="node9" href="post_images.html" target="_top" title="post_images" alt="" coords="687,151,883,239">
+<area shape="rect" id="node10" href="reactions.html" target="_top" title="reactions" alt="" coords="1052,405,1220,493">
+<area shape="rect" id="node11" href="v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1008,217,1264,281">
+<area shape="rect" id="node12" href="v_post_images.html" target="_top" title="v_post_images" alt="" coords="679,256,891,320">
+</map>
+                                        <a name='diagram'><img id="twoimpliedDegreeImg" src="../diagrams/tables/post_categories.implied2degrees.png" usemap="#twoDegreesRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
                                     </div>
                                 </div>
                             </div>

@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>../forum.db.main</title>
+        <title>../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -80,7 +80,7 @@
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="ion ion-key"></i>
-                            <h3 class="box-title">11 Foreign Key Constraints</h3>
+                            <h3 class="box-title">25 Foreign Key Constraints</h3>
                             <div class="box-tools pull-right">
                                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                                 <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
@@ -108,23 +108,17 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/reactions.html'>reactions</a><span>.comment_id</span></td>
+                                                    <td><a href='tables/group_join_requests.html'>group_join_requests</a><span>.group_id</span></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><a href='tables/reactions.html'>reactions</a><span>.post_id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/reactions.html'>reactions</a><span>.user_id</span></td>
+                                                    <td><a href='tables/group_join_requests.html'>group_join_requests</a><span>.user_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/comments.html'>comments</a><span>.comment_id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
@@ -138,7 +132,31 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/oauth_accounts.html'>oauth_accounts</a><span>.user_id</span></td>
+                                                    <td><a href='tables/group_messages.html'>group_messages</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_messages.html'>group_messages</a><span>.sender_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.owner_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -204,6 +222,60 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
+                                                    <td><a href='tables/group_invites.html'>group_invites</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_invites.html'>group_invites</a><span>.to_user_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_invites.html'>group_invites</a><span>.from_user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/follow_relationships.html'>follow_relationships</a><span>.followee_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/follow_relationships.html'>follow_relationships</a><span>.follower_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
                                                     <td><a href='tables/user_auth.html'>user_auth</a><span>.user_id</span></td>
                                                 </tr>
                                             </table>
@@ -222,20 +294,14 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/images.html'>images</a><span>.post_id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/images.html'>images</a><span>.user_id</span></td>
+                                                    <td><a href='tables/group_event_options.html'>group_event_options</a><span>.event_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                    <td><a href='tables/group_events.html'>group_events</a><span>.event_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -270,12 +336,18 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/sessions.html'>sessions</a><span>.user_id</span></td>
+                                                    <td><a href='tables/group_members.html'>group_members</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_members.html'>group_members</a><span>.user_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
+                                                </tr>
                                                 <tr>
                                                     <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
                                                 </tr>
@@ -289,6 +361,12 @@
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
                                                     <td><a href='tables/notifications.html'>notifications</a><span>.comment_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/notifications.html'>notifications</a><span>.event_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/notifications.html'>notifications</a><span>.group_id</span></td>
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/notifications.html'>notifications</a><span>.post_id</span></td>
@@ -305,6 +383,12 @@
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
                                                     <td><a href='tables/comments.html'>comments</a><span>.comment_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_events.html'>group_events</a><span>.event_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
@@ -324,17 +408,47 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/chat_images.html'>chat_images</a><span>.message_id</span></td>
+                                                    <td><a href='tables/comment_images.html'>comment_images</a><span>.comment_id</span></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><a href='tables/chat_images.html'>chat_images</a><span>.user_id</span></td>
+                                                    <td><a href='tables/comment_images.html'>comment_images</a><span>.image_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/messages.html'>messages</a><span>.message_id</span></td>
+                                                    <td><a href='tables/comments.html'>comments</a><span>.comment_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.image_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/reactions.html'>reactions</a><span>.comment_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/reactions.html'>reactions</a><span>.post_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/reactions.html'>reactions</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/comments.html'>comments</a><span>.comment_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
                                                 </tr>
                                                 <tr>
                                                     <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
@@ -348,12 +462,246 @@
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
+                                                    <td><a href='tables/oauth_accounts.html'>oauth_accounts</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/message_images.html'>message_images</a><span>.image_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/message_images.html'>message_images</a><span>.message_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.image_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/messages.html'>messages</a><span>.message_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/post_allowed_users.html'>post_allowed_users</a><span>.post_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/post_allowed_users.html'>post_allowed_users</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/post_images.html'>post_images</a><span>.image_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/post_images.html'>post_images</a><span>.post_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.image_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/posts.html'>posts</a><span>.post_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/group_message_images.html'>group_message_images</a><span>.group_message_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_message_images.html'>group_message_images</a><span>.image_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/group_messages.html'>group_messages</a><span>.message_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.image_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/group_events.html'>group_events</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_events.html'>group_events</a><span>.creator_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.uploader_user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/group_event_votes.html'>group_event_votes</a><span>.option_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_event_votes.html'>group_event_votes</a><span>.event_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_event_votes.html'>group_event_votes</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/group_event_options.html'>group_event_options</a><span>.option_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/group_events.html'>group_events</a><span>.event_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/sessions.html'>sessions</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/posts.html'>posts</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
                                                     <td><a href='tables/posts.html'>posts</a><span>.user_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/groups.html'>groups</a><span>.group_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user_avatars.html'>user_avatars</a><span>.image_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/user_avatars.html'>user_avatars</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/images_core.html'>images_core</a><span>.image_id</span></td>
+                                                </tr>
                                                 <tr>
                                                     <td><a href='tables/user.html'>user</a><span>.user_id</span></td>
                                                 </tr>

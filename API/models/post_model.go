@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Post represents a forum post in its raw database format
+// Post represents a social-network post in its raw database format
 // swagger:model Post
 type Post struct {
 	// The unique identifier for the post (UUID)

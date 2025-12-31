@@ -15,59 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/forum/api/register": {
-            "post": {
-                "description": "Creates a new user account, validates input fields, and establishes a session cookie.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Register a new user",
-                "parameters": [
-                    {
-                        "description": "User registration details",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.UserRegistration"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "User successfully registered and logged in.",
-                        "schema": {
-                            "$ref": "#/definitions/models.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation failed (e.g., weak password, invalid age).",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: Username or email is already taken.",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/forum/api/session/login": {
+        "/api/auth/login": {
             "post": {
                 "description": "Authenticates a user using either username or email and password, then creates a session cookie.",
                 "consumes": [
@@ -119,11 +67,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/forum/api/session/logout": {
+        "/api/auth/logout": {
             "post": {
-                "description": "Deletes the current user session from the database and clears the session and CSRF cookies.",
+                "description": "Invalidates the user's session and clears authentication cookies.",
                 "produces": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "tags": [
                     "Authentication"
@@ -131,16 +79,24 @@ const docTemplate = `{
                 "summary": "Log out a user",
                 "responses": {
                     "200": {
-                        "description": "Successfully logged out (session cookie cleared)."
+                        "description": "Successfully logged out",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
-        "/forum/api/session/logout-all": {
+        "/api/auth/logout-all": {
             "post": {
-                "description": "Deletes all active sessions for the currently authenticated user and clears the current session cookie.",
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Deletes all active sessions for the current user across all devices.",
                 "produces": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "tags": [
                     "Authentication"
@@ -148,13 +104,13 @@ const docTemplate = `{
                 "summary": "Log out from all devices",
                 "responses": {
                     "200": {
-                        "description": "Successfully logged out from all devices."
+                        "description": "Successfully logged out from all devices",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized: User not authenticated."
-                    },
-                    "500": {
-                        "description": "Internal server error.",
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -162,39 +118,102 @@ const docTemplate = `{
                 }
             }
         },
-        "/forum/api/session/verify": {
-            "get": {
-                "description": "Checks if the session cookie is valid, active, and not expired. Returns user data if session is valid.",
+        "/api/auth/register": {
+            "post": {
+                "description": "Creates a new user account. Accepts multipart/form-data for avatar uploads.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Verify current session status",
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User password (min 8 chars, 1 letter, 1 digit)",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User first name",
+                        "name": "first_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User last name",
+                        "name": "last_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User date of birth (YYYY-MM-DD)",
+                        "name": "date_of_birth",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "male, female, other, or prefer_not_to_say",
+                        "name": "gender",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional: defaults to email prefix",
+                        "name": "nickname",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional: Max 500 chars",
+                        "name": "about_me",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Set to 'true' or '1' for private profile",
+                        "name": "is_private",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "JPEG/PNG/GIF, max 5MB",
+                        "name": "avatar",
+                        "in": "formData"
+                    }
+                ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "csrf_token": {
-                                    "type": "string"
-                                },
-                                "user": {
-                                    "$ref": "#/definitions/models.User"
-                                }
-                            }
+                            "$ref": "#/definitions/models.LoginResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized: Session cookie not found, invalid, or expired.",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
-                    "500": {
-                        "description": "Internal server error.",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -202,9 +221,1348 @@ const docTemplate = `{
                 }
             }
         },
-        "/forum/api/user/profile": {
+        "/api/auth/verify": {
             "get": {
-                "description": "Returns the profile data for the user associated with the active session.",
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Checks if the session cookie is valid and returns the current user's info and a fresh CSRF token.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify current session",
+                "responses": {
+                    "200": {
+                        "description": "Current user and CSRF token",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SessionVerifyResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories": {
+            "get": {
+                "description": "Retrieves a list of all discussion categories available on the platform.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get all categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Category"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/detail": {
+            "get": {
+                "description": "Retrieves a specific category's details along with a list of posts belonging to it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get category by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CategoryWithPostsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/chat/gallery": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns a list of image metadata shared between the user and a partner. (Placeholder implementation).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Get chat gallery",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID of the chat partner",
+                        "name": "partner",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/chat/images": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns metadata for all images attached to a single message ID. Requires sender/receiver permission.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Get images by message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the message",
+                        "name": "messageID",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/chat/images/serve/{imagePath}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Serves the image file from disk. **Crucial**: Validates that the requester is either the sender or receiver of the message before serving.",
+                "produces": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Serve chat image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The relative path to the image",
+                        "name": "imagePath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden - You don't have access to this image",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Image not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/chat/images/stats": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns total count and total byte size of all images uploaded by the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Get user image stats",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/chat/images/upload": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Sends an image message to another user. Validates file type (JPEG, PNG, GIF), saves to disk, and broadcasts via WebSocket.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Upload chat image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the message recipient",
+                        "name": "receiver_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional text caption (max 1000 chars)",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to send (max 5MB)",
+                        "name": "chat_image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Returns {message: models.MessageWithUser}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file, too large, or messaging self",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/chat/images/{imageID}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Deletes the image file, the image metadata, and the original message record. Only the sender can perform this.",
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Delete chat image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the image to delete",
+                        "name": "imageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Unauthorized: Only sender can delete",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/comments": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Adds a new comment to a specific post. Triggers a real-time notification for the post owner via WebSocket.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Create a comment",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Comment"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing PostID or Content",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Database error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/comments/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates the text content of an existing comment. Only the author can perform this action.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Edit a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - not the owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Performs a soft-delete on a comment. Only the author can perform this action.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Delete a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: deleted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/guest/data": {
+            "get": {
+                "description": "Retrieves a full hierarchical tree of categories, including their posts, comments, and reactions.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guest"
+                ],
+                "summary": "Get structured guest data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GuestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/guest/view": {
+            "get": {
+                "description": "Retrieves all public posts, comments, and reactions in separate flat lists.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guest"
+                ],
+                "summary": "Get raw guest view data",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Persists a message to the database and broadcasts it via WebSocket to the receiver in real-time.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Send a private message",
+                "parameters": [
+                    {
+                        "description": "Message content and receiver ID",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Returns {message: models.Message}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error (e.g., messaging yourself)",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/conversation": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of messages between current user and partner. Marks messages as read.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Get conversation history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the partner",
+                        "name": "user_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max messages (default 10, max 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pagination offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/conversations": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all chat partners, last messages, unread counts, and real-time online status.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "List conversations",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/messages/read/{messageID}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates a single message status to read. Only the receiver can perform this.",
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Mark message read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the message",
+                        "name": "messageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Not the receiver",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Message not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/search-users": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves users. If all=true, returns everyone. Otherwise, returns only users you haven't chatted with yet.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Search chat partners",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Set to true to include users with existing chats",
+                        "name": "all",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/unread-count": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns the total count of unread messages across all conversations. Useful for badges.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Unread message count",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/messages/users": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all registered users (except current) and checks their real-time connection status via the Hub.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "List all users",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/{messageID}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Deletes a message and notifies the receiver via WebSocket. Only the sender can delete.",
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Delete a message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the message",
+                        "name": "messageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/my-commented-posts": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of posts that the current user has interacted with via comments. Useful for activity history.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Activity"
+                ],
+                "summary": "Get posts commented on",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/my-posts": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves a full list of posts created by the logged-in user, including nested categories, comments, and reactions.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Activity"
+                ],
+                "summary": "Get own posts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to load posts or associated data",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns a list of notifications for the authenticated user, including the total count of active notifications.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get notifications",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Soft-deletes or hides a specific notification from the user's view. Requires the notification ID as a path parameter.",
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Hide notification",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Missing notification ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a new post for the authenticated user with a title, content, and multiple categories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Create a post",
+                "parameters": [
+                    {
+                        "description": "Post Data (category_ids, title, content)",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or missing fields",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts/disliked": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns a list of all posts the authenticated user has reacted to negatively (disliked).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Engagement"
+                ],
+                "summary": "Get disliked posts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.MyPostResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts/liked": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns a list of all posts the authenticated user has reacted to positively (liked).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Engagement"
+                ],
+                "summary": "Get liked posts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Marks a post as deleted without removing it from the database. Only the owner can delete it.",
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Delete post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts/{id}/content": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to update only the main text content of their post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Edit post content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New Content",
+                        "name": "content",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden: Not the owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/posts/{id}/title": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to update only the title of their post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Edit post title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New Title",
+                        "name": "title",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden: Not the owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reactions": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows an authenticated user to toggle a reaction. If the reaction exists, it is removed; if a different one exists, it is updated. Triggers a real-time notification to the content owner.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "React to content",
+                "responses": {
+                    "200": {
+                        "description": "Returns the updated list of all reactions for the target",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ReactionWithUser"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid target_id, target_type, or reaction_type",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/privacy": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Changes the user's profile from public to private or vice versa. When changing to public, all pending follow requests are automatically cleaned up.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Toggle profile privacy",
+                "parameters": [
+                    {
+                        "description": "Privacy setting {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns updated privacy status and message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/profile": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns the full profile details of the currently authenticated user including avatar information.",
                 "produces": [
                     "application/json"
                 ],
@@ -214,19 +1572,649 @@ const docTemplate = `{
                 "summary": "Get current user profile",
                 "responses": {
                     "200": {
-                        "description": "Successful response.",
+                        "description": "Complete user profile data including avatar",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserWithAvatar"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates editable user profile fields (first_name, last_name, about_me, gender)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Profile update data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated user profile",
                         "schema": {
                             "$ref": "#/definitions/models.User"
                         }
                     },
+                    "400": {
+                        "description": "Invalid request body or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
                     "401": {
-                        "description": "Unauthorized: User not authenticated."
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/images/delete/{postId}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Removes all image associations for a post. Only the post owner can perform this.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Delete post images",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/images/upload": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Uploads one or more images and associates them with a post. Max total size 20MB.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload post images",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the post",
+                        "name": "post_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/avatar": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Uploads a new avatar image for the authenticated user. Replaces any existing avatar. Max size 5MB.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload user avatar",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Avatar image file (JPEG, PNG, GIF)",
+                        "name": "avatar",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: success, message: Avatar uploaded successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file or too large",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/github/callback": {
+            "get": {
+                "description": "Exchanges the GitHub code for a token, fetches user emails and profile, and logs the user in.",
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "GitHub OAuth Callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization code from GitHub",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "State token for validation",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to application feed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/github/login": {
+            "get": {
+                "description": "Generates a state token and redirects the browser to GitHub's authorization server.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Initiate GitHub Login",
+                "responses": {
+                    "307": {
+                        "description": "Temporary Redirect to GitHub",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "URL to GitHub Login"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google/callback": {
+            "get": {
+                "description": "Exchanges the authorization code for an access token, retrieves user info, creates/links a user record, and establishes a session.",
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Google OAuth Callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization code from Google",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "State token for CSRF validation",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to application feed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid state or missing code",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Token exchange or session creation failure",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google/login": {
+            "get": {
+                "description": "Generates a state token for CSRF protection and redirects the browser to Google's OAuth 2.0 authorization server.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Initiate Google Login",
+                "responses": {
+                    "307": {
+                        "description": "Temporary Redirect to Google",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "URL to Google Accounts"
+                            }
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "handlers.CategoryInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.PostResponse"
+                    }
+                }
+            }
+        },
+        "handlers.CategoryWithPostsResponse": {
+            "description": "Response containing category info and its associated post list",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Technology"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Post"
+                    }
+                }
+            }
+        },
+        "handlers.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "reactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.ReactionResponse"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.GuestResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CategoryResponse"
+                    }
+                }
+            }
+        },
+        "handlers.MyPostResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CategoryInfo"
+                    }
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CommentResponse"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "reactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.ReactionResponse"
+                    }
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.PostResponse": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "description": "NEW FIELD",
+                    "type": "string"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CommentResponse"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "reactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.ReactionResponse"
+                    }
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Optional title field",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ReactionResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "reaction_type": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SessionVerifyResponse": {
+            "type": "object",
+            "properties": {
+                "csrf_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "models.AvatarInfo": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string"
+                },
+                "image_id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "set_at": {
+                    "type": "string"
+                },
+                "thumbnail_path": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Category": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "The unique identifier for the category.\nexample: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "The name of the category.\nexample: Technology",
+                    "type": "string"
+                }
+            }
+        },
+        "models.Comment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "The text content of the comment\nexample: This is a very insightful comment!",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "The timestamp when the comment was created\nexample: 2025-12-21T10:00:00Z",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the comment (UUID)\nexample: 550e8400-e29b-41d4-a716-446655440000",
+                    "type": "string"
+                },
+                "post_id": {
+                    "description": "The ID of the post this comment belongs to\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "The timestamp when the comment was last updated\nexample: 2025-12-21T12:30:00Z",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the user who authored the comment\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateMessageRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "receiver_id"
+            ],
+            "properties": {
+                "content": {
+                    "description": "Message content\nrequired: true\nexample: Hello there!",
+                    "type": "string"
+                },
+                "receiver_id": {
+                    "description": "ID of the recipient\nrequired: true\nexample: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7",
+                    "type": "string"
+                }
+            }
+        },
         "models.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -248,11 +2236,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "csrf_token": {
-                    "description": "The CSRF token required for subsequent protected POST/PUT/DELETE requests.\nexample: XyZ123AbC456DeF789GhI0JkL",
+                    "description": "The CSRF token required for subsequent protected requests.\nexample: XyZ123AbC456DeF789GhI0JkL",
                     "type": "string"
                 },
-                "session_id": {
-                    "description": "The session ID (often set as a cookie, but included here for context).\nexample: d2e9f8a7-b6c5-d4e3-f2a1-b0c9d8e7f6a5",
+                "id": {
+                    "description": "The session ID.\nexample: d2e9f8a7-b6c5-d4e3-f2a1-b0c9d8e7f6a5",
                     "type": "string"
                 },
                 "user": {
@@ -265,15 +2253,84 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Post": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "description": "A list of category IDs associated with this post\nexample: [1, 2, 5]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "content": {
+                    "description": "The main body content of the post\nexample: I am trying to containerize my Go application...",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "The timestamp when the post was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the post (UUID)\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "The title of the post\nexample: How to use Go with Docker?",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "The timestamp when the post was last updated\nexample: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the user who created the post\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ReactionWithUser": {
+            "type": "object",
+            "properties": {
+                "comment_id": {
+                    "description": "The ID of the comment (if applicable)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "example: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "nickname": {
+                    "description": "The display name of the user\nexample: gopher_fan",
+                    "type": "string"
+                },
+                "post_id": {
+                    "description": "The ID of the post (if applicable)",
+                    "type": "string"
+                },
+                "reaction_type": {
+                    "description": "The type of reaction (e.g., 1 for Like, -1 for Dislike)\nexample: 1",
+                    "type": "integer"
+                },
+                "user_id": {
+                    "description": "The ID of the user who reacted\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                }
+            }
+        },
         "models.User": {
             "type": "object",
             "properties": {
-                "age": {
-                    "description": "The age of the user.\nexample: 35",
-                    "type": "integer"
+                "about_me": {
+                    "description": "A short bio or description of the user.",
+                    "type": "string"
                 },
                 "created_at": {
                     "description": "The timestamp when the user account was created.\nexample: 2025-01-01T10:00:00Z",
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "description": "The date of birth of the user.\nexample: 1990-01-01",
                     "type": "string"
                 },
                 "email": {
@@ -285,19 +2342,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gender": {
-                    "description": "The gender of the user (e.g., Male, Female, Other).\nexample: Male",
+                    "description": "The gender of the user (male, female, other, prefer_not_to_say).\nexample: male",
                     "type": "string"
                 },
                 "id": {
                     "description": "The unique identifier for the user.\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
                     "type": "string"
                 },
+                "is_private": {
+                    "description": "Indicates if the profile is private.",
+                    "type": "boolean"
+                },
                 "last_name": {
                     "description": "The last name of the user.\nexample: Doe",
                     "type": "string"
                 },
-                "username": {
-                    "description": "The unique username of the user.\nexample: johndoe",
+                "nickname": {
+                    "description": "The unique nickname of the user.\nexample: johndoe",
                     "type": "string"
                 }
             }
@@ -306,7 +2367,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "login": {
-                    "description": "The user's username OR email address.\nrequired: true\nexample: johndoe OR john.doe@example.com",
+                    "description": "The user's nickname OR email address.\nrequired: true\nexample: johndoe OR john.doe@example.com",
                     "type": "string"
                 },
                 "password": {
@@ -315,35 +2376,55 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UserRegistration": {
+        "models.UserWithAvatar": {
             "type": "object",
             "properties": {
-                "age": {
-                    "description": "The user's age. Must be between 13 and 120.\nrequired: true\nminimum: 13\nmaximum: 120\nexample: 24",
-                    "type": "integer"
+                "about_me": {
+                    "description": "A short bio or description of the user.",
+                    "type": "string"
+                },
+                "avatar": {
+                    "description": "Avatar information retrieved from images_core via user_avatars relationship",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.AvatarInfo"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "description": "The timestamp when the user account was created.\nexample: 2025-01-01T10:00:00Z",
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "description": "The date of birth of the user.\nexample: 1990-01-01",
+                    "type": "string"
                 },
                 "email": {
-                    "description": "The user's email address. Must be unique and valid.\nrequired: true\nexample: register@example.com",
+                    "description": "The email address of the user.\nexample: john.doe@example.com",
                     "type": "string"
                 },
                 "first_name": {
-                    "description": "The user's first name.\nrequired: true\nexample: Jane",
+                    "description": "The first name of the user.\nexample: John",
                     "type": "string"
                 },
                 "gender": {
-                    "description": "The user's gender.\nrequired: true\nexample: Female",
+                    "description": "The gender of the user (male, female, other, prefer_not_to_say).\nexample: male",
                     "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the user.\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+                    "type": "string"
+                },
+                "is_private": {
+                    "description": "Indicates if the profile is private.",
+                    "type": "boolean"
                 },
                 "last_name": {
-                    "description": "The user's last name.\nrequired: true\nexample: Smith",
+                    "description": "The last name of the user.\nexample: Doe",
                     "type": "string"
                 },
-                "password": {
-                    "description": "The user's chosen password.\nrequired: true\nmin length: 8\nexample: secureP@ss123",
-                    "type": "string"
-                },
-                "username": {
-                    "description": "The desired unique username.\nrequired: true\nmin length: 4\nexample: new_forum_user",
+                "nickname": {
+                    "description": "The unique nickname of the user.\nexample: johndoe",
                     "type": "string"
                 }
             }
@@ -355,10 +2436,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/forum/api",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Forum Application API",
-	Description:      "This is the API documentation for the forum application.",
+	Title:            "Social-network Application API",
+	Description:      "This is the API documentation for the social-network application.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

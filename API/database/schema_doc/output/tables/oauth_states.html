@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>oauth_states - ../forum.db.main</title>
+        <title>oauth_states - ../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="../index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -126,7 +126,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="provider">provider</span></td>
+                                    <td><span id="provider">provider</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
                                     <td title=''></td>
@@ -234,12 +234,6 @@
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>expires_at</td>
-                                </tr>
-                                <tr>
-                                    <td title='Indexed'>idx_oauth_states_provider</td>
-                                    <td>Performance</td>
-                                    <td><span title='Ascending'>Asc</span></td>
-                                    <td>provider</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_oauth_states_1</td>

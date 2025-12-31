@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>sessions - ../forum.db.main</title>
+        <title>sessions - ../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="../index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>sessions</h1><p><span id="recordNumber">7</span> rows</p><br />
+                    <h1>sessions</h1><p><span id="recordNumber">3</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -109,10 +109,27 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="user_id">user_id</span></td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="session_id">session_id</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
                                     <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="user_id">user_id</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -126,23 +143,6 @@
                                                 <td class="constraint detail"></td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
-                                        </table>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="session_id">session_id</span></td>
-                                    <td>TEXT</td>
-                                    <td>2000000000</td>
-                                    <td title=''></td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
                                     <td></td>
@@ -166,6 +166,23 @@
                                 </tr>
                                 <tr>
                                     <td><span id="ip_address">ip_address</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="user_agent">user_agent</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
                                     <td title='nullable'>√</td>
@@ -215,6 +232,23 @@
                                     </td>
                                     <td></td>
                                 </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="absolute_expires_at">absolute_expires_at</span></td>
+                                    <td>TIMESTAMP</td>
+                                    <td>2000000000,10</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -249,19 +283,31 @@
                                     <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> sessions_s_pk</td>
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span></td>
+                                    <td>session_id</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>idx_sessions_absolute_expiry</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>absolute_expires_at</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>idx_sessions_user</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
                                     <td>user_id</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_sessions_1</td>
                                     <td>Must be unique</td>
                                     <td><span title='Ascending'>Asc</span></td>
-                                    <td>user_id</td>
+                                    <td>session_id</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_sessions_2</td>
                                     <td>Must be unique</td>
                                     <td><span title='Ascending'>Asc</span></td>
-                                    <td>session_id</td>
+                                    <td>user_id</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -286,24 +332,33 @@
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
-<area shape="rect" id="node1" href="sessions.html" target="_top" title="sessions" alt="" coords="193,5,557,251">
-<area shape="rect" id="node2" href="user.html" target="_top" title="user" alt="" coords="5,8,149,184">
+<area shape="rect" id="node1" href="sessions.html" target="_top" title="sessions" alt="" coords="216,5,663,309">
+<area shape="rect" id="node2" href="user.html" target="_top" title="user" alt="" coords="5,37,172,213">
 </map>
                                         <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/sessions.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="twoDegreesRelationshipsDiagram" name="twoDegreesRelationshipsDiagram">
-<area shape="rect" id="node1" href="chat_images.html" target="_top" title="chat_images" alt="" coords="601,30,797,118">
-<area shape="rect" id="node2" href="messages.html" target="_top" title="messages" alt="" coords="289,66,461,154">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,221,149,397">
-<area shape="rect" id="node4" href="comments.html" target="_top" title="comments" alt="" coords="611,259,787,347">
-<area shape="rect" id="node5" href="posts.html" target="_top" title="posts" alt="" coords="301,259,449,347">
-<area shape="rect" id="node6" href="images.html" target="_top" title="images" alt="" coords="625,401,773,489">
-<area shape="rect" id="node7" href="notifications.html" target="_top" title="notifications" alt="" coords="841,165,1037,253">
-<area shape="rect" id="node8" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="263,401,487,489">
-<area shape="rect" id="node9" href="reactions.html" target="_top" title="reactions" alt="" coords="855,327,1023,415">
-<area shape="rect" id="node10" href="sessions.html" target="_top" title="sessions" alt="" coords="193,542,557,787">
-<area shape="rect" id="node11" href="user_auth.html" target="_top" title="user_auth" alt="" coords="289,805,461,893">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="1057,241,1233,329">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="765,171,913,259">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,519,172,695">
+<area shape="rect" id="node7" href="groups.html" target="_top" title="groups" alt="" coords="365,454,513,542">
+<area shape="rect" id="node4" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="307,135,571,223">
+<area shape="rect" id="node5" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1018,605,1271,693">
+<area shape="rect" id="node6" href="group_events.html" target="_top" title="group_events" alt="" coords="737,701,942,789">
+<area shape="rect" id="node8" href="group_invites.html" target="_top" title="group_invites" alt="" coords="737,349,942,437">
+<area shape="rect" id="node9" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="707,454,972,542">
+<area shape="rect" id="node10" href="group_members.html" target="_top" title="group_members" alt="" coords="725,595,953,683">
+<area shape="rect" id="node11" href="group_messages.html" target="_top" title="group_messages" alt="" coords="723,806,956,894">
+<area shape="rect" id="node12" href="images_core.html" target="_top" title="images_core" alt="" coords="341,914,537,1002">
+<area shape="rect" id="node13" href="messages.html" target="_top" title="messages" alt="" coords="353,631,525,719">
+<area shape="rect" id="node14" href="notifications.html" target="_top" title="notifications" alt="" coords="1317,607,1513,695">
+<area shape="rect" id="node15" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="327,773,551,861">
+<area shape="rect" id="node16" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="1016,99,1273,187">
+<area shape="rect" id="node17" href="reactions.html" target="_top" title="reactions" alt="" coords="1331,167,1499,255">
+<area shape="rect" id="node18" href="sessions.html" target="_top" title="sessions" alt="" coords="216,1019,663,1323">
+<area shape="rect" id="node19" href="user_auth.html" target="_top" title="user_auth" alt="" coords="353,1341,525,1429">
+<area shape="rect" id="node20" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="740,913,939,1001">
 </map>
                                         <a name='diagram'><img id="twodegreesDegreeImg" src="../diagrams/tables/sessions.2degrees.png" usemap="#twoDegreesRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>

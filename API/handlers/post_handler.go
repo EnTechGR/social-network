@@ -20,7 +20,7 @@ func NewPostHandler(repo *repository.PostRepository) *PostHandler {
 	return &PostHandler{PostRepo: repo}
 }
 
-// CreatePost creates a new forum post
+// CreatePost creates a new social-network post
 // @Summary      Create a post
 // @Description  Creates a new post for the authenticated user with a title, content, and multiple categories.
 // @Tags         Posts

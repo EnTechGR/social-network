@@ -284,9 +284,14 @@ curl -X POST http://localhost:8080/api/v1/register \                            
     "password": "Password123"
   }'
 
- curl -X POST http://localhost:8080/api/v1/login \                                                                                    ──(Wed,Dec31)─┘
+curl -X POST http://localhost:8080/api/v1/login \                                ──(Wed,Dec31)─┘
   -H "Content-Type: application/json" \
-  -d '{
-    "nickname": "mkouvara",
-    "password": "Password123"
-  }'
+  -d '{"login":"mkouvara","password":"Password123"}' \ 
+  -c cookies.txt
+
+curl http://localhost:8080/api/v1/user/profile -H "Cookie: id=AxXgQshiUnr8gInp_X77lkJnhJvfqIQoAWuBJ4Y5xBw="
+
+curl -X POST http://localhost:8080/api/v1/user/avatar \                          ──(Wed,Dec31)─┘
+  -b cookies.txt \
+  -H "X-CSRF-Token: GOTsl5b6KaIAzkuVPwCfNo2Ed8kVml4ziqDSDxCPeE8=" \
+  -F "avatar=@3551739.jpg"

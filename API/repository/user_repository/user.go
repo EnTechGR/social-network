@@ -413,21 +413,32 @@ func (r *UserRepository) GetUserWithAvatar(userID string) (*models.UserWithAvata
 	userWithAvatar.CreatedAt = createdAt.Time
 
 	// Get avatar data from v_user_avatars view
-	var avatar models.AvatarInfo
+	// ✅ FIX: Use sql.NullString to handle NULL values when user has no avatar
+	var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
+	
 	err = r.DB.QueryRow(
 		`SELECT image_id, file_path, thumbnail_path, mime_type, set_at 
-		FROM v_user_avatars WHERE user_id = ?`,
+		FROM v_user_avatars 
+		WHERE user_id = ? AND image_id IS NOT NULL`,
 		userID,
-	).Scan(&avatar.ImageID, &avatar.FilePath, &avatar.ThumbnailPath, &avatar.MimeType, &avatar.SetAt)
+	).Scan(&imageID, &filePath, &thumbnailPath, &mimeType, &setAt)
 
-	if err == nil {
-		// Avatar found
-		userWithAvatar.Avatar = &avatar
-	} else if err != sql.ErrNoRows {
-		// Real error (not just missing avatar)
-		return nil, err
+	// ✅ FIX: Check if values are valid (not NULL) before creating avatar
+	if err == nil && imageID.Valid {
+		// Avatar found with valid values
+		userWithAvatar.Avatar = &models.AvatarInfo{
+			ImageID:       imageID.String,
+			FilePath:      filePath.String,
+			ThumbnailPath: thumbnailPath.String,
+			MimeType:      mimeType.String,
+			SetAt:         setAt.String,
+		}
+	} else if err != nil && err != sql.ErrNoRows {
+		// Real error (not just missing avatar) - log but don't fail
+		// Avatar is optional, so we continue even if there's an issue fetching it
+		log.Printf("Warning: Failed to fetch avatar for user %s: %v", userID, err)
 	}
-	// If err == sql.ErrNoRows, avatar is nil (user has no avatar), which is fine
+	// If err == sql.ErrNoRows or values are invalid, avatar remains nil (user has no avatar)
 
 	return &userWithAvatar, nil
 }

@@ -73,7 +73,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	}
 
 	apiMux.Handle("/api/v1/register", guestOnly(http.HandlerFunc(registerLimiter.Limit(authHandler.Register))))
-	apiMux.Handle("/api/v1/session/login", guestOnly(http.HandlerFunc(authHandler.Login)))
+	apiMux.Handle("/api/v1/login", guestOnly(http.HandlerFunc(authHandler.Login)))
 
 	// OAuth routes (guest only)
 	apiMux.Handle("/auth/google/login", guestOnly(http.HandlerFunc(oauthHandler.GoogleLogin)))

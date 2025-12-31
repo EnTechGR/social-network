@@ -1,4 +1,3 @@
-// Package utils provides utility functions for validation, crypto, and ID generation
 package utils
 
 import (
@@ -95,29 +94,79 @@ func GenerateUUID() string {
 // SESSION TOKEN GENERATION
 // ============================================================================
 
-// GenerateSessionToken generates a secure random session token
-func GenerateSessionToken() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		// Fallback to UUID if random fails
-		return uuid.New().String()
+// GenerateSessionToken generates a cryptographically secure random session token.
+//
+// SECURITY PROPERTIES:
+//   - Entropy: 256 bits (32 bytes from crypto/rand)
+//   - Encoding: Base64 URL-safe encoding (43 characters)
+//   - Randomness: Uses crypto/rand.Read for CSPRNG
+//   - Attack resistance: 2^256 possible values, computationally infeasible to brute force
+//
+// ERROR HANDLING:
+//   - Returns error if crypto/rand fails (never falls back to weaker entropy)
+//   - Validates that exactly 32 bytes were read
+//
+// OWASP COMPLIANCE:
+//   - Exceeds minimum 64 bits of entropy requirement (provides 256 bits)
+//   - Uses CSPRNG as required by OWASP Session Management Cheat Sheet
+//
+// Expected time for attacker to brute force (theoretical):
+//   - At 10,000 guesses/second: > 10^70 years (universe age: ~10^10 years)
+func GenerateSessionToken() (string, error) {
+	bytes := make([]byte, 32) // 256 bits of entropy
+	
+	// Read cryptographically secure random bytes
+	n, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate session token: %w", err)
 	}
-	return base64.URLEncoding.EncodeToString(bytes)
+	
+	// Validate that we read exactly 32 bytes
+	if n != 32 {
+		return "", fmt.Errorf("insufficient random bytes: expected 32, got %d", n)
+	}
+	
+	// Encode to base64 URL-safe format (no padding issues)
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// GenerateCSRFToken generates a CSRF token
-func GenerateCSRFToken() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return uuid.New().String()
+// GenerateCSRFToken generates a cryptographically secure CSRF token.
+//
+// SECURITY PROPERTIES:
+//   - Entropy: 256 bits (32 bytes from crypto/rand)
+//   - Encoding: Base64 URL-safe encoding (43 characters)
+//   - Randomness: Uses crypto/rand.Read for CSPRNG
+//   - Unique per session: Prevents CSRF attacks via token validation
+//
+// ERROR HANDLING:
+//   - Returns error if crypto/rand fails (never falls back to weaker entropy)
+//   - Validates that exactly 32 bytes were read
+//
+// CSRF TOKEN REQUIREMENTS:
+//   - Must be unpredictable (achieved via CSPRNG)
+//   - Must be unique per session (achieved via 256-bit entropy)
+//   - Must be validated on state-changing requests
+//
+// Expected collision probability:
+//   - With 1 million active sessions: < 1 in 10^60
+func GenerateCSRFToken() (string, error) {
+	bytes := make([]byte, 32) // 256 bits of entropy
+	
+	// Read cryptographically secure random bytes
+	n, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate CSRF token: %w", err)
 	}
-	return base64.URLEncoding.EncodeToString(bytes)
+	
+	// Validate that we read exactly 32 bytes
+	if n != 32 {
+		return "", fmt.Errorf("insufficient random bytes: expected 32, got %d", n)
+	}
+	
+	// Encode to base64 URL-safe format
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// CalculateSessionExpiry returns the expiry time for a session (24 hours from now)
-func CalculateSessionExpiry() time.Time {
-	return time.Now().Add(24 * time.Hour)
-}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -129,4 +178,50 @@ func GetLastPathParam(r interface{}) string {
 	// This is a placeholder - implement based on your router
 	// For standard http, you might parse r.URL.Path manually
 	return ""
+}
+
+// Add these constants and functions to your utils/validation.go file
+// They should be added after the existing CalculateSessionExpiry function
+
+// ============================================================================
+// SESSION TIMEOUT CONFIGURATION
+// ============================================================================
+
+const (
+	// SessionIdleTimeout is how long a session can be inactive before expiring
+	// OWASP recommends 15-30 minutes for general applications
+	SessionIdleTimeout = 30 * time.Minute
+	
+	// SessionAbsoluteTimeout is the maximum lifetime of a session regardless of activity
+	// OWASP recommends 12 hours maximum, forces re-authentication
+	SessionAbsoluteTimeout = 12 * time.Hour
+
+	// SessionRenewalWindow defines how close to expiry we can extend a session
+	// Used to optimize database writes - only update expires_at if within this window
+	// Prevents updating database on every single request
+	SessionRenewalWindow = 5 * time.Minute
+)
+
+// CalculateSessionExpiry returns the expiry time for a session (idle timeout)
+// This is updated on each request to implement sliding window
+func CalculateSessionExpiry() time.Time {
+	return time.Now().Add(SessionIdleTimeout)
+}
+
+// CalculateAbsoluteSessionExpiry returns the absolute expiry time for a session
+// This is set once at session creation and never updated
+// Forces re-authentication after absolute timeout regardless of activity
+func CalculateAbsoluteSessionExpiry() time.Time {
+	return time.Now().Add(SessionAbsoluteTimeout)
+}
+
+// ShouldRenewSession determines if a session should have its idle timeout extended
+// Returns true if the session is within the renewal window of expiring
+// This optimizes database performance by avoiding updates on every request
+//
+// Example: If expires_at is 2 minutes away and renewal window is 5 minutes,
+// this returns true, indicating we should extend expires_at
+func ShouldRenewSession(expiresAt time.Time) bool {
+	timeUntilExpiry := time.Until(expiresAt)
+	return timeUntilExpiry <= SessionRenewalWindow && timeUntilExpiry > 0
 }

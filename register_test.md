@@ -267,14 +267,11 @@ curl -X POST http://localhost:8080/forum/api/register \
 #   -d '{"username": "user4", "email": "user4@example.com", "password": "Pass1234", "first_name": "User", "last_name": "Four", "age": 35, "gender": "prefer_not_to_say"}'
 # ```
 
- curl -X POST http://localhost:8080/api/v1/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "testuser@example.com",
-    "password": "TestPassword123!",
-    "first_name": "John",
-    "last_name": "Doe",
-    "nickname": "johndoe",
-    "date_of_birth": "1990-01-15T00:00:00Z",
-    "gender": "male"
-  }'
+curl -X POST http://localhost:8080/api/v1/register \                                                                               ──(Tue,Dec30)─┘
+  -F "email=testuser@example.com" \
+  -F "password=Password123" \
+  -F "first_name=John" \
+  -F "last_name=Doe" \
+  -F "nickname=johndoe" \ 
+  -F "date_of_birth=1990-01-15" \
+  -F "gender=male" 

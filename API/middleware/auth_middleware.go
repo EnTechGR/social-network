@@ -8,18 +8,18 @@ import (
 
 	"social-network/models"
 	"social-network/repository/session"
-	"social-network/repository/user"
+	"social-network/repository/user_repository"
 	"social-network/utils"
 )
 
 // Authentication middleware checks if the user is authenticated
 type AuthMiddleware struct {
 	SessionRepo *session.SessionRepository
-	UserRepo    *user.UserRepository
+	UserRepo    *user_repository.UserRepository
 }
 
 // NewAuthMiddleware creates a new AuthMiddleware
-func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.UserRepository) *AuthMiddleware {
+func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user_repository.UserRepository) *AuthMiddleware {
 	return &AuthMiddleware{
 		SessionRepo: sessionRepo,
 		UserRepo:    userRepo,

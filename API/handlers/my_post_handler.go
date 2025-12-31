@@ -53,7 +53,7 @@ type MyPostResponse struct {
 // @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Failed to load posts or associated data"
-// @Router       /api/my-posts [get]
+// @Router       /api/v1/my-posts [get]
 func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -170,7 +170,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 // @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
-// @Router       /api/my-commented-posts [get]
+// @Router       /api/v1/my-commented-posts [get]
 func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

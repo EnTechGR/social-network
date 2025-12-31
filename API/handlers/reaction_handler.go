@@ -48,7 +48,7 @@ func NewReactionHandler(
 // @Failure      400       {object}  models.ErrorResponse      "Invalid target_id, target_type, or reaction_type"
 // @Failure      401       {object}  models.ErrorResponse      "Unauthorized"
 // @Failure      500       {object}  models.ErrorResponse      "Internal Server Error"
-// @Router       /api/reactions [post]
+// @Router       /api/v1/reactions [post]
 func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

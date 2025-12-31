@@ -34,7 +34,7 @@ func NewNotificationHandler(
 // @Success      200
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Internal Server Error"
-// @Router       /api/notifications [get]
+// @Router       /api/v1/notifications [get]
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -77,7 +77,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 // @Success      200
 // @Failure      400      {object}  models.ErrorResponse "Missing notification ID"
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
-// @Router       /api/notifications/{id} [delete]
+// @Router       /api/v1/notifications/{id} [delete]
 func (h *NotificationHandler) HideNotification(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

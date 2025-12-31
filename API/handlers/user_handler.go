@@ -66,7 +66,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  models.ErrorResponse "Invalid request body"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/user/privacy [put]
+// @Router       /api/v1/user/privacy [put]
 func (h *UserHandler) TogglePrivacy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -125,7 +125,7 @@ func (h *UserHandler) TogglePrivacy(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  models.ErrorResponse "Invalid request body or validation error"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/user/profile [put]
+// @Router       /api/v1/user/profile [put]
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

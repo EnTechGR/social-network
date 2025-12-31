@@ -242,11 +242,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate user
-	user, _ := h.UserRepo.Authenticate(loginData)
-	utils.JSONResponse(w, map[string]string{
-		"error":   "unauthorized",
-		"message": "Invalid credentials",
-	}, http.StatusUnauthorized)
+	user, err := h.UserRepo.Authenticate(loginData)
+	if err != nil {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
 
 	// Create session (generates initial CSRF token)
 	session, err := h.createUserSession(w, r, user)
@@ -268,7 +268,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Return response with NEW CSRF token
 	utils.JSONResponse(w, map[string]interface{}{
 		"user":       user,
-		"csrf_token": csrfToken, // Send new token to frontend
+		"csrf_token": csrfToken,  // Send new token to frontend
 		"message":    "Login successful",
 	}, http.StatusOK)
 }
@@ -320,6 +320,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+
 // VerifySession handles session verification
 // @Summary      Verify current session
 // @Description  Checks if the session cookie is valid and returns the current user's info and a fresh CSRF token.
@@ -369,6 +370,7 @@ type SessionVerifyResponse struct {
 	CSRFToken string      `json:"csrf_token"`
 }
 
+
 // createUserSession creates a session and sets the session cookie
 // SECURITY: Implements session regeneration to prevent session fixation attacks
 // by explicitly invalidating any existing session before creating a new one
@@ -378,7 +380,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 	// Check if there's an old session cookie in the request
 	if oldCookie, err := r.Cookie(utils.GetSessionCookieName()); err == nil {
 		log.Printf("[SECURITY] Session regeneration: Invalidating old session %s for user %s", oldCookie.Value, user.ID)
-
+		
 		// Delete the old session from the database
 		if err := h.SessionRepo.DeleteBySessionID(oldCookie.Value); err != nil {
 			// Log but don't fail - the old session might already be expired/deleted
@@ -392,7 +394,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 	if userAgent == "" {
 		log.Printf("[SECURITY] Warning: Session created without User-Agent for user %s", user.ID)
 	}
-
+	
 	csrfToken, err := utils.GenerateCSRFToken()
 	if err != nil {
 		log.Printf("Failed to generate CSRF token: %v", err)
@@ -405,8 +407,8 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 		return nil, err
 	}
 
-	log.Printf("[SECURITY] Session created: ID=%s, User=%s, IP=%s, UA=%s",
-		session.SessionID, user.ID, session.IPAddress,
+	log.Printf("[SECURITY] Session created: ID=%s, User=%s, IP=%s, UA=%s", 
+		session.SessionID, user.ID, session.IPAddress, 
 		utils.ParseUserAgent(userAgent).Browser+" "+utils.ParseUserAgent(userAgent).OS)
 
 	// STEP 3: Set the new session cookie with the new session ID
@@ -483,6 +485,7 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 // 	utils.JSONResponse(w, user, http.StatusOK)
 // }
 
+
 // RotateCSRFTokenIfNeeded checks if CSRF token should be rotated and does so
 // Returns the (possibly new) CSRF token and whether it was rotated
 func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger utils.RotationTrigger) (string, bool) {
@@ -490,7 +493,7 @@ func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger u
 	if !utils.ShouldRotateForTrigger(trigger) {
 		return session.CSRFToken, false
 	}
-
+	
 	// Rotate the token
 	newToken, err := h.SessionRepo.RotateCSRFToken(session.SessionID)
 	if err != nil {
@@ -498,7 +501,7 @@ func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger u
 		// Return old token on error
 		return session.CSRFToken, false
 	}
-
+	
 	log.Printf("[CSRF ROTATION] Token rotated for session %s (trigger: %s)", session.SessionID, trigger)
 	return newToken, true
 }
@@ -511,7 +514,7 @@ func (h *AuthHandler) RotateCSRFToken(session *models.Session, reason string) st
 		log.Printf("[CSRF ROTATION] Failed to rotate token for session %s: %v", session.SessionID, err)
 		return session.CSRFToken
 	}
-
+	
 	log.Printf("[CSRF ROTATION] Token rotated for session %s (reason: %s)", session.SessionID, reason)
 	return newToken
 }

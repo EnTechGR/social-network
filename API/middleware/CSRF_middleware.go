@@ -19,19 +19,19 @@ func CSRFMiddleware(sessionRepo *session.SessionRepository) func(http.Handler) h
 			if (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete) && !excludePaths[r.URL.Path] {
 				cookie, err := r.Cookie(utils.GetSessionCookieName())
 				if err != nil || cookie.Value == "" {
-					http.Error(w, "Unauthorized - no session", http.StatusUnauthorized)
+					utils.ErrorResponse(w, "Unauthorized - no session", http.StatusUnauthorized)
 					return
 				}
 
 				session, err := sessionRepo.GetBySessionID(cookie.Value)
 				if err != nil {
-					http.Error(w, "Invalid session", http.StatusUnauthorized)
+					utils.ErrorResponse(w, "Invalid session", http.StatusUnauthorized)
 					return
 				}
 
 				csrfHeader := r.Header.Get("X-CSRF-Token")
 				if csrfHeader == "" || csrfHeader != session.CSRFToken {
-					http.Error(w, "CSRF token mismatch", http.StatusForbidden)
+					utils.ErrorResponse(w, "CSRF token mismatch", http.StatusForbidden)
 					return
 				}
 			}

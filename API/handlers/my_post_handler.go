@@ -62,7 +62,7 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

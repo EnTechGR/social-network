@@ -275,3 +275,18 @@ curl -X POST http://localhost:8080/api/v1/register \                            
   -F "nickname=johndoe" \ 
   -F "date_of_birth=1990-01-15" \
   -F "gender=male" 
+
+
+  curl -X POST http://localhost:8080/api/v1/login \                                                                              127 ↵ ──(Wed,Dec31)─┘
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "marinos@test.com",
+    "password": "Password123"
+  }'
+
+ curl -X POST http://localhost:8080/api/v1/login \                                                                                    ──(Wed,Dec31)─┘
+  -H "Content-Type: application/json" \
+  -d '{
+    "nickname": "mkouvara",
+    "password": "Password123"
+  }'

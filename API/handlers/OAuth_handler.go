@@ -16,7 +16,7 @@ import (
 	"social-network/models"
 	"social-network/repository"
 	"social-network/repository/session"
-	"social-network/repository/user"
+	"social-network/repository/user_repository"
 	"social-network/utils"
 )
 
@@ -32,13 +32,13 @@ var (
 
 // OAuthHandler handles OAuth authentication
 type OAuthHandler struct {
-	UserRepo    *user.UserRepository
+	UserRepo    *user_repository.UserRepository
 	SessionRepo *session.SessionRepository
 	AuthHandler *AuthHandler
 }
 
 // NewOAuthHandler creates a new OAuthHandler
-func NewOAuthHandler(userRepo *user.UserRepository, sessionRepo *session.SessionRepository, authHandler *AuthHandler) *OAuthHandler {
+func NewOAuthHandler(userRepo *user_repository.UserRepository, sessionRepo *session.SessionRepository, authHandler *AuthHandler) *OAuthHandler {
 	return &OAuthHandler{
 		UserRepo:    userRepo,
 		SessionRepo: sessionRepo,

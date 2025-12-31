@@ -21,7 +21,7 @@ import (
 	dbmigrate "social-network/pkg/db/sqlite"
 	"social-network/repository"
 	"social-network/repository/session"
-	"social-network/repository/user"
+	"social-network/repository/user_repository"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -179,7 +179,7 @@ func TestAuthHandler_Register_Success_NoAvatar(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -261,7 +261,7 @@ func TestAuthHandler_Register_Success_WithAvatar(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -334,7 +334,7 @@ func TestAuthHandler_Register_DefaultNickname(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -366,7 +366,7 @@ func TestAuthHandler_Register_MissingRequiredFields(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -433,7 +433,7 @@ func TestAuthHandler_Register_InvalidEmail(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -461,7 +461,7 @@ func TestAuthHandler_Register_WeakPassword(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -503,7 +503,7 @@ func TestAuthHandler_Register_InvalidAge(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -547,7 +547,7 @@ func TestAuthHandler_Register_DuplicateEmail(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -591,7 +591,7 @@ func TestAuthHandler_Register_DuplicateNickname(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -635,7 +635,7 @@ func TestAuthHandler_Register_AvatarTooLarge(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -677,7 +677,7 @@ func TestAuthHandler_Register_InvalidGender(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -709,7 +709,7 @@ func TestAuthHandler_Register_AboutMeTooLong(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -745,7 +745,7 @@ func TestAuthHandler_Register_PrivacyFlag(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -802,7 +802,7 @@ func TestAuthHandler_Register_MethodNotAllowed(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
 
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
@@ -842,7 +842,7 @@ func BenchmarkAuthHandler_Register(b *testing.B) {
 	}
 
 	testDB.DB = db
-	userRepo := user.NewUserRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
 	sessionRepo := session.NewSessionRepository(testDB.DB)
 	imageRepo := repository.NewImageRepository(testDB.DB)
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)

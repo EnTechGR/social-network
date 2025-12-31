@@ -9,7 +9,7 @@ import (
 	"social-network/repository"
 	"social-network/repository/message"
 	"social-network/repository/session"
-	"social-network/repository/user"
+	"social-network/repository/user_repository"
 	"social-network/websocket"
 
 	// IMPORTANT SWAGGER IMPORTS
@@ -20,7 +20,7 @@ import (
 
 func SetupRoutes(db *sql.DB) http.Handler {
 	// Create repositories
-	userRepo := user.NewUserRepository(db)
+	userRepo := user_repository.NewUserRepository(db)
 	sessionRepo := session.NewSessionRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 	postRepo := repository.NewPostRepository(db)
@@ -37,6 +37,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
+    userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo, postRepo, imageRepo)
 	postHandler := handlers.NewPostHandler(postRepo)
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
@@ -83,8 +84,8 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/oauth/github/callback", corsMiddleware.Handler(http.HandlerFunc(oauthHandler.GitHubCallback)))
 
 	// Session management routes
-	apiMux.Handle("/api/v1/session/logout", corsMiddleware.Handler(http.HandlerFunc(authHandler.Logout)))
-	apiMux.Handle("/api/v1/session/verify", corsMiddleware.Handler(http.HandlerFunc(authHandler.VerifySession)))
+	apiMux.Handle("/api/v1/logout", corsMiddleware.Handler(http.HandlerFunc(authHandler.Logout)))
+	apiMux.Handle("/api/v1/verify", corsMiddleware.Handler(http.HandlerFunc(authHandler.VerifySession)))
 
 	// ✅ WebSocket endpoint (requires authentication, no CSRF needed for WebSocket upgrade)
 	apiMux.Handle("/ws", corsMiddleware.Handler(authMiddleware.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -114,22 +115,26 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/images/upload", protected(http.HandlerFunc(imageHTTPHandler.UploadPostImages)))
 	apiMux.Handle("/api/v1/images/delete/", protected(http.HandlerFunc(imageHTTPHandler.DeletePostImages)))
 	apiMux.Handle("/api/v1/user/avatar", protected(http.HandlerFunc(imageHTTPHandler.UploadAvatar)))
-	
+
 	// Additional protected routes for user management
-	apiMux.Handle("/api/v1/user/profile", protected(http.HandlerFunc(authHandler.GetProfile)))
+	// User profile endpoint (handles both GET and PUT via method switching in handler)
+	apiMux.Handle("/api/user/profile", protected(http.HandlerFunc(userHandler.GetProfile)))
+
+	// Toggle profile privacy (public/private)
+	apiMux.Handle("/api/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
 	apiMux.Handle("/api/v1/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification)))
-	apiMux.Handle("/api/v1/session/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
+	apiMux.Handle("/api/v1/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))
 
 	// Protected message routes
-	apiMux.Handle("/api/v1/messages/send", protected(http.HandlerFunc(messageHandler.SendMessage)))
-	apiMux.Handle("/api/v1/messages/conversation", protected(http.HandlerFunc(messageHandler.GetConversation)))
-	apiMux.Handle("/api/v1/messages/conversations", protected(http.HandlerFunc(messageHandler.GetConversations)))
-	apiMux.Handle("/api/v1/messages/users", protected(http.HandlerFunc(messageHandler.GetAllUsers)))
-	apiMux.Handle("/api/v1/messages/users-for-chat", protected(http.HandlerFunc(messageHandler.GetUsersForChat)))
-	apiMux.Handle("/api/v1/messages/unread-count", protected(http.HandlerFunc(messageHandler.GetUnreadCount)))
-	apiMux.Handle("/api/v1/messages/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))
-	apiMux.Handle("/api/v1/messages/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))
+	apiMux.Handle("/api/v1/chat/send", protected(http.HandlerFunc(messageHandler.SendMessage)))
+	apiMux.Handle("/api/v1/chat/conversation", protected(http.HandlerFunc(messageHandler.GetConversation)))
+	apiMux.Handle("/api/v1/chat/conversations", protected(http.HandlerFunc(messageHandler.GetConversations)))
+	apiMux.Handle("/api/v1/chat/users", protected(http.HandlerFunc(messageHandler.GetAllUsers)))
+	apiMux.Handle("/api/v1/chat/users-for-chat", protected(http.HandlerFunc(messageHandler.GetUsersForChat)))
+	apiMux.Handle("/api/v1/chat/unread-count", protected(http.HandlerFunc(messageHandler.GetUnreadCount)))
+	apiMux.Handle("/api/v1/chat/mark-read/", protected(http.HandlerFunc(messageHandler.MarkAsRead)))
+	apiMux.Handle("/api/v1/chat/delete/", protected(http.HandlerFunc(messageHandler.DeleteMessage)))
 
 	// Protected chat image routes
 	apiMux.Handle("/api/v1/chat/images/upload", protected(http.HandlerFunc(chatImageHandler.UploadChatImage)))

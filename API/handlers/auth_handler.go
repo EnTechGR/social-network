@@ -279,8 +279,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags         Authentication
 // @Produce      json
 // @Success      200  {string}  string "Successfully logged out"
-// @Router       /api/auth/logout [post]
+// @Router       /api/v1/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -292,10 +297,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.SessionRepo.Delete(cookie.Value)
-	if err != nil {
-		log.Printf("Failed to delete session: %v", err)
-	}
+	_ = h.SessionRepo.Delete(cookie.Value)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "id",
@@ -303,7 +305,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -313,12 +314,12 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: false,
-		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
 	w.WriteHeader(http.StatusOK)
 }
+
 
 // VerifySession handles session verification
 // @Summary      Verify current session

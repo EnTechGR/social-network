@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// User represents a forum user
+// User represents a social-network user
 // swagger:model User
 type User struct {
 	// The unique identifier for the user.
@@ -59,7 +59,7 @@ type UserRegistration struct {
 	// required: false
 	// min length: 1
 	// max length: 50
-	// example: new_forum_user
+	// example: new_social_network_user
 	Nickname string `json:"nickname"`
 	// The user's email address. Must be unique and valid.
 	// required: true
@@ -91,7 +91,7 @@ type UserRegistration struct {
 	// example: female
 	Gender string `json:"gender"`
 	// A short bio or description of the user.
-	// example: I love coding and forums!
+	// example: I love coding and social networks!
 	AboutMe string `json:"about_me"`
 	// Indicates if the profile should be private.
 	// example: false

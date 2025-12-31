@@ -1,5 +1,226 @@
-basePath: /forum/api
+basePath: /api/v1
 definitions:
+  handlers.CategoryInfo:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handlers.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      posts:
+        items:
+          $ref: '#/definitions/handlers.PostResponse'
+        type: array
+    type: object
+  handlers.CategoryWithPostsResponse:
+    description: Response containing category info and its associated post list
+    properties:
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Technology
+        type: string
+      posts:
+        items:
+          $ref: '#/definitions/models.Post'
+        type: array
+    type: object
+  handlers.CommentResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      nickname:
+        type: string
+      reactions:
+        items:
+          $ref: '#/definitions/handlers.ReactionResponse'
+        type: array
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handlers.GuestResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+    type: object
+  handlers.MyPostResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryInfo'
+        type: array
+      comments:
+        items:
+          $ref: '#/definitions/handlers.CommentResponse'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      nickname:
+        type: string
+      reactions:
+        items:
+          $ref: '#/definitions/handlers.ReactionResponse'
+        type: array
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handlers.PostResponse:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        description: NEW FIELD
+        type: string
+      comments:
+        items:
+          $ref: '#/definitions/handlers.CommentResponse'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      nickname:
+        type: string
+      reactions:
+        items:
+          $ref: '#/definitions/handlers.ReactionResponse'
+        type: array
+      thumbnail_url:
+        type: string
+      title:
+        description: Optional title field
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handlers.ReactionResponse:
+    properties:
+      created_at:
+        type: string
+      nickname:
+        type: string
+      reaction_type:
+        type: integer
+      user_id:
+        type: string
+    type: object
+  handlers.SessionVerifyResponse:
+    properties:
+      csrf_token:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.AvatarInfo:
+    properties:
+      file_path:
+        type: string
+      image_id:
+        type: string
+      mime_type:
+        type: string
+      set_at:
+        type: string
+      thumbnail_path:
+        type: string
+    type: object
+  models.Category:
+    properties:
+      id:
+        description: |-
+          The unique identifier for the category.
+          example: 1
+        type: integer
+      name:
+        description: |-
+          The name of the category.
+          example: Technology
+        type: string
+    type: object
+  models.Comment:
+    properties:
+      content:
+        description: |-
+          The text content of the comment
+          example: This is a very insightful comment!
+        type: string
+      created_at:
+        description: |-
+          The timestamp when the comment was created
+          example: 2025-12-21T10:00:00Z
+        type: string
+      id:
+        description: |-
+          The unique identifier for the comment (UUID)
+          example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      post_id:
+        description: |-
+          The ID of the post this comment belongs to
+          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+        type: string
+      updated_at:
+        description: |-
+          The timestamp when the comment was last updated
+          example: 2025-12-21T12:30:00Z
+        type: string
+      user_id:
+        description: |-
+          The ID of the user who authored the comment
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+    type: object
+  models.CreateMessageRequest:
+    properties:
+      content:
+        description: |-
+          Message content
+          required: true
+          example: Hello there!
+        type: string
+      receiver_id:
+        description: |-
+          ID of the recipient
+          required: true
+          example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
+        type: string
+    required:
+    - content
+    - receiver_id
+    type: object
   models.ErrorResponse:
     properties:
       code:
@@ -22,12 +243,12 @@ definitions:
     properties:
       csrf_token:
         description: |-
-          The CSRF token required for subsequent protected POST/PUT/DELETE requests.
+          The CSRF token required for subsequent protected requests.
           example: XyZ123AbC456DeF789GhI0JkL
         type: string
-      session_id:
+      id:
         description: |-
-          The session ID (often set as a cookie, but included here for context).
+          The session ID.
           example: d2e9f8a7-b6c5-d4e3-f2a1-b0c9d8e7f6a5
         type: string
       user:
@@ -35,17 +256,87 @@ definitions:
         - $ref: '#/definitions/models.User'
         description: The details of the successfully logged-in user.
     type: object
+  models.Post:
+    properties:
+      category_id:
+        description: |-
+          A list of category IDs associated with this post
+          example: [1, 2, 5]
+        items:
+          type: integer
+        type: array
+      content:
+        description: |-
+          The main body content of the post
+          example: I am trying to containerize my Go application...
+        type: string
+      created_at:
+        description: |-
+          The timestamp when the post was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      id:
+        description: |-
+          The unique identifier for the post (UUID)
+          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+        type: string
+      title:
+        description: |-
+          The title of the post
+          example: How to use Go with Docker?
+        type: string
+      updated_at:
+        description: |-
+          The timestamp when the post was last updated
+          example: 2025-12-29T19:30:00Z
+        type: string
+      user_id:
+        description: |-
+          The ID of the user who created the post
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+    type: object
+  models.ReactionWithUser:
+    properties:
+      comment_id:
+        description: The ID of the comment (if applicable)
+        type: string
+      created_at:
+        description: 'example: 2025-12-29T18:00:00Z'
+        type: string
+      nickname:
+        description: |-
+          The display name of the user
+          example: gopher_fan
+        type: string
+      post_id:
+        description: The ID of the post (if applicable)
+        type: string
+      reaction_type:
+        description: |-
+          The type of reaction (e.g., 1 for Like, -1 for Dislike)
+          example: 1
+        type: integer
+      user_id:
+        description: |-
+          The ID of the user who reacted
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+    type: object
   models.User:
     properties:
-      age:
-        description: |-
-          The age of the user.
-          example: 35
-        type: integer
+      about_me:
+        description: A short bio or description of the user.
+        type: string
       created_at:
         description: |-
           The timestamp when the user account was created.
           example: 2025-01-01T10:00:00Z
+        type: string
+      date_of_birth:
+        description: |-
+          The date of birth of the user.
+          example: 1990-01-01
         type: string
       email:
         description: |-
@@ -59,22 +350,25 @@ definitions:
         type: string
       gender:
         description: |-
-          The gender of the user (e.g., Male, Female, Other).
-          example: Male
+          The gender of the user (male, female, other, prefer_not_to_say).
+          example: male
         type: string
       id:
         description: |-
           The unique identifier for the user.
           example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
         type: string
+      is_private:
+        description: Indicates if the profile is private.
+        type: boolean
       last_name:
         description: |-
           The last name of the user.
           example: Doe
         type: string
-      username:
+      nickname:
         description: |-
-          The unique username of the user.
+          The unique nickname of the user.
           example: johndoe
         type: string
     type: object
@@ -82,7 +376,7 @@ definitions:
     properties:
       login:
         description: |-
-          The user's username OR email address.
+          The user's nickname OR email address.
           required: true
           example: johndoe OR john.doe@example.com
         type: string
@@ -93,99 +387,68 @@ definitions:
           example: secureP@ss123
         type: string
     type: object
-  models.UserRegistration:
+  models.UserWithAvatar:
     properties:
-      age:
+      about_me:
+        description: A short bio or description of the user.
+        type: string
+      avatar:
+        allOf:
+        - $ref: '#/definitions/models.AvatarInfo'
+        description: Avatar information retrieved from images_core via user_avatars
+          relationship
+      created_at:
         description: |-
-          The user's age. Must be between 13 and 120.
-          required: true
-          minimum: 13
-          maximum: 120
-          example: 24
-        type: integer
+          The timestamp when the user account was created.
+          example: 2025-01-01T10:00:00Z
+        type: string
+      date_of_birth:
+        description: |-
+          The date of birth of the user.
+          example: 1990-01-01
+        type: string
       email:
         description: |-
-          The user's email address. Must be unique and valid.
-          required: true
-          example: register@example.com
+          The email address of the user.
+          example: john.doe@example.com
         type: string
       first_name:
         description: |-
-          The user's first name.
-          required: true
-          example: Jane
+          The first name of the user.
+          example: John
         type: string
       gender:
         description: |-
-          The user's gender.
-          required: true
-          example: Female
+          The gender of the user (male, female, other, prefer_not_to_say).
+          example: male
         type: string
+      id:
+        description: |-
+          The unique identifier for the user.
+          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+        type: string
+      is_private:
+        description: Indicates if the profile is private.
+        type: boolean
       last_name:
         description: |-
-          The user's last name.
-          required: true
-          example: Smith
+          The last name of the user.
+          example: Doe
         type: string
-      password:
+      nickname:
         description: |-
-          The user's chosen password.
-          required: true
-          min length: 8
-          example: secureP@ss123
-        type: string
-      username:
-        description: |-
-          The desired unique username.
-          required: true
-          min length: 4
-          example: new_forum_user
+          The unique nickname of the user.
+          example: johndoe
         type: string
     type: object
 host: localhost:8080
 info:
   contact: {}
-  description: This is the API documentation for the forum application.
-  title: Forum Application API
+  description: This is the API documentation for the social-network application.
+  title: Social-network Application API
   version: "1.0"
 paths:
-  /forum/api/register:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new user account, validates input fields, and establishes
-        a session cookie.
-      parameters:
-      - description: User registration details
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/models.UserRegistration'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: User successfully registered and logged in.
-          schema:
-            $ref: '#/definitions/models.LoginResponse'
-        "400":
-          description: Invalid request body or validation failed (e.g., weak password,
-            invalid age).
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "409":
-          description: 'Conflict: Username or email is already taken.'
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal server error.
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      summary: Register a new user
-      tags:
-      - Authentication
-  /forum/api/session/login:
+  /api/auth/login:
     post:
       consumes:
       - application/json
@@ -220,77 +483,1222 @@ paths:
       summary: Log in a user
       tags:
       - Authentication
-  /forum/api/session/logout:
+  /api/auth/logout:
     post:
-      description: Deletes the current user session from the database and clears the
-        session and CSRF cookies.
+      description: Invalidates the user's session and clears authentication cookies.
       produces:
-      - text/plain
+      - application/json
       responses:
         "200":
-          description: Successfully logged out (session cookie cleared).
+          description: Successfully logged out
+          schema:
+            type: string
       summary: Log out a user
       tags:
       - Authentication
-  /forum/api/session/logout-all:
+  /api/auth/logout-all:
     post:
-      description: Deletes all active sessions for the currently authenticated user
-        and clears the current session cookie.
+      description: Deletes all active sessions for the current user across all devices.
       produces:
-      - text/plain
+      - application/json
       responses:
         "200":
-          description: Successfully logged out from all devices.
+          description: Successfully logged out from all devices
+          schema:
+            type: string
         "401":
-          description: 'Unauthorized: User not authenticated.'
-        "500":
-          description: Internal server error.
+          description: Unauthorized
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
       summary: Log out from all devices
       tags:
       - Authentication
-  /forum/api/session/verify:
+  /api/auth/register:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new user account. Accepts multipart/form-data for avatar
+        uploads.
+      parameters:
+      - description: User email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: User password (min 8 chars, 1 letter, 1 digit)
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: User first name
+        in: formData
+        name: first_name
+        required: true
+        type: string
+      - description: User last name
+        in: formData
+        name: last_name
+        required: true
+        type: string
+      - description: User date of birth (YYYY-MM-DD)
+        in: formData
+        name: date_of_birth
+        required: true
+        type: string
+      - description: male, female, other, or prefer_not_to_say
+        in: formData
+        name: gender
+        required: true
+        type: string
+      - description: 'Optional: defaults to email prefix'
+        in: formData
+        name: nickname
+        type: string
+      - description: 'Optional: Max 500 chars'
+        in: formData
+        name: about_me
+        type: string
+      - description: Set to 'true' or '1' for private profile
+        in: formData
+        name: is_private
+        type: string
+      - description: JPEG/PNG/GIF, max 5MB
+        in: formData
+        name: avatar
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+  /api/auth/verify:
     get:
-      description: Checks if the session cookie is valid, active, and not expired.
-        Returns user data if session is valid.
+      description: Checks if the session cookie is valid and returns the current user's
+        info and a fresh CSRF token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current user and CSRF token
+          schema:
+            $ref: '#/definitions/handlers.SessionVerifyResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Verify current session
+      tags:
+      - Authentication
+  /api/categories:
+    get:
+      description: Retrieves a list of all discussion categories available on the
+        platform.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            properties:
-              csrf_token:
-                type: string
-              user:
-                $ref: '#/definitions/models.User'
-            type: object
-        "401":
-          description: 'Unauthorized: Session cookie not found, invalid, or expired.'
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
         "500":
-          description: Internal server error.
+          description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Verify current session status
+      summary: Get all categories
       tags:
-      - Authentication
-  /forum/api/user/profile:
+      - Categories
+  /api/categories/detail:
     get:
-      description: Returns the profile data for the user associated with the active
-        session.
+      description: Retrieves a specific category's details along with a list of posts
+        belonging to it.
+      parameters:
+      - description: Category ID
+        in: query
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Successful response.
+          description: OK
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/handlers.CategoryWithPostsResponse'
+        "400":
+          description: Invalid or missing ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get category by ID
+      tags:
+      - Categories
+  /api/chat/gallery:
+    get:
+      description: Returns a list of image metadata shared between the user and a
+        partner. (Placeholder implementation).
+      parameters:
+      - description: User ID of the chat partner
+        in: query
+        name: partner
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: Get chat gallery
+      tags:
+      - Messaging
+  /api/chat/images:
+    get:
+      description: Returns metadata for all images attached to a single message ID.
+        Requires sender/receiver permission.
+      parameters:
+      - description: ID of the message
+        in: query
+        name: messageID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: Get images by message
+      tags:
+      - Messaging
+  /api/chat/images/{imageID}:
+    delete:
+      description: Deletes the image file, the image metadata, and the original message
+        record. Only the sender can perform this.
+      parameters:
+      - description: ID of the image to delete
+        in: path
+        name: imageID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: 'Unauthorized: Only sender can delete'
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete chat image
+      tags:
+      - Messaging
+  /api/chat/images/serve/{imagePath}:
+    get:
+      description: 'Serves the image file from disk. **Crucial**: Validates that the
+        requester is either the sender or receiver of the message before serving.'
+      parameters:
+      - description: The relative path to the image
+        in: path
+        name: imagePath
+        required: true
+        type: string
+      produces:
+      - image/jpeg
+      - image/png
+      - image/gif
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - You don't have access to this image
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Image not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Serve chat image
+      tags:
+      - Messaging
+  /api/chat/images/stats:
+    get:
+      description: Returns total count and total byte size of all images uploaded
+        by the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: Get user image stats
+      tags:
+      - Messaging
+  /api/chat/images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Sends an image message to another user. Validates file type (JPEG,
+        PNG, GIF), saves to disk, and broadcasts via WebSocket.
+      parameters:
+      - description: ID of the message recipient
+        in: formData
+        name: receiver_id
+        required: true
+        type: string
+      - description: Optional text caption (max 1000 chars)
+        in: formData
+        name: content
+        type: string
+      - description: Image file to send (max 5MB)
+        in: formData
+        name: chat_image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'Returns {message: models.MessageWithUser}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid file, too large, or messaging self
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
         "401":
-          description: 'Unauthorized: User not authenticated.'
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Upload chat image
+      tags:
+      - Messaging
+  /api/comments:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new comment to a specific post. Triggers a real-time notification
+        for the post owner via WebSocket.
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Missing PostID or Content
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create a comment
+      tags:
+      - Comments
+  /api/comments/{id}:
+    delete:
+      description: Performs a soft-delete on a comment. Only the author can perform
+        this action.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: deleted'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Comment not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete a comment
+      tags:
+      - Comments
+    put:
+      consumes:
+      - application/json
+      description: Updates the text content of an existing comment. Only the author
+        can perform this action.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: updated'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden - not the owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Comment not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Edit a comment
+      tags:
+      - Comments
+  /api/guest/data:
+    get:
+      description: Retrieves a full hierarchical tree of categories, including their
+        posts, comments, and reactions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.GuestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get structured guest data
+      tags:
+      - Guest
+  /api/guest/view:
+    get:
+      description: Retrieves all public posts, comments, and reactions in separate
+        flat lists.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get raw guest view data
+      tags:
+      - Guest
+  /api/messages:
+    post:
+      consumes:
+      - application/json
+      description: Persists a message to the database and broadcasts it via WebSocket
+        to the receiver in real-time.
+      parameters:
+      - description: Message content and receiver ID
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'Returns {message: models.Message}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validation error (e.g., messaging yourself)
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Send a private message
+      tags:
+      - Messaging
+  /api/messages/{messageID}:
+    delete:
+      description: Deletes a message and notifies the receiver via WebSocket. Only
+        the sender can delete.
+      parameters:
+      - description: ID of the message
+        in: path
+        name: messageID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: Delete a message
+      tags:
+      - Messaging
+  /api/messages/conversation:
+    get:
+      description: Retrieves a paginated list of messages between current user and
+        partner. Marks messages as read.
+      parameters:
+      - description: ID of the partner
+        in: query
+        name: user_id
+        required: true
+        type: string
+      - description: Max messages (default 10, max 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get conversation history
+      tags:
+      - Messaging
+  /api/messages/conversations:
+    get:
+      description: Retrieves all chat partners, last messages, unread counts, and
+        real-time online status.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: List conversations
+      tags:
+      - Messaging
+  /api/messages/read/{messageID}:
+    put:
+      description: Updates a single message status to read. Only the receiver can
+        perform this.
+      parameters:
+      - description: ID of the message
+        in: path
+        name: messageID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Not the receiver
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Message not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Mark message read
+      tags:
+      - Messaging
+  /api/messages/search-users:
+    get:
+      description: Retrieves users. If all=true, returns everyone. Otherwise, returns
+        only users you haven't chatted with yet.
+      parameters:
+      - description: Set to true to include users with existing chats
+        in: query
+        name: all
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Search chat partners
+      tags:
+      - Messaging
+  /api/messages/unread-count:
+    get:
+      description: Returns the total count of unread messages across all conversations.
+        Useful for badges.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - CookieAuth: []
+      summary: Unread message count
+      tags:
+      - Messaging
+  /api/messages/users:
+    get:
+      description: Retrieves all registered users (except current) and checks their
+        real-time connection status via the Hub.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List all users
+      tags:
+      - Messaging
+  /api/my-commented-posts:
+    get:
+      description: Retrieves a list of posts that the current user has interacted
+        with via comments. Useful for activity history.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get posts commented on
+      tags:
+      - User Activity
+  /api/my-posts:
+    get:
+      description: Retrieves a full list of posts created by the logged-in user, including
+        nested categories, comments, and reactions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Failed to load posts or associated data
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get own posts
+      tags:
+      - User Activity
+  /api/notifications:
+    get:
+      description: Returns a list of notifications for the authenticated user, including
+        the total count of active notifications.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get notifications
+      tags:
+      - Notifications
+  /api/notifications/{id}:
+    delete:
+      description: Soft-deletes or hides a specific notification from the user's view.
+        Requires the notification ID as a path parameter.
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing notification ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Hide notification
+      tags:
+      - Notifications
+  /api/posts:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new post for the authenticated user with a title, content,
+        and multiple categories.
+      parameters:
+      - description: Post Data (category_ids, title, content)
+        in: body
+        name: post
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Invalid request body or missing fields
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create a post
+      tags:
+      - Posts
+  /api/posts/{id}:
+    delete:
+      description: Marks a post as deleted without removing it from the database.
+        Only the owner can delete it.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete post
+      tags:
+      - Posts
+  /api/posts/{id}/content:
+    put:
+      consumes:
+      - application/json
+      description: Allows the post owner to update only the main text content of their
+        post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New Content
+        in: body
+        name: content
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: 'Forbidden: Not the owner'
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Edit post content
+      tags:
+      - Posts
+  /api/posts/{id}/title:
+    put:
+      consumes:
+      - application/json
+      description: Allows the post owner to update only the title of their post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New Title
+        in: body
+        name: title
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: 'Forbidden: Not the owner'
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Edit post title
+      tags:
+      - Posts
+  /api/posts/disliked:
+    get:
+      description: Returns a list of all posts the authenticated user has reacted
+        to negatively (disliked).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.MyPostResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get disliked posts
+      tags:
+      - User Engagement
+  /api/posts/liked:
+    get:
+      description: Returns a list of all posts the authenticated user has reacted
+        to positively (liked).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get liked posts
+      tags:
+      - User Engagement
+  /api/reactions:
+    post:
+      consumes:
+      - application/json
+      description: Allows an authenticated user to toggle a reaction. If the reaction
+        exists, it is removed; if a different one exists, it is updated. Triggers
+        a real-time notification to the content owner.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns the updated list of all reactions for the target
+          schema:
+            items:
+              $ref: '#/definitions/models.ReactionWithUser'
+            type: array
+        "400":
+          description: Invalid target_id, target_type, or reaction_type
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: React to content
+      tags:
+      - Reactions
+  /api/user/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Changes the user's profile from public to private or vice versa.
+        When changing to public, all pending follow requests are automatically cleaned
+        up.
+      parameters:
+      - description: Privacy setting {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns updated privacy status and message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Toggle profile privacy
+      tags:
+      - User Profile
+  /api/user/profile:
+    get:
+      description: Returns the full profile details of the currently authenticated
+        user including avatar information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Complete user profile data including avatar
+          schema:
+            $ref: '#/definitions/models.UserWithAvatar'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
       summary: Get current user profile
       tags:
       - User Profile
+    put:
+      consumes:
+      - application/json
+      description: Updates editable user profile fields (first_name, last_name, about_me,
+        gender)
+      parameters:
+      - description: Profile update data
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user profile
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update user profile
+      tags:
+      - User Profile
+  /api/v1/images/delete/{postId}:
+    delete:
+      description: Removes all image associations for a post. Only the post owner
+        can perform this.
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete post images
+      tags:
+      - Images
+  /api/v1/images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads one or more images and associates them with a post. Max
+        total size 20MB.
+      parameters:
+      - description: ID of the post
+        in: formData
+        name: post_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Upload post images
+      tags:
+      - Images
+  /api/v1/user/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a new avatar image for the authenticated user. Replaces
+        any existing avatar. Max size 5MB.
+      parameters:
+      - description: Avatar image file (JPEG, PNG, GIF)
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: success, message: Avatar uploaded successfully'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid file or too large
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Upload user avatar
+      tags:
+      - Images
+  /auth/github/callback:
+    get:
+      description: Exchanges the GitHub code for a token, fetches user emails and
+        profile, and logs the user in.
+      parameters:
+      - description: Authorization code from GitHub
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State token for validation
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Redirect to application feed
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: GitHub OAuth Callback
+      tags:
+      - Authentication
+  /auth/github/login:
+    get:
+      description: Generates a state token and redirects the browser to GitHub's authorization
+        server.
+      produces:
+      - text/html
+      responses:
+        "307":
+          description: Temporary Redirect to GitHub
+          headers:
+            Location:
+              description: URL to GitHub Login
+              type: string
+          schema:
+            type: string
+      summary: Initiate GitHub Login
+      tags:
+      - Authentication
+  /auth/google/callback:
+    get:
+      description: Exchanges the authorization code for an access token, retrieves
+        user info, creates/links a user record, and establishes a session.
+      parameters:
+      - description: Authorization code from Google
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State token for CSRF validation
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Redirect to application feed
+          schema:
+            type: string
+        "400":
+          description: Invalid state or missing code
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Token exchange or session creation failure
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Google OAuth Callback
+      tags:
+      - Authentication
+  /auth/google/login:
+    get:
+      description: Generates a state token for CSRF protection and redirects the browser
+        to Google's OAuth 2.0 authorization server.
+      produces:
+      - text/html
+      responses:
+        "307":
+          description: Temporary Redirect to Google
+          headers:
+            Location:
+              description: URL to Google Accounts
+              type: string
+          schema:
+            type: string
+      summary: Initiate Google Login
+      tags:
+      - Authentication
 swagger: "2.0"

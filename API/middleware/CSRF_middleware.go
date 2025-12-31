@@ -11,8 +11,8 @@ func CSRFMiddleware(sessionRepo *session.SessionRepository) func(http.Handler) h
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Paths to exclude from CSRF protection
 			excludePaths := map[string]bool{
-				"/forum/api/session/login": true,
-				"/forum/api/register":      true,
+				"/api/v1/login": true,
+				"/api/v1/register": true,
 			}
 
 			// Only protect modifying methods and only if path is not excluded

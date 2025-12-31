@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>notifications - ../forum.db.main</title>
+        <title>notifications - ../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="../index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>notifications</h1><p><span id="recordNumber">67</span> rows</p><br />
+                    <h1>notifications</h1><p><span id="recordNumber">0</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -139,7 +139,7 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="notifications.[comment_id, post_id, from_user_id, user_id] references user.[comment_id, post_id, user_id, user_id] via "><a href='user.html'>user</a><span class='relatedKey'>.user_id</span></td>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='user.html'>user</a><span class='relatedKey'>.user_id</span></td>
                                                 <td class="constraint detail"></td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
@@ -151,7 +151,7 @@
                                     <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="from_user_id">from_user_id</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
-                                    <td title=''></td>
+                                    <td title='nullable'>√</td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -161,7 +161,7 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="notifications.[comment_id, post_id, from_user_id, user_id] references user.[comment_id, post_id, user_id, user_id] via "><a href='user.html'>user</a><span class='relatedKey'>.user_id</span></td>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='user.html'>user</a><span class='relatedKey'>.user_id</span></td>
                                                 <td class="constraint detail"></td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
@@ -170,7 +170,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="type">type</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="type">type</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
                                     <td title=''></td>
@@ -190,7 +190,7 @@
                                     <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="post_id">post_id</span></td>
                                     <td>TEXT</td>
                                     <td>2000000000</td>
-                                    <td title=''></td>
+                                    <td title='nullable'>√</td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -200,7 +200,7 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="notifications.[comment_id, post_id, from_user_id, user_id] references user.[comment_id, post_id, user_id, user_id] via "><a href='posts.html'>posts</a><span class='relatedKey'>.post_id</span></td>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='posts.html'>posts</a><span class='relatedKey'>.post_id</span></td>
                                                 <td class="constraint detail"></td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
@@ -222,7 +222,51 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="notifications.[comment_id, post_id, from_user_id, user_id] references user.[comment_id, post_id, user_id, user_id] via "><a href='comments.html'>comments</a><span class='relatedKey'>.comment_id</span></td>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='comments.html'>comments</a><span class='relatedKey'>.comment_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="group_id">group_id</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='groups.html'>groups</a><span class='relatedKey'>.group_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="event_id">event_id</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='group_events.html'>group_events</a><span class='relatedKey'>.event_id</span></td>
                                                 <td class="constraint detail"></td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
@@ -318,13 +362,13 @@
                                     <td>notification_id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_notifications_from_user_id</td>
+                                    <td title='Indexed'>idx_notifications_type</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
-                                    <td>from_user_id</td>
+                                    <td>type</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_notifications_user_id</td>
+                                    <td title='Indexed'>idx_notifications_user</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>user_id</td>
@@ -354,33 +398,91 @@
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
                                     <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
+                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
+                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
-<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="388,201,564,377">
-<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="193,143,344,289">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,120,149,296">
-<area shape="rect" id="node4" href="notifications.html" target="_top" title="notifications" alt="" coords="608,5,1004,339">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="660,177,836,353">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="438,112,589,317">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,237,172,413">
+<area shape="rect" id="node5" href="groups.html" target="_top" title="groups" alt="" coords="216,331,367,507">
+<area shape="rect" id="node4" href="group_events.html" target="_top" title="group_events" alt="" coords="411,407,616,583">
+<area shape="rect" id="node6" href="notifications.html" target="_top" title="notifications" alt="" coords="880,5,1276,397">
 </map>
                                         <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/notifications.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="twoDegreesRelationshipsDiagram" name="twoDegreesRelationshipsDiagram">
-<area shape="rect" id="node1" href="chat_images.html" target="_top" title="chat_images" alt="" coords="473,24,669,112">
-<area shape="rect" id="node2" href="messages.html" target="_top" title="messages" alt="" coords="217,5,389,93">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,275,147,363">
-<area shape="rect" id="node4" href="comments.html" target="_top" title="comments" alt="" coords="483,465,659,553">
-<area shape="rect" id="node5" href="posts.html" target="_top" title="posts" alt="" coords="229,327,377,415">
-<area shape="rect" id="node6" href="images.html" target="_top" title="images" alt="" coords="497,219,645,307">
-<area shape="rect" id="node7" href="notifications.html" target="_top" title="notifications" alt="" coords="728,132,1124,465">
-<area shape="rect" id="node8" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="191,468,415,556">
-<area shape="rect" id="node9" href="post_categories.html" target="_top" title="post_categories" alt="" coords="459,324,684,412">
-<area shape="rect" id="node10" href="reactions.html" target="_top" title="reactions" alt="" coords="842,533,1010,621">
-<area shape="rect" id="node11" href="sessions.html" target="_top" title="sessions" alt="" coords="223,643,383,731">
-<area shape="rect" id="node12" href="user_auth.html" target="_top" title="user_auth" alt="" coords="217,748,389,836">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1201,180,1441,268">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="855,393,1031,481">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="533,116,729,204">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="557,464,705,552">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,623,147,711">
+<area shape="rect" id="node10" href="groups.html" target="_top" title="groups" alt="" coords="249,835,397,923">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="191,288,455,376">
+<area shape="rect" id="node7" href="group_event_options.html" target="_top" title="group_event_options" alt="" coords="808,1169,1079,1257">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="529,1099,734,1187">
+<area shape="rect" id="node9" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1194,1169,1447,1257">
+<area shape="rect" id="node11" href="group_invites.html" target="_top" title="group_invites" alt="" coords="529,605,734,693">
+<area shape="rect" id="node12" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="499,711,764,799">
+<area shape="rect" id="node13" href="group_members.html" target="_top" title="group_members" alt="" coords="517,816,745,904">
+<area shape="rect" id="node14" href="group_messages.html" target="_top" title="group_messages" alt="" coords="515,993,748,1081">
+<area shape="rect" id="node15" href="messages.html" target="_top" title="messages" alt="" coords="237,729,409,817">
+<area shape="rect" id="node16" href="notifications.html" target="_top" title="notifications" alt="" coords="1123,713,1519,1105">
+<area shape="rect" id="node17" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="211,976,435,1064">
+<area shape="rect" id="node18" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="815,288,1072,376">
+<area shape="rect" id="node19" href="post_categories.html" target="_top" title="post_categories" alt="" coords="831,535,1056,623">
+<area shape="rect" id="node20" href="post_images.html" target="_top" title="post_images" alt="" coords="845,147,1041,235">
+<area shape="rect" id="node21" href="reactions.html" target="_top" title="reactions" alt="" coords="1237,391,1405,479">
+<area shape="rect" id="node22" href="sessions.html" target="_top" title="sessions" alt="" coords="243,1153,403,1241">
+<area shape="rect" id="node23" href="user_auth.html" target="_top" title="user_auth" alt="" coords="237,1259,409,1347">
+<area shape="rect" id="node24" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="844,5,1043,93">
 </map>
                                         <a name='diagram'><img id="twodegreesDegreeImg" src="../diagrams/tables/notifications.2degrees.png" usemap="#twoDegreesRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="oneDegreeRelationshipsDiagramImplied" name="oneDegreeRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="660,177,836,353">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="438,112,589,317">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,237,172,413">
+<area shape="rect" id="node5" href="groups.html" target="_top" title="groups" alt="" coords="216,331,367,507">
+<area shape="rect" id="node4" href="group_events.html" target="_top" title="group_events" alt="" coords="411,407,616,583">
+<area shape="rect" id="node6" href="notifications.html" target="_top" title="notifications" alt="" coords="880,5,1276,397">
+</map>
+                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/notifications.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="twoDegreesRelationshipsDiagramImplied" name="twoDegreesRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1201,203,1441,291">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="855,652,1031,740">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="533,147,729,235">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="557,511,705,599">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,793,147,881">
+<area shape="rect" id="node10" href="groups.html" target="_top" title="groups" alt="" coords="249,1005,397,1093">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="191,511,455,599">
+<area shape="rect" id="node7" href="group_event_options.html" target="_top" title="group_event_options" alt="" coords="808,1324,1079,1412">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="529,1253,734,1341">
+<area shape="rect" id="node9" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1194,1324,1447,1412">
+<area shape="rect" id="node11" href="group_invites.html" target="_top" title="group_invites" alt="" coords="529,724,734,812">
+<area shape="rect" id="node12" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="499,865,764,953">
+<area shape="rect" id="node13" href="group_members.html" target="_top" title="group_members" alt="" coords="517,971,745,1059">
+<area shape="rect" id="node14" href="group_messages.html" target="_top" title="group_messages" alt="" coords="515,1148,748,1236">
+<area shape="rect" id="node15" href="messages.html" target="_top" title="messages" alt="" coords="237,900,409,988">
+<area shape="rect" id="node16" href="notifications.html" target="_top" title="notifications" alt="" coords="1123,808,1519,1200">
+<area shape="rect" id="node17" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="211,1147,435,1235">
+<area shape="rect" id="node18" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="815,369,1072,457">
+<area shape="rect" id="node19" href="post_categories.html" target="_top" title="post_categories" alt="" coords="831,547,1056,635">
+<area shape="rect" id="node20" href="post_images.html" target="_top" title="post_images" alt="" coords="845,183,1041,271">
+<area shape="rect" id="node21" href="reactions.html" target="_top" title="reactions" alt="" coords="1237,649,1405,737">
+<area shape="rect" id="node22" href="sessions.html" target="_top" title="sessions" alt="" coords="243,1324,403,1412">
+<area shape="rect" id="node23" href="user_auth.html" target="_top" title="user_auth" alt="" coords="237,1429,409,1517">
+<area shape="rect" id="node24" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="844,5,1043,93">
+<area shape="rect" id="node25" href="v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1193,437,1449,501">
+<area shape="rect" id="node26" href="v_post_images.html" target="_top" title="v_post_images" alt="" coords="837,288,1049,352">
+</map>
+                                        <a name='diagram'><img id="twoimpliedDegreeImg" src="../diagrams/tables/notifications.implied2degrees.png" usemap="#twoDegreesRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
                                     </div>
                                 </div>
                             </div>

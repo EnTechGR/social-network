@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>reactions - ../forum.db.main</title>
+        <title>reactions - ../social-network.db.main</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -46,7 +46,7 @@
                 <nav class="navbar navbar-static-top">
                     <div class="container">
                         <div class="navbar-header">
-                            <a href="../index.html" class="navbar-brand"><b>../forum.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
                             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
                         </div>
 
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>reactions</h1><p><span id="recordNumber">11</span> rows</p><br />
+                    <h1>reactions</h1><p><span id="recordNumber">0</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -245,22 +245,16 @@
                                     <td>user_id + comment_id + post_id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_reactions_comment_id</td>
+                                    <td title='Indexed'>idx_reactions_comment</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>comment_id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_reactions_post_id</td>
+                                    <td title='Indexed'>idx_reactions_post</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>post_id</td>
-                                </tr>
-                                <tr>
-                                    <td title='Indexed'>idx_reactions_user_id</td>
-                                    <td>Performance</td>
-                                    <td><span title='Ascending'>Asc</span></td>
-                                    <td>user_id</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_reactions_1</td>
@@ -287,33 +281,85 @@
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
                                     <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
+                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
+                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
-<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="388,67,564,243">
-<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="193,152,344,299">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,76,149,252">
-<area shape="rect" id="node4" href="reactions.html" target="_top" title="reactions" alt="" coords="608,5,999,221">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="411,67,587,243">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="216,152,367,357">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,76,172,252">
+<area shape="rect" id="node4" href="reactions.html" target="_top" title="reactions" alt="" coords="631,5,1021,221">
 </map>
                                         <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/reactions.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="twoDegreesRelationshipsDiagram" name="twoDegreesRelationshipsDiagram">
-<area shape="rect" id="node1" href="chat_images.html" target="_top" title="chat_images" alt="" coords="473,15,669,103">
-<area shape="rect" id="node2" href="messages.html" target="_top" title="messages" alt="" coords="217,5,389,93">
-<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,251,147,339">
-<area shape="rect" id="node4" href="comments.html" target="_top" title="comments" alt="" coords="483,428,659,516">
-<area shape="rect" id="node5" href="posts.html" target="_top" title="posts" alt="" coords="229,303,377,391">
-<area shape="rect" id="node6" href="images.html" target="_top" title="images" alt="" coords="497,181,645,269">
-<area shape="rect" id="node7" href="notifications.html" target="_top" title="notifications" alt="" coords="825,217,1021,305">
-<area shape="rect" id="node8" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="191,556,415,644">
-<area shape="rect" id="node9" href="post_categories.html" target="_top" title="post_categories" alt="" coords="459,287,684,375">
-<area shape="rect" id="node10" href="reactions.html" target="_top" title="reactions" alt="" coords="728,439,1119,655">
-<area shape="rect" id="node11" href="sessions.html" target="_top" title="sessions" alt="" coords="223,661,383,749">
-<area shape="rect" id="node12" href="user_auth.html" target="_top" title="user_auth" alt="" coords="217,767,389,855">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1185,49,1425,137">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="849,294,1025,382">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="533,83,729,171">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="557,402,705,490">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,617,147,705">
+<area shape="rect" id="node9" href="groups.html" target="_top" title="groups" alt="" coords="249,614,397,702">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="191,225,455,313">
+<area shape="rect" id="node7" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="810,998,1063,1086">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="529,965,734,1053">
+<area shape="rect" id="node10" href="group_invites.html" target="_top" title="group_invites" alt="" coords="529,507,734,595">
+<area shape="rect" id="node11" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="499,613,764,701">
+<area shape="rect" id="node12" href="group_members.html" target="_top" title="group_members" alt="" coords="517,754,745,842">
+<area shape="rect" id="node13" href="group_messages.html" target="_top" title="group_messages" alt="" coords="515,859,748,947">
+<area shape="rect" id="node14" href="messages.html" target="_top" title="messages" alt="" coords="237,755,409,843">
+<area shape="rect" id="node15" href="notifications.html" target="_top" title="notifications" alt="" coords="1207,742,1403,830">
+<area shape="rect" id="node16" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="211,897,435,985">
+<area shape="rect" id="node17" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="808,399,1065,487">
+<area shape="rect" id="node18" href="post_categories.html" target="_top" title="post_categories" alt="" coords="824,505,1049,593">
+<area shape="rect" id="node19" href="post_images.html" target="_top" title="post_images" alt="" coords="839,189,1035,277">
+<area shape="rect" id="node20" href="reactions.html" target="_top" title="reactions" alt="" coords="1109,227,1500,443">
+<area shape="rect" id="node21" href="sessions.html" target="_top" title="sessions" alt="" coords="243,1074,403,1162">
+<area shape="rect" id="node22" href="user_auth.html" target="_top" title="user_auth" alt="" coords="237,1179,409,1267">
+<area shape="rect" id="node23" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="837,83,1036,171">
 </map>
                                         <a name='diagram'><img id="twodegreesDegreeImg" src="../diagrams/tables/reactions.2degrees.png" usemap="#twoDegreesRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="oneDegreeRelationshipsDiagramImplied" name="oneDegreeRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="411,67,587,243">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="216,152,367,357">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,76,172,252">
+<area shape="rect" id="node4" href="reactions.html" target="_top" title="reactions" alt="" coords="631,5,1021,221">
+</map>
+                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/reactions.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="twoDegreesRelationshipsDiagramImplied" name="twoDegreesRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1185,92,1425,180">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="849,408,1025,496">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="533,132,729,220">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="557,488,705,576">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,792,147,880">
+<area shape="rect" id="node9" href="groups.html" target="_top" title="groups" alt="" coords="249,790,397,878">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="191,470,455,558">
+<area shape="rect" id="node7" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="810,1174,1063,1262">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="529,1140,734,1228">
+<area shape="rect" id="node10" href="group_invites.html" target="_top" title="group_invites" alt="" coords="529,683,734,771">
+<area shape="rect" id="node11" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="499,788,764,876">
+<area shape="rect" id="node12" href="group_members.html" target="_top" title="group_members" alt="" coords="517,930,745,1018">
+<area shape="rect" id="node13" href="group_messages.html" target="_top" title="group_messages" alt="" coords="515,1035,748,1123">
+<area shape="rect" id="node14" href="messages.html" target="_top" title="messages" alt="" coords="237,931,409,1019">
+<area shape="rect" id="node15" href="notifications.html" target="_top" title="notifications" alt="" coords="1207,935,1403,1023">
+<area shape="rect" id="node16" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="211,1072,435,1160">
+<area shape="rect" id="node17" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="808,691,1065,779">
+<area shape="rect" id="node18" href="post_categories.html" target="_top" title="post_categories" alt="" coords="824,586,1049,674">
+<area shape="rect" id="node19" href="post_images.html" target="_top" title="post_images" alt="" coords="839,186,1035,274">
+<area shape="rect" id="node20" href="reactions.html" target="_top" title="reactions" alt="" coords="1109,400,1500,616">
+<area shape="rect" id="node21" href="sessions.html" target="_top" title="sessions" alt="" coords="243,1250,403,1338">
+<area shape="rect" id="node22" href="user_auth.html" target="_top" title="user_auth" alt="" coords="237,1355,409,1443">
+<area shape="rect" id="node23" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="837,80,1036,168">
+<area shape="rect" id="node24" href="v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1177,319,1433,383">
+<area shape="rect" id="node25" href="v_post_images.html" target="_top" title="v_post_images" alt="" coords="831,291,1043,355">
+</map>
+                                        <a name='diagram'><img id="twoimpliedDegreeImg" src="../diagrams/tables/reactions.implied2degrees.png" usemap="#twoDegreesRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
                                     </div>
                                 </div>
                             </div>

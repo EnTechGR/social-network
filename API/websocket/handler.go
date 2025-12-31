@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"social-network/middleware"
+	"social-network/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -33,7 +34,7 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
 		log.Printf("WebSocket connection rejected: user not authenticated")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

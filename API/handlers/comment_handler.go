@@ -56,7 +56,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -139,7 +139,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	commentID := utils.GetLastPathParam(r)
@@ -233,7 +233,7 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	commentID := utils.GetLastPathParam(r)

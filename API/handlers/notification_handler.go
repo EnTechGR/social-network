@@ -42,7 +42,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	notifs, err := h.Repo.GetByUser(user.ID)
@@ -85,7 +85,7 @@ func (h *NotificationHandler) HideNotification(w http.ResponseWriter, r *http.Re
 	}
 	user := middleware.GetCurrentUser(r)
 	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	notifID := utils.GetLastPathParam(r)

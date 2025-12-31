@@ -91,7 +91,7 @@ func NewGuestHandler(
 // @Produce      json
 // @Success      200  
 // @Failure      500  {object}  models.ErrorResponse
-// @Router       /api/guest/view [get]
+// @Router       /api/v1/guest/view [get]
 func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Only POST requests are allowed for registration.", http.StatusMethodNotAllowed)
@@ -132,7 +132,7 @@ func (h *GuestHandler) GuestView(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Success      200  {object}  handlers.GuestResponse
 // @Failure      500  {object}  models.ErrorResponse
-// @Router       /api/guest/data [get]
+// @Router       /api/v1/guest/data [get]
 func (h *GuestHandler) GetGuestData(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

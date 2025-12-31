@@ -40,7 +40,7 @@ func NewMessageHandler(messageRepo *message.MessageRepository, hub *websocket.Hu
 // @Success      201      {object}  map[string]interface{} "Returns {message: models.Message}"
 // @Failure      400      {object}  models.ErrorResponse   "Validation error (e.g., messaging yourself)"
 // @Failure      401      {object}  models.ErrorResponse   "Unauthorized"
-// @Router       /api/messages [post]
+// @Router       /api/v1/messages [post]
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -129,7 +129,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 // @Param        offset   query     int     false  "Pagination offset"
 // @Success      200
 // @Failure      400      {object}  models.ErrorResponse
-// @Router       /api/messages/conversation [get]
+// @Router       /api/v1/messages/conversation [get]
 func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -215,7 +215,7 @@ func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request)
 // @Security     CookieAuth
 // @Produce      json
 // @Success      200 
-// @Router       /api/messages/conversations [get]
+// @Router       /api/v1/messages/conversations [get]
 func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -262,7 +262,7 @@ func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request
 // @Produce      json
 // @Success      200 
 // @Failure      401  {object}  models.ErrorResponse
-// @Router       /api/messages/users [get]
+// @Router       /api/v1/messages/users [get]
 func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -332,7 +332,7 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Produce      json
 // @Success      200
-// @Router       /api/messages/unread-count [get]
+// @Router       /api/v1/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -370,7 +370,7 @@ func (h *MessageHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) 
 // @Success      200
 // @Failure      403        {object}  models.ErrorResponse "Not the receiver"
 // @Failure      404        {object}  models.ErrorResponse "Message not found"
-// @Router       /api/messages/read/{messageID} [put]
+// @Router       /api/v1/messages/read/{messageID} [put]
 func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	// Allow both PUT (semantically correct for update) and POST (common for simple actions).
 	if r.Method != http.MethodPut && r.Method != http.MethodPost {
@@ -435,7 +435,7 @@ func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Param        messageID  path      string  true  "ID of the message"
 // @Success      200
-// @Router       /api/messages/{messageID} [delete]
+// @Router       /api/v1/messages/{messageID} [delete]
 func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -510,7 +510,7 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 // @Param        all   query    bool  false  "Set to true to include users with existing chats"
 // @Success      200
 // @Failure      401   {object}  models.ErrorResponse
-// @Router       /api/messages/search-users [get]
+// @Router       /api/v1/messages/search-users [get]
 func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

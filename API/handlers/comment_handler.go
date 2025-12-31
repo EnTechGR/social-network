@@ -47,7 +47,7 @@ func NewCommentHandler(
 // @Failure      400      {object}  models.ErrorResponse "Missing PostID or Content"
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Database error"
-// @Router       /api/comments [post]
+// @Router       /api/v1/comments [post]
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -131,7 +131,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  map[string]string             "status: updated"
 // @Failure      403      {object}  models.ErrorResponse          "Forbidden - not the owner"
 // @Failure      404      {object}  models.ErrorResponse          "Comment not found"
-// @Router       /api/comments/{id} [put]
+// @Router       /api/v1/comments/{id} [put]
 func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -225,7 +225,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}  map[string]string "status: deleted"
 // @Failure      403  {object}  models.ErrorResponse "Forbidden"
 // @Failure      404  {object}  models.ErrorResponse "Comment not found"
-// @Router       /api/comments/{id} [delete]
+// @Router       /api/v1/comments/{id} [delete]
 func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

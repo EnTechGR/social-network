@@ -242,7 +242,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate user
-	user, err := h.UserRepo.Authenticate(loginData)
+	user, _ := h.UserRepo.Authenticate(loginData)
 	utils.JSONResponse(w, map[string]string{
 		"error":   "unauthorized",
 		"message": "Invalid credentials",

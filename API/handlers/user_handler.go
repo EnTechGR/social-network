@@ -35,7 +35,7 @@ func NewUserHandler(userRepo *user_repository.UserRepository, imageRepo *reposit
 // @Success      200  {object}  models.UserWithAvatar "Complete user profile data including avatar"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/user/profile [get]
+// @Router       /api/v1/user/profile [get]
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetCurrentUser(r)
 	if user == nil {

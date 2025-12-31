@@ -9,6 +9,7 @@ import (
 	"social-network/models"
 	"social-network/repository/session"
 	"social-network/repository/user"
+	"social-network/utils"
 )
 
 // Authentication middleware checks if the user is authenticated
@@ -25,10 +26,15 @@ func NewAuthMiddleware(sessionRepo *session.SessionRepository, userRepo *user.Us
 	}
 }
 
+// Updated Authenticate middleware with User-Agent validation
+// Replace the session validation section in your Authenticate method in API/middleware/auth_middleware.go
+
 // Authenticate middleware verifies authentication and sets user in context
+// SECURITY: Implements session renewal (sliding window) to extend idle timeout for active users
+// SECURITY: Validates User-Agent to detect session hijacking attempts
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_id")
+		cookie, err := r.Cookie(utils.GetSessionCookieName())
 		if err != nil {
 			// Scenario 1: No session cookie found in the request.
 			log.Printf("AuthMiddleware [DEBUG]: No session cookie found for request to %s: %v", r.URL.Path, err)
@@ -47,24 +53,145 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 
 		if session.ExpiresAt.Before(time.Now()) {
 			// Scenario 3: Session found in DB, but its expiration time is in the past.
-			log.Printf("AuthMiddleware [DEBUG]: Session ID '%s' expired (UserID: %d) for request to %s", session.SessionID, session.UserID, r.URL.Path)
+			log.Printf("AuthMiddleware [DEBUG]: Session ID '%s' expired (UserID: %s) for request to %s", session.SessionID, session.UserID, r.URL.Path)
 			m.SessionRepo.DeleteBySessionID(session.SessionID)
 			m.clearSessionCookie(w) // Clear expired cookie
 			next.ServeHTTP(w, r)    // Proceed as unauthenticated
 			return
 		}
 
+		// ============================================================================
+		// USER-AGENT VALIDATION - NEW CODE
+		// ============================================================================
+		// Validate that the User-Agent matches the one stored at session creation
+		// This helps detect session hijacking attempts
+		
+		currentUserAgent := r.Header.Get("User-Agent")
+		isValid, suspicionLevel, reason := utils.ValidateUserAgent(session.UserAgent, currentUserAgent)
+		
+		if !isValid {
+			// CRITICAL: User-Agent mismatch detected - possible session hijacking
+			log.Printf("[SECURITY ALERT] Session hijacking suspected for session %s (User: %s): %s", 
+				session.SessionID, session.UserID, reason)
+			log.Printf("[SECURITY ALERT] Stored UA: %s", session.UserAgent)
+			log.Printf("[SECURITY ALERT] Current UA: %s", currentUserAgent)
+			log.Printf("[SECURITY ALERT] Request from IP: %s to %s", r.RemoteAddr, r.URL.Path)
+			
+			// Terminate the session immediately
+			m.SessionRepo.DeleteBySessionID(session.SessionID)
+			m.clearSessionCookie(w)
+			
+			// Return 401 Unauthorized
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "session_invalid", "message": "Session validation failed for security reasons"}`))
+			return
+		}
+		
+		// Log suspicious but allowed User-Agent variations
+		if suspicionLevel != "none" {
+			log.Printf("[SECURITY] User-Agent validation (Level: %s) for session %s: %s", 
+				suspicionLevel, session.SessionID, reason)
+		}
+		// ============================================================================
+
 		user, err := m.UserRepo.GetByID(session.UserID)
 		if err != nil {
 			// Scenario 4: Session is valid, but the user it points to cannot be found.
-			log.Printf("AuthMiddleware [DEBUG]: User not found for session ID '%s' (UserID %d) for request to %s: %v", session.SessionID, session.UserID, r.URL.Path, err)
+			log.Printf("AuthMiddleware [DEBUG]: User not found for session ID '%s' (UserID %s) for request to %s: %v", session.SessionID, session.UserID, r.URL.Path, err)
 			m.clearSessionCookie(w) // Clear cookie, as session is invalid without a user
 			next.ServeHTTP(w, r)    // Proceed as unauthenticated
 			return
 		}
 
 		// Scenario 5: Authentication successful!
-		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %d) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
+		log.Printf("AuthMiddleware [INFO]: User '%s' (ID: %s) authenticated for request to %s", user.Nickname, user.ID, r.URL.Path)
+
+
+		// IP ADDRESS VALIDATION - NEW CODE
+		// ============================================================================
+		// Validate that the IP address hasn't changed drastically
+		// This helps detect session hijacking from different networks
+		// More flexible than User-Agent (allows same-subnet changes for DHCP/mobile)
+		
+		currentIP := utils.GetClientIP(r.RemoteAddr, r.Header)
+		isValidIP, ipSuspicionLevel, ipReason := utils.ValidateIPAddress(session.IPAddress, currentIP)
+		
+		if !isValidIP {
+			// CRITICAL: IP changed to different subnet - possible session hijacking
+			log.Printf("[SECURITY ALERT] Suspicious IP change for session %s (User: %s): %s", 
+				session.SessionID, session.UserID, ipReason)
+			log.Printf("[SECURITY ALERT] Stored IP: %s", session.IPAddress)
+			log.Printf("[SECURITY ALERT] Current IP: %s", currentIP)
+			log.Printf("[SECURITY ALERT] Request to %s", r.URL.Path)
+			
+			// Analyze both IPs for detailed logging
+			storedInfo := utils.AnalyzeIP(session.IPAddress)
+			currentInfo := utils.AnalyzeIP(currentIP)
+			log.Printf("[SECURITY ALERT] Stored subnet: %s (private: %v)", storedInfo.Subnet24, storedInfo.IsPrivate)
+			log.Printf("[SECURITY ALERT] Current subnet: %s (private: %v)", currentInfo.Subnet24, currentInfo.IsPrivate)
+			
+			// For IP validation, we might want to be more lenient than User-Agent
+			// Consider this a WARNING rather than immediate termination
+			// Option 1: Terminate session (strict security)
+			// Option 2: Allow but log heavily (better UX for mobile users)
+			
+			// STRICT MODE (uncomment to terminate session on IP mismatch):
+			/*
+			m.SessionRepo.DeleteBySessionID(session.SessionID)
+			m.clearSessionCookie(w)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "session_invalid", "message": "Session validation failed for security reasons"}`))
+			return
+			*/
+			
+			// LENIENT MODE (current): Allow but log heavily
+			// Mobile users and users behind rotating proxies will trigger this
+			log.Printf("[SECURITY WARNING] Allowing request despite IP change - monitor for abuse")
+		}
+		
+		// Log suspicious but allowed IP changes
+		if ipSuspicionLevel != "none" {
+			log.Printf("[SECURITY] IP validation (Level: %s) for session %s: %s (stored: %s, current: %s)", 
+				ipSuspicionLevel, session.SessionID, ipReason, session.IPAddress, currentIP)
+		}
+		// ============================================================================
+
+		// ============================================================================
+		// SESSION RENEWAL (SLIDING WINDOW)
+		// ============================================================================
+		// Extend idle timeout for active users, but only if:
+		// 1. Session is within renewal window (optimization - avoid DB writes on every request)
+		// 2. Won't extend past absolute timeout (security - force re-auth after max time)
+		
+		if utils.ShouldRenewSession(session.ExpiresAt) {
+			// Session is close to expiring (within renewal window)
+			// Attempt to renew it to keep active user logged in
+			
+			newExpiresAt, renewed, err := m.SessionRepo.RenewSession(session.SessionID, session.AbsoluteExpiresAt)
+			if err != nil {
+				// Log but don't fail the request - session is still valid for now
+				log.Printf("AuthMiddleware [WARN]: Failed to renew session %s: %v", session.SessionID, err)
+			} else if renewed {
+				// Session was successfully renewed
+				log.Printf("[SESSION RENEWAL] Extended session %s from %v to %v (user: %s)", 
+					session.SessionID, 
+					session.ExpiresAt.Format("15:04:05"), 
+					newExpiresAt.Format("15:04:05"),
+					user.Nickname)
+				
+				// Update the session object in context with new expiry time
+				session.ExpiresAt = newExpiresAt
+			} else {
+				// Renewal was skipped (would extend past absolute timeout)
+				log.Printf("[SESSION RENEWAL] Skipped renewal for session %s - would exceed absolute timeout at %v", 
+					session.SessionID, 
+					session.AbsoluteExpiresAt.Format("15:04:05"))
+			}
+		}
+		// ============================================================================
+		
 		ctx := context.WithValue(r.Context(), "user", user)
 		ctx = context.WithValue(ctx, "session", session)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -112,7 +239,7 @@ func (m *AuthMiddleware) RequireGuest(next http.Handler) http.Handler {
 // clearSessionCookie helper function to clear session cookie
 func (m *AuthMiddleware) clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     "id",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
@@ -120,7 +247,7 @@ func (m *AuthMiddleware) clearSessionCookie(w http.ResponseWriter) {
 		Secure:   true, // Enable in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
 	})
-	log.Printf("AuthMiddleware [DEBUG]: Cleared session_id cookie.")
+	log.Printf("AuthMiddleware [DEBUG]: Cleared id cookie.")
 }
 
 // GetCurrentUser returns the authenticated user from the context

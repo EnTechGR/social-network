@@ -33,7 +33,7 @@ func NewCategoryHandler(catRepo *repository.CategoryRepository, postRepo *reposi
 // @Produce      json
 // @Success      200  {array}   models.Category
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/categories [get]
+// @Router       /api/v1/categories [get]
 func (h *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -59,7 +59,7 @@ func (h *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request) 
 // @Failure      400  {object}  models.ErrorResponse "Invalid or missing ID"
 // @Failure      404  {object}  models.ErrorResponse "Category not found"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/categories/detail [get]
+// @Router       /api/v1/categories/detail [get]
 func (h *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

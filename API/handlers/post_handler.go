@@ -32,7 +32,7 @@ func NewPostHandler(repo *repository.PostRepository) *PostHandler {
 // @Failure      400   {object}  models.ErrorResponse "Invalid request body or missing fields"
 // @Failure      401   {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500   {object}  models.ErrorResponse "Internal Server Error"
-// @Router       /api/posts [post]
+// @Router       /api/v1/posts [post]
 func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -87,7 +87,7 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 // @Success      200
 // @Failure      403   {object}  models.ErrorResponse "Forbidden: Not the owner"
 // @Failure      404   {object}  models.ErrorResponse "Post not found"
-// @Router       /api/posts/{id}/title [put]
+// @Router       /api/v1/posts/{id}/title [put]
 func (h *PostHandler) EditPostTitle(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -149,7 +149,7 @@ func (h *PostHandler) EditPostTitle(w http.ResponseWriter, r *http.Request) {
 // @Success      200
 // @Failure      403     {object}  models.ErrorResponse "Forbidden: Not the owner"
 // @Failure      404     {object}  models.ErrorResponse "Post not found"
-// @Router       /api/posts/{id}/content [put]
+// @Router       /api/v1/posts/{id}/content [put]
 func (h *PostHandler) EditPostContent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -208,7 +208,7 @@ func (h *PostHandler) EditPostContent(w http.ResponseWriter, r *http.Request) {
 // @Success      200
 // @Failure      403   {object}  models.ErrorResponse "Forbidden"
 // @Failure      404   {object}  models.ErrorResponse "Post not found"
-// @Router       /api/posts/{id} [delete]
+// @Router       /api/v1/posts/{id} [delete]
 func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

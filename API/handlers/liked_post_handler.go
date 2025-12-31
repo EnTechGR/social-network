@@ -27,7 +27,7 @@ func NewLikedPostsHandler(postRepo *repository.PostRepository, commentRepo *repo
 // @Success      200  
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/posts/liked [get]
+// @Router       /api/v1/posts/liked [get]
 func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -142,7 +142,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 // @Success      200  {array}   handlers.MyPostResponse
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500  {object}  models.ErrorResponse "Internal server error"
-// @Router       /api/posts/disliked [get]
+// @Router       /api/v1/posts/disliked [get]
 func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

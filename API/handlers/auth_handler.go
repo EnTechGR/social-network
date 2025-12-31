@@ -328,7 +328,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Success      200  {object}  SessionVerifyResponse "Current user and CSRF token"
 // @Failure      401  {object}  models.ErrorResponse
-// @Router       /api/auth/verify [get]
+// @Router       /api/v1/verify [get]
 func (h *AuthHandler) VerifySession(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie(utils.GetSessionCookieName())
 	if err != nil {
@@ -431,7 +431,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 // @Produce      json
 // @Success      200  {string}  string "Successfully logged out from all devices"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
-// @Router       /api/auth/logout-all [post]
+// @Router       /api/v1/logout-all [post]
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -472,7 +472,7 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Success      200  {object}  models.User "User profile data"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
-// @Router       /api/auth/profile [get]
+// @Router       /api/v1/profile [get]
 // RotateCSRFTokenIfNeeded checks if CSRF token should be rotated and does so
 // Returns the (possibly new) CSRF token and whether it was rotated
 func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger utils.RotationTrigger) (string, bool) {

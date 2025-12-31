@@ -68,7 +68,7 @@ func NewChatImageHandler(messageRepo *message.MessageRepository, hub *websocket.
 // @Success      201          {object}  map[string]interface{} "Returns {message: models.MessageWithUser}"
 // @Failure      400          {object}  models.ErrorResponse   "Invalid file, too large, or messaging self"
 // @Failure      401          {object}  models.ErrorResponse   "Unauthorized"
-// @Router       /api/chat/images/upload [post]
+// @Router       /api/v1/chat/images/upload [post]
 func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -292,7 +292,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 // @Success      200
 // @Failure      403        {object}  models.ErrorResponse "Forbidden - You don't have access to this image"
 // @Failure      404        {object}  models.ErrorResponse "Image not found"
-// @Router       /api/chat/images/serve/{imagePath} [get]
+// @Router       /api/v1/chat/images/serve/{imagePath} [get]
 func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request) {
 	// 1. Get authenticated user from context (Set by protected middleware)
 	user := middleware.GetCurrentUser(r)
@@ -361,7 +361,7 @@ func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request
 // @Param        imageID  path      string  true  "ID of the image to delete"
 // @Success      200
 // @Failure      403      {object}  models.ErrorResponse "Unauthorized: Only sender can delete"
-// @Router       /api/chat/images/{imageID} [delete]
+// @Router       /api/v1/chat/images/{imageID} [delete]
 func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -454,7 +454,7 @@ func (h *ChatImageHandler) DeleteChatImage(w http.ResponseWriter, r *http.Reques
 // @Security     CookieAuth
 // @Produce      json
 // @Success      200
-// @Router       /api/chat/images/stats [get]
+// @Router       /api/v1/chat/images/stats [get]
 func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -499,7 +499,7 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 // @Produce      json
 // @Param        messageID  query    string  true  "ID of the message"
 // @Success      200
-// @Router       /api/chat/images [get]
+// @Router       /api/v1/chat/images [get]
 func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -526,7 +526,7 @@ func (h *ChatImageHandler) GetMessageImages(w http.ResponseWriter, r *http.Reque
 // @Produce      json
 // @Param        partner  query     string  true  "User ID of the chat partner"
 // @Success      200
-// @Router       /api/chat/gallery [get]
+// @Router       /api/v1/chat/gallery [get]
 func (h *ChatImageHandler) GetConversationGallery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)

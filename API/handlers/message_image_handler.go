@@ -303,8 +303,8 @@ func (h *ChatImageHandler) ServeChatImage(w http.ResponseWriter, r *http.Request
 	}
 
 	// 2. Parse URL to get the full file path from the request.
-	// Example path: /forum/api/chat/images/serve/uploads/chat_images/73245b0a-56cd-4f02-91eb-f16731bd3aac.png
-	const filePathPrefix = "/forum/api/chat/images/serve/"
+	// Example path: /api/chat/images/serve/uploads/chat_images/73245b0a-56cd-4f02-91eb-f16731bd3aac.png
+	const filePathPrefix = "/api/chat/images/serve/"
 	requestPath := strings.TrimPrefix(r.URL.Path, filePathPrefix)
 
 	if requestPath == r.URL.Path {

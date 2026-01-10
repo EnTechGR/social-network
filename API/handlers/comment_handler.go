@@ -95,7 +95,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 			CommentID:  &created.ID,
 		}
 		
-		if err := h.NotificationRepo.Create(n); err != nil {
+		if err := h.NotificationRepo.Create(&n); err != nil {
 			log.Printf("[CommentHandler] Failed to create notification: %v", err)
 		} else {
 			// ✅ Send real-time notification via WebSocket
@@ -190,7 +190,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 				CommentID:  &comment.ID,
 			}
 			
-			if err := h.NotificationRepo.Create(n); err != nil {
+			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[CommentHandler] Failed to create edit notification: %v", err)
 			} else {
 				// ✅ Send real-time notification via WebSocket
@@ -274,7 +274,7 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 				CommentID:  &comment.ID,
 			}
 			
-			if err := h.NotificationRepo.Create(n); err != nil {
+			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[CommentHandler] Failed to create delete notification: %v", err)
 			} else {
 				// ✅ Send real-time notification via WebSocket

@@ -22,6 +22,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Create repositories
 	userRepo := user_repository.NewUserRepository(db)
 	sessionRepo := session.NewSessionRepository(db)
+	followRepo := repository.NewFollowRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 	postRepo := repository.NewPostRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
@@ -38,6 +39,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
     userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
+	followHandler := handlers.NewFollowHandler(followRepo, userRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo, postRepo, imageRepo)
 	postHandler := handlers.NewPostHandler(postRepo)
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
@@ -122,6 +124,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Toggle profile privacy (public/private)
 	apiMux.Handle("/api/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
+	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))
+	apiMux.Handle("/api/v1/follow/delete/", protected(http.HandlerFunc(followHandler.Unfollow)))
+	apiMux.Handle("/api/v1/followers/delete/", protected(http.HandlerFunc(followHandler.RemoveFollower)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
 	apiMux.Handle("/api/v1/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification)))
 	apiMux.Handle("/api/v1/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))

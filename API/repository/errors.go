@@ -15,4 +15,8 @@ var (
 	ErrOAuthAccountExists   = errors.New("oauth account already exists")
 	ErrCommentNotFound      = errors.New("comment not found")
 	ErrPostNotFound         = errors.New("post not found")
+	ErrFollowAlreadyExists  = errors.New("follow relationship already exists")
+	ErrFollowBlocked        = errors.New("follow relationship is blocked")
+	ErrFollowSelf           = errors.New("cannot follow yourself")
+	ErrFollowNotFound       = errors.New("follow relationship not found")
 )

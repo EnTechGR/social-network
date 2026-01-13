@@ -1,3 +1,41 @@
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+backend/API/.env
+**/.env
+
+# Backend (Go)
+backend/API/*.test
+backend/API/*.prof
+backend/API/tmp/
+backend/API/uploads/*
+!backend/API/uploads/.gitkeep
+
+# Frontend (Next.js/Node)
+node_modules/
+.next/
+out/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Misc
 cookies.txt
-**/env
-API/.env
+*.bak
+.cache/

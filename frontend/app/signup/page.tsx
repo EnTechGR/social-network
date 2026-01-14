@@ -6,7 +6,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButtons';
-import { registerStep1, registerStep2 } from '@/lib/api';
+import { registerStep1 } from '@/lib/api';
 import { isValidEmail, isValidPassword } from '@/lib/validations';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,6 +25,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [registerData, setRegisterData] = useState<any>(null);
+  const [gender, setGender] = useState<'male'|'female'|'other'|'prefer_not_to_say'>('prefer_not_to_say');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,7 +71,7 @@ export default function SignUpPage() {
     return dateStr;
   };
 
-  const handleStep1Submit = async (e: React.FormEvent) => {
+  const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -90,26 +91,18 @@ export default function SignUpPage() {
       return;
     }
 
-    setIsLoading(true);
+    // Save the data locally and proceed to step 2
+    setRegisterData({
+      email,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+      date_of_birth: formatDateForAPI(dateOfBirth),
+      gender,
+      avatar: avatar || undefined,
+    });
 
-    try {
-      const response = await registerStep1({
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        date_of_birth: formatDateForAPI(dateOfBirth),
-        gender: 'prefer_not_to_say', // Default, can be updated later
-        avatar: avatar || undefined,
-      });
-      
-      setRegisterData(response);
-      setStep(2);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    setStep(2);
   };
 
   if (step === 2) {
@@ -209,6 +202,21 @@ export default function SignUpPage() {
               onBlur={() => setIsDateFocused(false)}
               required
             />
+
+            <div>
+              <label className="text-sm text-parea-black mb-1 block">Gender*</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value as any)}
+                className="w-full rounded-[3rem] border border-parea-black px-4 py-2 bg-parea-white"
+                required
+              >
+                <option value="prefer_not_to_say">Prefer not to say</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
             <Input
               type="email"
@@ -318,21 +326,22 @@ function SignUpStep2({
     setIsLoading(true);
 
     try {
-      // Complete registration step 2
-      await registerStep2(registerData.id, {
+      // Send all registration data in a single request
+      const response = await registerStep1({
+        ...registerData,
         nickname,
         about_me: aboutMe,
-      }, registerData.csrf_token);
+      });
 
       // Store auth data
       if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', registerData.csrf_token);
-        localStorage.setItem('user_id', registerData.id);
+        localStorage.setItem('auth_token', response.csrf_token);
+        localStorage.setItem('user_id', response.id);
       }
 
       router.push('/feed');
     } catch (err: any) {
-      setError(err.message || 'Failed to complete registration. Please try again.');
+      setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }

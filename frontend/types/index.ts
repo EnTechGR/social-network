@@ -124,6 +124,11 @@ export interface RegisterStep1Request {
   date_of_birth: string;
   gender: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   avatar?: File;
+
+  // Optional profile fields that can be sent during registration
+  nickname?: string;
+  about_me?: string;
+  is_private?: boolean;
 }
 
 /**

@@ -106,6 +106,17 @@ export async function registerStep1(data: RegisterStep1Request): Promise<AuthRes
     formData.append('avatar', data.avatar);
   }
 
+  // Optional profile fields so registration can be completed in a single request
+  if ((data as any).nickname) {
+    formData.append('nickname', (data as any).nickname);
+  }
+  if ((data as any).about_me) {
+    formData.append('about_me', (data as any).about_me);
+  }
+  if ((data as any).is_private !== undefined) {
+    formData.append('is_private', (data as any).is_private ? 'true' : 'false');
+  }
+
   return fetchAPI<AuthResponse>('/api/v1/register', {
     method: 'POST',
     body: formData,

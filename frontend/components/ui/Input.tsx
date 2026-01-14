@@ -16,6 +16,7 @@ interface InputProps {
   disabled?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
+  label?: string; // Optional label for the input
 }
 
 export default function Input({
@@ -28,9 +29,16 @@ export default function Input({
   disabled = false,
   onFocus,
   onBlur,
+  label,
 }: InputProps) {
   return (
     <div className="flex flex-col gap-1">
+      {label && (
+        <label className="text-sm text-parea-black mb-1">
+          {label}
+        </label>
+      )}
+
       <input
         type={type}
         placeholder={placeholder}

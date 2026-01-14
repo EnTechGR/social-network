@@ -78,13 +78,13 @@ export async function createUser(data: { name: string; email: string }) {
  * Login a user
  * POST /api/v1/login
  */
-export async function login(credentials: LoginRequest): Promise<AuthResponse> {
+export async function login(credentials: { email: string; password: string }): Promise<AuthResponse> {
   return fetchAPI<AuthResponse>('/api/v1/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify({ login: credentials.email, password: credentials.password }),
   });
 }
 

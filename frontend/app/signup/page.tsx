@@ -389,7 +389,7 @@ function SignUpStep2({
                 className="
                   flex
                   min-h-[120px]
-                  px-3 py-2
+                  px-4 py-2
                   items-start
                   gap-2
                   self-stretch

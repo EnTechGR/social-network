@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import NavbarWrapper from "@/components/ui/NavbarWrapper";
 
 // Inter - for body text and headings
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({
           className="fixed inset-0 pointer-events-none z-[9999]"
           style={noiseStyle}
         />
+        <NavbarWrapper />
         {children}
       </body>
     </html>

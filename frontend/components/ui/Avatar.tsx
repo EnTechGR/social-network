@@ -18,7 +18,7 @@ interface AvatarProps {
   /** Alt text for accessibility */
   alt?: string;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Additional CSS classes */
   className?: string;
 }
@@ -39,6 +39,7 @@ export default function Avatar({
     sm: 'w-10 h-10',     // 40px
     md: 'w-20 h-20',     // 80px  
     lg: 'w-40 h-40',     // 160px
+    xl: 'w-60 h-60',     // 240px - for profile cards
   };
 
   // Self vs Not-self shadow styles

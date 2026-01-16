@@ -15,6 +15,7 @@
   --primary: var(--parea-yellow);
   --muted: var(--parea-grey);
   --border: var(--parea-border);
+
 }
 
 /* Register colors with Tailwind v4 */
@@ -38,6 +39,7 @@
   --font-body: var(--font-inter);
   --font-display: var(--font-ibm-plex-mono);
   --font-mono: var(--font-ibm-plex-mono);
+  
 
   /* Font Sizes */
   --text-tiny: 0.75rem;       /* 12px */
@@ -72,12 +74,15 @@
 
 
 body {
+  --font-display: var(--font-ibm-plex-mono);
+  --font-body: var(--font-inter);
   font-family: var(--font-body), system-ui, sans-serif;
   font-size: var(--text-regular);
   font-weight: var(--font-normal);
   line-height: var(--leading-relaxed);
   color: var(--color-parea-black);
   background-color: var(--color-parea-white);
+  
 }
 
 /* ========================================

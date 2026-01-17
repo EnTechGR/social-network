@@ -127,6 +127,8 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))
 	apiMux.Handle("/api/v1/follow/accept/", protected(http.HandlerFunc(followHandler.AcceptFollowRequest)))
 	apiMux.Handle("/api/v1/follow/requests", protected(http.HandlerFunc(followHandler.GetFollowRequests)))
+	apiMux.Handle("/api/v1/follow/requests/pending", protected(http.HandlerFunc(followHandler.GetPendingFollowRequests)))
+	apiMux.Handle("/api/v1/followers", protected(http.HandlerFunc(followHandler.GetFollowers)))
 	apiMux.Handle("/api/v1/follower/delete/", protected(http.HandlerFunc(followHandler.Unfollow)))
 	apiMux.Handle("/api/v1/followee/delete/", protected(http.HandlerFunc(followHandler.RemoveFollower)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))

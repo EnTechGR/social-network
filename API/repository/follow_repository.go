@@ -135,29 +135,11 @@ func (r *FollowRepository) DeclineFollowRequest(followerID, followeeID string) e
 	return nil
 }
 
-// DeleteFollow removes an accepted follow relationship.
-func (r *FollowRepository) DeleteFollow(followerID, followeeID string) error {
+// DeleteRelationship removes an accepted or pending follow relationship.
+func (r *FollowRepository) DeleteRelationship(followerID, followeeID string) error {
 	result, err := r.db.Exec(`
 		DELETE FROM follow_relationships 
-		WHERE follower_id = ? AND followee_id = ? AND status = 'accepted'
-	`, followerID, followeeID)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return ErrFollowNotFound
-	}
-
-	return nil
-}
-
-// RemoveFollower removes an accepted follow relationship where the current user is the followee.
-func (r *FollowRepository) RemoveFollower(followeeID, followerID string) error {
-	result, err := r.db.Exec(`
-		DELETE FROM follow_relationships 
-		WHERE follower_id = ? AND followee_id = ? AND status = 'accepted'
+		WHERE follower_id = ? AND followee_id = ? AND status IN ('accepted', 'pending')
 	`, followerID, followeeID)
 	if err != nil {
 		return err

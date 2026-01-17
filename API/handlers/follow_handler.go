@@ -65,11 +65,6 @@ func (h *FollowHandler) FollowPublicUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if user.IsPrivate {
-		utils.ErrorResponse(w, "Private profiles cannot follow in this step", http.StatusForbidden)
-		return
-	}
-
 	followee, err := h.UserRepo.GetByID(req.FolloweeID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
@@ -191,9 +186,9 @@ func (h *FollowHandler) GetFollowRequests(w http.ResponseWriter, r *http.Request
 	utils.JSONResponse(w, resp, http.StatusOK)
 }
 
-// Unfollow removes an accepted follow relationship.
+// Unfollow removes an accepted or pending follow relationship.
 // @Summary      Unfollow a user
-// @Description  Removes an accepted follow relationship for the authenticated user.
+// @Description  Removes an accepted or pending follow relationship for the authenticated user.
 // @Tags         Follow
 // @Security     CookieAuth
 // @Produce      json
@@ -222,7 +217,7 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.FollowRepo.DeleteFollow(user.ID, followeeID); err != nil {
+	if err := h.FollowRepo.DeleteRelationship(user.ID, followeeID); err != nil {
 		if err == repository.ErrFollowNotFound {
 			utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
 		} else {
@@ -234,9 +229,83 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, map[string]string{"status": "unfollowed"}, http.StatusOK)
 }
 
+// GetFollowers returns accepted followers for the current user.
+// @Summary      Get followers
+// @Description  Returns accepted followers for the authenticated user.
+// @Tags         Follow
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  map[string][]models.FollowRelationship
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/v1/followers [get]
+func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	followers, err := h.FollowRepo.GetByFolloweeAndStatus(user.ID, "accepted")
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to load followers", http.StatusInternalServerError)
+		return
+	}
+
+	resp := struct {
+		Followers []models.FollowRelationship `json:"followers"`
+	}{
+		Followers: followers,
+	}
+
+	utils.JSONResponse(w, resp, http.StatusOK)
+}
+
+// GetPendingFollowRequests returns pending follow requests for the current user.
+// @Summary      Get pending follow requests
+// @Description  Returns pending follow requests for the authenticated user.
+// @Tags         Follow
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  map[string][]models.FollowRelationship
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/v1/follow/requests/pending [get]
+func (h *FollowHandler) GetPendingFollowRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	pending, err := h.FollowRepo.GetByFolloweeAndStatus(user.ID, "pending")
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to load follow requests", http.StatusInternalServerError)
+		return
+	}
+
+	resp := struct {
+		Pending []models.FollowRelationship `json:"pending"`
+	}{
+		Pending: pending,
+	}
+
+	utils.JSONResponse(w, resp, http.StatusOK)
+}
+
 // RemoveFollower removes a follower from the current user's followers list.
 // @Summary      Remove a follower
-// @Description  Removes an accepted follower relationship for the authenticated user.
+// @Description  Removes an accepted or pending follower relationship for the authenticated user.
 // @Tags         Follow
 // @Security     CookieAuth
 // @Produce      json
@@ -265,7 +334,7 @@ func (h *FollowHandler) RemoveFollower(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.FollowRepo.RemoveFollower(user.ID, followerID); err != nil {
+	if err := h.FollowRepo.DeleteRelationship(followerID, user.ID); err != nil {
 		if err == repository.ErrFollowNotFound {
 			utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
 		} else {

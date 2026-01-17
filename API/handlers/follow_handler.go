@@ -1,28 +1,34 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
 
-	"social-network/middleware"
-	"social-network/repository"
-	"social-network/repository/user_repository"
-	"social-network/utils"
+import (
+   "encoding/json"
+   "net/http"
+
+
+   "social-network/middleware"
+   "social-network/models"
+   "social-network/repository"
+   "social-network/repository/user_repository"
+   "social-network/utils"
 )
+
 
 // FollowHandler handles follow-related endpoints.
 type FollowHandler struct {
-	FollowRepo *repository.FollowRepository
-	UserRepo   *user_repository.UserRepository
+   FollowRepo *repository.FollowRepository
+   UserRepo   *user_repository.UserRepository
 }
+
 
 // NewFollowHandler creates a new FollowHandler.
 func NewFollowHandler(followRepo *repository.FollowRepository, userRepo *user_repository.UserRepository) *FollowHandler {
-	return &FollowHandler{
-		FollowRepo: followRepo,
-		UserRepo:   userRepo,
-	}
+   return &FollowHandler{
+       FollowRepo: followRepo,
+       UserRepo:   userRepo,
+   }
 }
+
 
 // FollowPublicUser creates an accepted follow relationship when both users are public.
 // @Summary      Follow a public user
@@ -41,66 +47,73 @@ func NewFollowHandler(followRepo *repository.FollowRepository, userRepo *user_re
 // @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
 // @Router       /api/v1/follow [post]
 func (h *FollowHandler) FollowPublicUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+   if r.Method != http.MethodPost {
+       utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+       return
+   }
 
-	user := middleware.GetCurrentUser(r)
-	if user == nil {
-		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
-	var req struct {
-		FolloweeID string `json:"followee_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	if req.FolloweeID == "" {
-		utils.ErrorResponse(w, "Followee ID is required", http.StatusBadRequest)
-		return
-	}
+   user := middleware.GetCurrentUser(r)
+   if user == nil {
+       utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+       return
+   }
 
-	if user.IsPrivate {
-		utils.ErrorResponse(w, "Private profiles cannot follow in this step", http.StatusForbidden)
-		return
-	}
 
-	followee, err := h.UserRepo.GetByID(req.FolloweeID)
-	if err != nil {
-		if err == repository.ErrUserNotFound {
-			utils.ErrorResponse(w, "User not found", http.StatusNotFound)
-		} else {
-			utils.ErrorResponse(w, "Failed to load user", http.StatusInternalServerError)
-		}
-		return
-	}
+   var req struct {
+       FolloweeID string `json:"followee_id"`
+   }
+   if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+       utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+       return
+   }
+   if req.FolloweeID == "" {
+       utils.ErrorResponse(w, "Followee ID is required", http.StatusBadRequest)
+       return
+   }
 
-	if followee.IsPrivate {
-		utils.ErrorResponse(w, "Followee profile is private", http.StatusForbidden)
-		return
-	}
 
-	relationship, err := h.FollowRepo.CreateAcceptedFollow(user.ID, followee.ID)
-	if err != nil {
-		switch err {
-		case repository.ErrFollowSelf:
-			utils.ErrorResponse(w, "You cannot follow yourself", http.StatusBadRequest)
-		case repository.ErrFollowAlreadyExists:
-			utils.ErrorResponse(w, "Already following", http.StatusConflict)
-		case repository.ErrFollowBlocked:
-			utils.ErrorResponse(w, "Follow not allowed", http.StatusForbidden)
-		default:
-			utils.ErrorResponse(w, "Failed to follow user", http.StatusInternalServerError)
-		}
-		return
-	}
+   if user.IsPrivate {
+       utils.ErrorResponse(w, "Private profiles cannot follow in this step", http.StatusForbidden)
+       return
+   }
 
-	utils.JSONResponse(w, relationship, http.StatusCreated)
+
+   followee, err := h.UserRepo.GetByID(req.FolloweeID)
+   if err != nil {
+       if err == repository.ErrUserNotFound {
+           utils.ErrorResponse(w, "User not found", http.StatusNotFound)
+       } else {
+           utils.ErrorResponse(w, "Failed to load user", http.StatusInternalServerError)
+       }
+       return
+   }
+
+
+   var relationship *models.FollowRelationship
+   if followee.IsPrivate {
+       relationship, err = h.FollowRepo.CreateFollowRequest(user.ID, followee.ID)
+   } else {
+       relationship, err = h.FollowRepo.CreateAcceptedFollow(user.ID, followee.ID)
+   }
+   if err != nil {
+       switch err {
+       case repository.ErrFollowSelf:
+           utils.ErrorResponse(w, "You cannot follow yourself", http.StatusBadRequest)
+       case repository.ErrFollowAlreadyExists:
+           utils.ErrorResponse(w, "Already following", http.StatusConflict)
+       case repository.ErrFollowBlocked:
+           utils.ErrorResponse(w, "Follow not allowed", http.StatusForbidden)
+       default:
+           utils.ErrorResponse(w, "Failed to follow user", http.StatusInternalServerError)
+       }
+       return
+   }
+
+
+   utils.JSONResponse(w, relationship, http.StatusCreated)
 }
+
 
 // Unfollow removes an accepted follow relationship.
 // @Summary      Unfollow a user
@@ -116,34 +129,39 @@ func (h *FollowHandler) FollowPublicUser(w http.ResponseWriter, r *http.Request)
 // @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
 // @Router       /api/v1/follow/delete/{id} [delete]
 func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+   if r.Method != http.MethodDelete {
+       utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+       return
+   }
 
-	user := middleware.GetCurrentUser(r)
-	if user == nil {
-		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
-	followeeID := utils.GetLastPathParam(r)
-	if followeeID == "" {
-		utils.ErrorResponse(w, "Missing followee ID", http.StatusBadRequest)
-		return
-	}
+   user := middleware.GetCurrentUser(r)
+   if user == nil {
+       utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+       return
+   }
 
-	if err := h.FollowRepo.DeleteFollow(user.ID, followeeID); err != nil {
-		if err == repository.ErrFollowNotFound {
-			utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
-		} else {
-			utils.ErrorResponse(w, "Failed to unfollow user", http.StatusInternalServerError)
-		}
-		return
-	}
 
-	utils.JSONResponse(w, map[string]string{"status": "unfollowed"}, http.StatusOK)
+   followeeID := utils.GetLastPathParam(r)
+   if followeeID == "" {
+       utils.ErrorResponse(w, "Missing followee ID", http.StatusBadRequest)
+       return
+   }
+
+
+   if err := h.FollowRepo.DeleteFollow(user.ID, followeeID); err != nil {
+       if err == repository.ErrFollowNotFound {
+           utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
+       } else {
+           utils.ErrorResponse(w, "Failed to unfollow user", http.StatusInternalServerError)
+       }
+       return
+   }
+
+
+   utils.JSONResponse(w, map[string]string{"status": "unfollowed"}, http.StatusOK)
 }
+
 
 // RemoveFollower removes a follower from the current user's followers list.
 // @Summary      Remove a follower
@@ -159,31 +177,39 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request) {
 // @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
 // @Router       /api/v1/followers/delete/{id} [delete]
 func (h *FollowHandler) RemoveFollower(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+   if r.Method != http.MethodDelete {
+       utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+       return
+   }
 
-	user := middleware.GetCurrentUser(r)
-	if user == nil {
-		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
-	followerID := utils.GetLastPathParam(r)
-	if followerID == "" {
-		utils.ErrorResponse(w, "Missing follower ID", http.StatusBadRequest)
-		return
-	}
+   user := middleware.GetCurrentUser(r)
+   if user == nil {
+       utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+       return
+   }
 
-	if err := h.FollowRepo.RemoveFollower(user.ID, followerID); err != nil {
-		if err == repository.ErrFollowNotFound {
-			utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
-		} else {
-			utils.ErrorResponse(w, "Failed to remove follower", http.StatusInternalServerError)
-		}
-		return
-	}
 
-	utils.JSONResponse(w, map[string]string{"status": "removed"}, http.StatusOK)
+   followerID := utils.GetLastPathParam(r)
+   if followerID == "" {
+       utils.ErrorResponse(w, "Missing follower ID", http.StatusBadRequest)
+       return
+   }
+
+
+   if err := h.FollowRepo.RemoveFollower(user.ID, followerID); err != nil {
+       if err == repository.ErrFollowNotFound {
+           utils.ErrorResponse(w, "Follow relationship not found", http.StatusNotFound)
+       } else {
+           utils.ErrorResponse(w, "Failed to remove follower", http.StatusInternalServerError)
+       }
+       return
+   }
+
+
+   utils.JSONResponse(w, map[string]string{"status": "removed"}, http.StatusOK)
 }
+
+
+
+

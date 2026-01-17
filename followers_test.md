@@ -30,10 +30,10 @@ curl -s -c ./bob1.cookies \
 
 
 curl -i -b ./alice.cookies \
-  -H "X-CSRF-Token: Qdbs_g_sWPhOYcMZFY3_TQvVvB-g9p4Md9Vhgsg8qJo=" \
+  -H "X-CSRF-Token: Z3MSt-g3dcg3D_Ru1F1fpzlDZnW-tRXfe9f6clSnkdI=" \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/follow \
-  -d '{"followee_id":"ce8715ad-27f1-409e-8261-8f9d68a36221"}'
+  -d '{"followee_id":"c7f62be6-0cbd-4f46-bed5-dc27ef9ef49f"}'
 
 curl -i -b ./alice.cookies \
   -H "X-CSRF-Token: 1BGnF2882u5tyx3Rpn_99G2zVwaH-zvMXurbS0ITQ3k=" \
@@ -46,6 +46,16 @@ curl -s -c ./bob.cookies \
   -X POST http://localhost:8080/api/v1/login \
   -d '{"login":"bob@example.com","password":"Pass1234"}' 
 
-curl -i -b ./bob.cookies \
-  -H "X-CSRF-Token: a_jgfUyRS_BjRxTJaY_5CflkYi4vGeMSiYSpp5XhLsM=" \
-  -X DELETE http://localhost:8080/api/v1/follow/delete/b9abfb51-245c-4621-9885-1865ccc2aeb5
+curl -i -b ./bob1.cookies \
+  -H "X-CSRF-Token: RxVbRfMHdpSEPxpGddFux_ZeeDQtNsOjjWfasZl1UVg=" \
+  -X DELETE http://localhost:8080/api/v1/followee/delete/01e97e7d-7a57-4df4-8623-e98977e5bead
+
+curl -i -b ./alice1.cookies \
+  -H "X-CSRF-Token: Z3MSt-g3dcg3D_Ru1F1fpzlDZnW-tRXfe9f6clSnkdI=" \
+  -X DELETE http://localhost:8080/api/v1/follower/delete/c7f62be6-0cbd-4f46-bed5-dc27ef9ef49f
+
+curl -i -b ./bob1.cookies \
+  -H "X-CSRF-Token: RxVbRfMHdpSEPxpGddFux_ZeeDQtNsOjjWfasZl1UVg=" \
+  -H 'Content-Type: application/json' \
+  -X PUT http://localhost:8080/api/v1/user/privacy \
+  -d '{"is_private": true}'

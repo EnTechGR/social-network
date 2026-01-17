@@ -123,10 +123,10 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/user/profile", protected(http.HandlerFunc(userHandler.GetProfile)))
 
 	// Toggle profile privacy (public/private)
-	apiMux.Handle("/api/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
+	apiMux.Handle("/api/v1/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
 	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))
-	apiMux.Handle("/api/v1/follow/delete/", protected(http.HandlerFunc(followHandler.Unfollow)))
-	apiMux.Handle("/api/v1/followers/delete/", protected(http.HandlerFunc(followHandler.RemoveFollower)))
+	apiMux.Handle("/api/v1/follower/delete/", protected(http.HandlerFunc(followHandler.Unfollow)))
+	apiMux.Handle("/api/v1/followee/delete/", protected(http.HandlerFunc(followHandler.RemoveFollower)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))
 	apiMux.Handle("/api/v1/notifications/delete/", protected(http.HandlerFunc(notificationHandler.HideNotification)))
 	apiMux.Handle("/api/v1/logout-all", protected(http.HandlerFunc(authHandler.LogoutAll)))

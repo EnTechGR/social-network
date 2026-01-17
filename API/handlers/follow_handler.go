@@ -115,6 +115,54 @@ func (h *FollowHandler) FollowPublicUser(w http.ResponseWriter, r *http.Request)
 }
 
 
+// AcceptFollowRequest accepts a pending follow request for the current user.
+// @Summary      Accept a follow request
+// @Description  Accepts a pending follow request for the authenticated user.
+// @Tags         Follow
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id   path      string  true  "Follower ID"
+// @Success      200  {object}  map[string]string "status: accepted"
+// @Failure      400  {object}  models.ErrorResponse "Missing follower ID"
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      404  {object}  models.ErrorResponse "Follow request not found"
+// @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/v1/follow/accept/{id} [put]
+func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+
+	followerID := utils.GetLastPathParam(r)
+	if followerID == "" {
+		utils.ErrorResponse(w, "Missing follower ID", http.StatusBadRequest)
+		return
+	}
+
+
+	if err := h.FollowRepo.AcceptFollowRequest(followerID, user.ID); err != nil {
+		if err == repository.ErrFollowNotFound {
+			utils.ErrorResponse(w, "Follow request not found", http.StatusNotFound)
+		} else {
+			utils.ErrorResponse(w, "Failed to accept follow request", http.StatusInternalServerError)
+		}
+		return
+	}
+
+
+	utils.JSONResponse(w, map[string]string{"status": "accepted"}, http.StatusOK)
+}
+
+
 // Unfollow removes an accepted follow relationship.
 // @Summary      Unfollow a user
 // @Description  Removes an accepted follow relationship for the authenticated user.

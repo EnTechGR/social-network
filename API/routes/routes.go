@@ -38,7 +38,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
-    userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
+	userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
 	followHandler := handlers.NewFollowHandler(followRepo, userRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo, postRepo, imageRepo)
 	postHandler := handlers.NewPostHandler(postRepo)
@@ -126,6 +126,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
 	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))
 	apiMux.Handle("/api/v1/follow/accept/", protected(http.HandlerFunc(followHandler.AcceptFollowRequest)))
+	apiMux.Handle("/api/v1/follow/requests", protected(http.HandlerFunc(followHandler.GetFollowRequests)))
 	apiMux.Handle("/api/v1/follower/delete/", protected(http.HandlerFunc(followHandler.Unfollow)))
 	apiMux.Handle("/api/v1/followee/delete/", protected(http.HandlerFunc(followHandler.RemoveFollower)))
 	apiMux.Handle("/api/v1/notifications", protected(http.HandlerFunc(notificationHandler.GetNotifications)))

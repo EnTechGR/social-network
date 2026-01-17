@@ -66,6 +66,38 @@ func (r *FollowRepository) CreateFollowRequest(followerID, followeeID string) (*
 	return r.createFollowWithStatus(followerID, followeeID, "pending")
 }
 
+// GetByFolloweeAndStatus returns follow relationships for a followee with a specific status.
+func (r *FollowRepository) GetByFolloweeAndStatus(followeeID, status string) ([]models.FollowRelationship, error) {
+	rows, err := r.db.Query(`
+		SELECT follower_id, followee_id, status, created_at, updated_at
+		FROM follow_relationships
+		WHERE followee_id = ? AND status = ?
+		ORDER BY created_at DESC
+	`, followeeID, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var relationships []models.FollowRelationship
+	for rows.Next() {
+		var relationship models.FollowRelationship
+		var updatedAt sql.NullTime
+		if err := rows.Scan(&relationship.FollowerID, &relationship.FolloweeID, &relationship.Status, &relationship.CreatedAt, &updatedAt); err != nil {
+			return nil, err
+		}
+		if updatedAt.Valid {
+			relationship.UpdatedAt = &updatedAt.Time
+		}
+		relationships = append(relationships, relationship)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return relationships, nil
+}
+
 // AcceptFollowRequest marks a pending follow request as accepted.
 func (r *FollowRepository) AcceptFollowRequest(followerID, followeeID string) error {
 	result, err := r.db.Exec(`

@@ -25,7 +25,7 @@ export default function Button({
   type = 'button',
   className = '',
 }: ButtonProps) {
-  const baseStyles = 'rounded-[3rem] border border-parea-black transition-colors focus:outline-none label';
+  const baseStyles = 'rounded-[3rem] border border-parea-black transition-colors focus:outline-none label shrink-0';
 
   const variantStyles = {
     primary: 'text-parea-black',

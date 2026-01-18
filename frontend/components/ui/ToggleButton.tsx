@@ -40,8 +40,8 @@ interface ToggleButtonProps {
       duration-300
       ease-in-out
       ${isOn 
-        ? 'items-end bg-parea-black border-parea-black' 
-        : 'items-start bg-parea-grey border-parea-black'
+        ? 'items-start bg-parea-grey border-parea-black' 
+        : 'items-end bg-parea-black border-parea-black' 
       }
       ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
     `;

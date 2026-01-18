@@ -45,6 +45,7 @@ export const Navbar = () => {
 
         {/* Search */}
         <div
+        className='w-full md:w[299px]'
           style={{
             display: 'flex',
             width: '299px',

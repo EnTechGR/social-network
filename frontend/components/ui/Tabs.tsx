@@ -34,12 +34,16 @@ export default function Tabs({
   // Frame styles
   const frameStyles = `
     inline-flex
+    flex-wrap
     p-1
     items-start
     gap-1
     rounded-full
     border
     border-parea-border
+    md:border
+    border-transparent
+    md:border-parea-border
   `;
 
   // Base tab option styles (shared)

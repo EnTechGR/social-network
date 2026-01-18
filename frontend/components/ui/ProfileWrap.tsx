@@ -8,7 +8,7 @@
 import Avatar from './Avatar';
 import ToggleButton from './ToggleButton';
 
-interface ProfileCardProps {
+interface ProfileWrapProps {
   /** User data to display */
   user: {
     avatarUrl?: string;
@@ -45,7 +45,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex w-full justify-between items-center gap-4">
-      <span className="font-medium">{label}</span>
+      <span className="font-size-medium">{label}</span>
       <span className="text-regular text-right">{children}</span>
     </div>
   );
@@ -66,7 +66,8 @@ function CountBadge({
     rounded-full 
     border border-parea-black 
     bg-parea-yellow 
-    text-small font-medium
+    text-small font-mono font-weight-medium
+    font-medium
     tabular-nums
   `;
   
@@ -85,25 +86,26 @@ function CountBadge({
   return <span className={baseStyles}>{count}</span>;
 }
 
-export default function ProfileCard({
+export default function ProfileWrap({
   user,
   isSelf = false,
   onTogglePublic,
   onFollowersClick,
   onFollowingClick,
   className = '',
-}: ProfileCardProps) {
+}: ProfileWrapProps) {
   return (
     <div
       className={`
         flex
+        flex-col lg:flex-row
         max-w-[1246px]
         w-full
         min-h-[309px]
-        p-8
+        p-6 lg:p-8
         justify-center
-        items-center
-        gap-24
+        items-start lg:items-start
+        gap-6 md:gap-16 lg:gap-24
         rounded
         border
         border-parea-border
@@ -113,7 +115,7 @@ export default function ProfileCard({
       `}
     >
       {/* Column 1: Avatar + Name/Bio */}
-      <div className="flex items-center gap-11 flex-1 self-stretch">
+      <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-11 flex-1 self-stretch">
         {/* Avatar */}
         <Avatar
           type={user.avatarUrl ? 'image' : 'user'}
@@ -137,7 +139,7 @@ export default function ProfileCard({
       </div>
 
       {/* Column 2: User Details */}
-      <div className="flex flex-col items-center gap-3 min-w-[280px]">
+      <div className="flex flex-col items-start gap-3 min-w-[280px]">
         {/* Username */}
         <InfoRow label="Username">@{user.username}</InfoRow>
 
@@ -148,8 +150,10 @@ export default function ProfileCard({
         <InfoRow label="Birth Date">{user.birthDate}</InfoRow>
 
         {/* Public Profile Toggle */}
+        {isSelf && (
+          <>
         <div className="flex w-full justify-between items-center gap-4">
-          <span className="font-medium">Public Profile</span>
+          <span className="font-medium"> {user.isPublic ? 'Public Profile' : 'Private Profile'}</span>
           <ToggleButton
             isOn={user.isPublic}
             onChange={onTogglePublic}
@@ -163,16 +167,18 @@ export default function ProfileCard({
             ? 'Your profile can be seen by everyone.' 
             : 'Your profile is private.'}
         </p>
+        </>
+      )}
 
         {/* Followers */}
         <div className="flex w-full justify-between items-center gap-4">
-          <span className="font-medium">Followers</span>
+          <span className="font-size-medium">Followers</span>
           <CountBadge count={user.followersCount} onClick={onFollowersClick} />
         </div>
 
         {/* Following */}
         <div className="flex w-full justify-between items-center gap-4">
-          <span className="font-medium">Following</span>
+          <span className="font-size-medium">Following</span>
           <CountBadge count={user.followingCount} onClick={onFollowingClick} />
         </div>
       </div>

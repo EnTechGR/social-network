@@ -46,14 +46,14 @@ interface IconButtonProps {
 const closeIcon = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="15"
-    height="15"
-    viewBox="0 0 15 15"
+    width="12"
+    height="12"
+    viewBox="0 0 12 12"
     fill="none"
     className="w-[0.875rem] h-[0.875rem] shrink-0"
   >
     <path
-      d="M12.5 0.5L0.5 12.5M0.5 0.5L12.5 12.5"
+      d="M11.5 0.5L0.5 11.5M0.5 0.5L11.5 11.5"
       stroke="black"
       strokeWidth="1"
       strokeLinecap="round"

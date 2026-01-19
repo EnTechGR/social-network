@@ -2,8 +2,76 @@
 
 import React from 'react';
 import { Search } from 'lucide-react';
+import SearchSuggestions from './SearchSuggestions';
+import { useState, useRef } from 'react';
 import Button from './Button';
 import Link from 'next/link';
+
+// --- SearchInputWithDropdown component ---
+function SearchInputWithDropdown() {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClick);
+    } else {
+      document.removeEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showDropdown]);
+
+  return (
+    <div className="relative w-full">
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Search..."
+        className="
+          flex-1
+          border-none
+          outline-none
+          bg-transparent
+          text-black/60
+          font-mono
+          text-[15px]
+          font-medium
+          leading-[1.5]
+          tracking-[-0.15px]
+          uppercase
+          placeholder:text-black/60
+          w-full
+        "
+        onFocus={() => setShowDropdown(true)}
+      />
+      {showDropdown && (
+        <div className="
+              fixed
+              flex
+              w-[1368px]
+              max-w-[1368px]
+              flex-col
+              items-center
+              top-[72px]
+              left-1/2
+              -translate-x-1/2
+              z-50
+            "
+        >
+          <SearchSuggestions />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Navbar = () => {
   return (
@@ -49,6 +117,7 @@ export const Navbar = () => {
         {/* Search */}
         <div
           className="
+            relative
             hidden
             md:flex
             w-[299px]
@@ -74,24 +143,8 @@ export const Navbar = () => {
           ">
             <Search className="w-6 h-6 text-parea-black/70" />
           </div>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="
-              flex-1
-              border-none
-              outline-none
-              bg-transparent
-              text-black/60
-              font-mono
-              text-[15px]
-              font-medium
-              leading-[1.5]
-              tracking-[-0.15px]
-              uppercase
-              placeholder:text-black/60
-            "
-          />
+          {/* Search input with focus/blur handlers */}
+          <SearchInputWithDropdown />
         </div>
 
         {/* Links and Button */}

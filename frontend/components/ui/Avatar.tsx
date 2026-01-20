@@ -50,7 +50,8 @@ export default function Avatar({
 
   // Render the appropriate avatar content based on type
   const renderContent = () => {
-    if (type === 'image' && src) {
+    // If src is provided, use it
+    if (src) {
       return (
         <Image
           src={src}
@@ -60,34 +61,19 @@ export default function Avatar({
         />
       );
     }
-
-    if (type === 'group') {
-      // Default group avatar icon (you'd replace with your actual SVG)
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="w-1/2 h-1/2 text-parea-black"
-        >
-          <path d="M18 18.86h-.76c-.8 0-1.2 0-1.53.12a2 2 0 0 0-1.08 1.04c-.14.32-.17.71-.2 1.48M18 18.86c1.13-.47 2-1.4 2-2.86 0-2-1.79-3-4-3M14 6.12c.24-.08.5-.12.77-.12 1.8 0 3.23 1.57 3.23 3.5s-1.44 3.5-3.23 3.5c-.27 0-.53-.04-.77-.12M6 18.86h.76c.8 0 1.2 0 1.53.12.46.17.82.52 1.08 1.04.14.32.17.71.2 1.48M6 18.86c-1.13-.47-2-1.4-2-2.86 0-2 1.79-3 4-3s4 1 4 3c0 1.46-.87 2.39-2 2.86m0 0h-.76c-.8 0-1.2 0-1.53.12a2 2 0 0 0-1.08 1.04c-.14.32-.17.71-.2 1.48M11.5 6.5c0 1.93-1.44 3.5-3.23 3.5S5.04 8.43 5.04 6.5 6.48 3 8.27 3s3.23 1.57 3.23 3.5Z" />
-        </svg>
-      );
-    }
-
-    // Default user avatar icon
+  
+    // Use default image based on type
+    const defaultSrc = type === 'group' 
+      ? '/group-avatar-default.png' 
+      : '/user-avatar-default.png';
+  
     return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="w-1/2 h-1/2 text-parea-black"
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 20c0-2.5 3.5-4 8-4s8 1.5 8 4" />
-      </svg>
+      <Image
+        src={defaultSrc}
+        alt={alt}
+        fill
+        className="object-cover"
+      />
     );
   };
 

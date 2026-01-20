@@ -8,6 +8,7 @@ import Tabs from '@/components/ui/Tabs';
 import ToggleButton from '@/components/ui/ToggleButton';
 import IconButton from '@/components/ui/IconButtons';
 import CreatePostModal from '@/components/ui/CreatePostModal';
+import { Card } from '@/components/ui/Card';
 
 export default function ComponentsPage() {
   const [inputValue, setInputValue] = useState('');
@@ -184,6 +185,43 @@ export default function ComponentsPage() {
           <div className="w-24 h-24 bg-parea-yellow border border-parea-black flex items-end p-2">
             <span className="text-tiny">Yellow</span>
           </div>
+        </div>
+      </section>
+
+      {/* Card */}
+      <section className="mb-12">
+        <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Card</h2>
+        <div className="space-y-4">
+          <Card
+            imageType="post"
+            imageSrc="/postCardImage.png"
+            avatarSrc="/test-avatar.jpg"
+            avatarAlt="Test user"
+            userName="John Doe"
+            userDate="Jan 20, 2026"
+          />
+          <Card
+            imageType="event"
+            imageSrc="/eventCardImage.png"
+            avatarSrc="/test-avatar.jpg"
+            avatarAlt="Event creator"
+            userName="Jane Smith"
+            userDate="Jan 21, 2026"
+          />
+          <Card
+            imageType="post"
+            avatarSrc="/test-avatar.jpg"
+            avatarAlt="User"
+            userName="Default Post"
+            userDate="Jan 22, 2026"
+          />
+          <Card
+            imageType="event"
+            avatarSrc="/test-avatar.jpg"
+            avatarAlt="User"
+            userName="Default Event"
+            userDate="Jan 23, 2026"
+          />
         </div>
       </section>
     </div>

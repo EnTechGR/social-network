@@ -1,60 +1,67 @@
-/**
- * components/ui/Card.tsx
- *
- * Reusable card component for displaying content in a contained box.
- * Common use cases: user profiles, posts, settings panels, etc.
- */
+import React from 'react';
+import { CardImage } from './CardImage';
+import { CardAvatar } from './CardAvatar';
 
 interface CardProps {
-  children: React.ReactNode;
-  className?: string;
+  imageType: 'post' | 'event';
+  imageSrc?: string;
+  avatarSrc: string;
+  avatarAlt: string;
+  userName: string;
+  userDate?: string;
 }
 
-export default function Card({ children, className = '' }: CardProps) {
+export const Card: React.FC<CardProps> = ({
+  imageType,
+  imageSrc,
+  avatarSrc,
+  avatarAlt,
+  userName,
+  userDate,
+}) => {
   return (
-    <div
-      className={`
-        bg-white dark:bg-gray-800
-        border border-gray-200 dark:border-gray-700
-        rounded-lg shadow-sm
-        p-6
-        ${className}
-      `}
-    >
-      {children}
-    </div>
-  );
-}
-
-/**
- * Card.Header - Optional header section for the card
- */
-Card.Header = function CardHeader({ children, className = '' }: CardProps) {
-  return (
-    <div className={`mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 ${className}`}>
-      {children}
+    <div className="flex
+      w-[917px]
+      h-[306px]
+      pb-8
+      items-center
+      gap-4
+      border-b
+      border-dashed
+      border-black/20">
+      <CardImage
+        type={imageType}
+        src={imageSrc}
+        alt="Card image"
+      />
+      <div className="flex
+        px-8
+        flex-col
+        justify-between
+        items-start
+        flex-1
+        self-stretch">
+        <div className="flex
+          flex-col
+          items-start
+          gap-4
+          self-stretch">
+          <h3 className="text-lg font-semibold text-black">
+            Discover Amazing Content
+          </h3>
+          <p className="text-sm text-gray-700 line-clamp-3">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          </p>
+        </div>
+        <CardAvatar
+          src={avatarSrc}
+          alt={avatarAlt}
+          name={userName}
+          subtitle={userDate}
+        />
+      </div>
     </div>
   );
 };
 
-/**
- * Card.Title - Title for the card
- */
-Card.Title = function CardTitle({ children, className = '' }: CardProps) {
-  return (
-    <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>
-      {children}
-    </h3>
-  );
-};
-
-/**
- * Card.Content - Main content area
- */
-Card.Content = function CardContent({ children, className = '' }: CardProps) {
-  return (
-    <div className={`text-gray-600 dark:text-gray-300 ${className}`}>
-      {children}
-    </div>
-  );
-};
+export default Card;

@@ -20,6 +20,12 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
     { id: 2, name: 'Jane Smith' },
     { id: 3, name: 'Bob Johnson' },
     { id: 4, name: 'Alice Brown' },
+    { id: 5, name: 'Charlie Davis' },
+    { id: 6, name: 'Diana Wilson' },
+    { id: 7, name: 'Ethan Martinez' },
+    { id: 8, name: 'Fiona Garcia' },
+    { id: 9, name: 'George Taylor' },
+    { id: 10, name: 'Hannah Anderson' },
   ];
 
   if (!isOpen && !preview) return null;
@@ -33,6 +39,7 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
         bg-parea-white
         border
         border-parea-black
+        overflow-hidden
       "
     >
       {/* Header */}
@@ -150,6 +157,10 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
               gap-2
               self-stretch
               relative
+              max-h-[400px]
+              overflow-y-auto
+              overflow-x-hidden
+              pb-32
             "
           >
             {mockUsers.map((user) => (
@@ -235,24 +246,24 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
                 </button>
               </div>
             ))}
-
-            {/* Fade Effect Overlay */}
-            <div
-              className="
-                absolute
-                w-[767px]
-                h-[141px]
-                rounded-[767px]
-                bg-parea-white
-                blur-[30px]
-                pointer-events-none
-              "
-              style={{
-                left: '-160px',
-                bottom: '-65.5px',
-              }}
-            />
           </div>
+
+          {/* Fade Effect Overlay */}
+          <div
+            className="
+              absolute
+              w-[767px]
+              h-[141px]
+              rounded-[767px]
+              bg-parea-white
+              blur-[30px]
+              pointer-events-none
+            "
+            style={{
+              left: '-128px',
+              bottom: '-32px',
+            }}
+          />
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import Tabs from '@/components/ui/Tabs';
 import ToggleButton from '@/components/ui/ToggleButton';
 import IconButton from '@/components/ui/IconButtons';
 import CreatePostModal from '@/components/ui/CreatePostModal';
+import FollowersModal from '@/components/ui/FollowersModal';
 import { Card } from '@/components/ui/Card';
 
 export default function ComponentsPage() {
@@ -150,6 +151,12 @@ export default function ComponentsPage() {
       <section className="mb-12">
         <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Create Post Modal</h2>
         <CreatePostModal isOpen={false} onClose={() => {}} preview />
+      </section>
+
+      {/* Followers Modal */}
+      <section className="mb-12">
+        <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Followers Modal</h2>
+        <FollowersModal isOpen={false} onClose={() => {}} heading="Followers" preview />
       </section>
 
       {/* Typography */}

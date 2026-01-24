@@ -14,7 +14,7 @@ import Tabs from '@/components/ui/Tabs';
 
 // Mock user data for testing - replace with API call later
 const mockUser = {
-  avatarUrl: '/test-avatar.jpg',
+  avatarUrl: '/test-avatar.png',
   name: 'Olivia Winter',
   username: 'owinter',
   bio: 'Urban explorer, coffee enthusiast, and amateur photographer. Always chasing hidden gems in the city and capturing everyday moments that tell a story. Lover of slow mornings, cozy cafés, and spontaneous adventures.',

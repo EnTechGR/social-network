@@ -202,7 +202,7 @@ export default function ComponentsPage() {
           <Card
             imageType="post"
             imageSrc="/postCardImage.png"
-            avatarSrc="/test-avatar.jpg"
+            avatarSrc="/test-avatar.png"
             avatarAlt="Test user"
             userName="John Doe"
             userDate="Jan 20, 2026"
@@ -210,21 +210,21 @@ export default function ComponentsPage() {
           <Card
             imageType="event"
             imageSrc="/eventCardImage.png"
-            avatarSrc="/test-avatar.jpg"
+            avatarSrc="/test-avatar.png"
             avatarAlt="Event creator"
             userName="Jane Smith"
             userDate="Jan 21, 2026"
           />
           <Card
             imageType="post"
-            avatarSrc="/test-avatar.jpg"
+            avatarSrc="/test-avatar.png"
             avatarAlt="User"
             userName="Default Post"
             userDate="Jan 22, 2026"
           />
           <Card
             imageType="event"
-            avatarSrc="/test-avatar.jpg"
+            avatarSrc="/test-avatar.png"
             avatarAlt="User"
             userName="Default Event"
             userDate="Jan 23, 2026"

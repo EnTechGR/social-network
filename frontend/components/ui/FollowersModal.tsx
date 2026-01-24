@@ -189,7 +189,7 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
                     bg-no-repeat
                   "
                   style={{
-                    backgroundImage: 'url(/test-avatar.jpg)',
+                    backgroundImage: 'url(/test-avatar.png)',
                   }}
                 />
 

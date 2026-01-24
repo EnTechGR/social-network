@@ -27,8 +27,16 @@ export default function ComponentsPage() {
           <Button variant="primary" size="md">Primary Medium</Button>
           <Button variant="primary" size="sm">Primary Small</Button>
           <Button variant="secondary" size="lg">Secondary</Button>
-          <Button variant="tertiary" size="lg">Tertiary</Button>
-          <Button variant="primary" size="lg" disabled>Disabled</Button>
+          <div className="flex flex-col gap-4">
+          <Button variant="tertiary" size="lg">Regular Tertiary</Button>
+          <Button 
+          variant="tertiary" 
+          size="lg"
+          inactiveText="FOLLOWING"
+          activeText="FOLLOW"
+          />
+          </div>          
+        <Button variant="primary" size="lg" disabled>Disabled</Button>
         </div>
       </section>
 

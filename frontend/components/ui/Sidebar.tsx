@@ -308,17 +308,17 @@ export default function Sidebar() {
                     className="
                       flex
                       w-[315px]
-                      flex-col
+                      flex-row
                       items-start
                       self-stretch
                       pt-5
                       px-4
                       pb-3
-                      gap-2
+                      justify-between
                     "
                   >
                     <Button variant="tertiary" onClick={() => {}}>
-                      MARK ALL AS READ
+                      MARK ALL READ
                     </Button>
                     <Button variant="tertiary" onClick={() => {}}>
                       DELETE ALL

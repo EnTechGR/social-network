@@ -1,10 +1,7 @@
 # Instructions
 
-## Guest view
-curl  http://localhost:8080/forum/api/guest
 
-## Get categories
-curl http://localhost:8080/forum/api/categories
+
 
 ## Register a new user:
 
@@ -28,15 +25,14 @@ curl -X POST http://localhost:8080/forum/api/session/logout \
 
  ## Create a Post
 
- curl -X POST http://localhost:8080/forum/api/posts \
+ curl -s -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: OZAWt-K_X-Lu5ooC0vQgKSLZpz1o9bYhfwlsvXPqRHg=" \
   -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{"category_id":1,"title":"My first post","content":"Hello forum!"}'
-
-  curl -X POST http://localhost:8080/forum/api/posts/create \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{"title":"My first TITLE","content":"Hello new forum!","category_ids":[1,2]}'
+  -b alice1.cookies \
+  -d '{
+    "title": "My First Post",
+    "content": "This is the content of my post"
+  }'
 
 ## Create a comment
 
@@ -101,3 +97,9 @@ curl -X DELETE http://localhost:8080/forum/api/comments/delete/{ID} \
   curl -i -X POST http://localhost:8080/forum/api/session/login \
   -H "Content-Type: application/json" \
   -d '{"email":"pat@pat.com","password":"pat123456"}'
+
+
+  curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: nZDzwtvdZ3I0Ppab-M0_AMouafxmOVo0Ffc-Fe4QRAs=" \
+  -H "Content-Type: application/json" \
+  -d '{"category_id":1,"title":"My first post","content":"Hello forum!"}'

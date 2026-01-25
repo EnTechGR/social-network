@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"strings"
 	"time"
 
 	"social-network/models"
@@ -11,28 +10,6 @@ import (
 
 type PostRepository struct {
 	db *sql.DB
-}
-
-// checks if the legacy category_id column exists on the posts table
-func (r *PostRepository) hasLegacyCategoryColumn() bool {
-	rows, err := r.db.Query(`PRAGMA table_info(posts)`)
-	if err != nil {
-		return false
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var cid int
-		var name, ctype string
-		var notnull int
-		var dflt interface{}
-		var pk int
-		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err == nil {
-			if name == "category_id" {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func NewPostRepository(db *sql.DB) *PostRepository {
@@ -55,7 +32,8 @@ func (r *PostRepository) GetByID(postID string) (*models.Post, error) {
 func (r *PostRepository) GetAllPosts() ([]models.Post, error) {
 	rows, err := r.db.Query(`
 		SELECT post_id, user_id, title, content, created_at, updated_at
-                FROM posts ORDER BY created_at DESC`)
+		FROM posts 
+		ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +42,6 @@ func (r *PostRepository) GetAllPosts() ([]models.Post, error) {
 	var posts []models.Post
 	for rows.Next() {
 		var post models.Post
-		//err := rows.Scan(&post.ID, &post.UserID, &post.CategoryID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
 		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -76,66 +53,33 @@ func (r *PostRepository) GetAllPosts() ([]models.Post, error) {
 }
 
 // Create inserts a new post into the database
-// func (r *PostRepository) Create(post models.Post) (*models.Post, error) {
-func (r *PostRepository) Create(post models.Post, categoryIDs []int) (*models.Post, error) {
+// UPDATED: Removed category logic - posts no longer need categories
+func (r *PostRepository) Create(post models.Post) (*models.Post, error) {
 	post.ID = utils.GenerateUUID()
 	post.CreatedAt = time.Now()
-	// _, err := r.db.Exec(`INSERT INTO posts (post_id, user_id, category_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-	// 	post.ID, post.UserID, post.CategoryID, post.Title, post.Content, post.CreatedAt)
 
-	tx, err := r.db.Begin()
+	// Simple insert without categories
+	_, err := r.db.Exec(
+		`INSERT INTO posts (post_id, user_id, title, content, created_at) 
+		VALUES (?, ?, ?, ?, ?)`,
+		post.ID, post.UserID, post.Title, post.Content, post.CreatedAt,
+	)
+
 	if err != nil {
-		return nil, err
-	}
-
-	var insertPost string
-	var args []interface{}
-	if r.hasLegacyCategoryColumn() {
-		if len(categoryIDs) == 0 {
-			tx.Rollback()
-			return nil, sql.ErrNoRows
-		}
-		insertPost = `INSERT INTO posts (post_id, user_id, category_id, title, content, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-		args = []interface{}{post.ID, post.UserID, categoryIDs[0], post.Title, post.Content, post.CreatedAt}
-	} else {
-		insertPost = `INSERT INTO posts (post_id, user_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)`
-		args = []interface{}{post.ID, post.UserID, post.Title, post.Content, post.CreatedAt}
-	}
-
-	_, err = tx.Exec(insertPost, args...)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	stmt, err := tx.Prepare(`INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	defer stmt.Close()
-
-	for _, cid := range categoryIDs {
-		if _, err := stmt.Exec(post.ID, cid); err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
 	return &post, nil
 }
 
+// GetPostsByUser returns all posts by a specific user
 func (r *PostRepository) GetPostsByUser(userID string) ([]models.PostWithUser, error) {
 	rows, err := r.db.Query(`
-        SELECT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at, p.updated_at
-        FROM posts p
-        JOIN user u ON p.user_id = u.user_id
-        WHERE p.user_id = ?
-        ORDER BY p.created_at DESC`, userID)
+		SELECT p.post_id, p.user_id, u.nickname, p.title, p.content, p.created_at, p.updated_at
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		WHERE p.user_id = ?
+		ORDER BY p.created_at DESC`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -152,160 +96,117 @@ func (r *PostRepository) GetPostsByUser(userID string) ([]models.PostWithUser, e
 	return posts, nil
 }
 
-func (r *PostRepository) GetCategoriesByPostID(postID string) ([]models.Category, error) {
+// UpdateTitle updates the title of a post
+func (r *PostRepository) UpdateTitle(postID, title string) error {
+	now := time.Now()
+	result, err := r.db.Exec(
+		`UPDATE posts SET title = ?, updated_at = ? WHERE post_id = ?`,
+		title, now, postID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+// UpdateContent updates the content of a post
+func (r *PostRepository) UpdateContent(postID, content string) error {
+	now := time.Now()
+	result, err := r.db.Exec(
+		`UPDATE posts SET content = ?, updated_at = ? WHERE post_id = ?`,
+		content, now, postID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+// DeleteByID deletes a post by ID
+func (r *PostRepository) DeleteByID(postID string) error {
+	result, err := r.db.Exec(`DELETE FROM posts WHERE post_id = ?`, postID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+// GetPostsWithUsers returns all posts with user information
+func (r *PostRepository) GetPostsWithUsers() ([]models.PostWithUser, error) {
 	rows, err := r.db.Query(`
-        SELECT c.category_id, c.name
-        FROM categories c
-        JOIN post_categories pc ON c.category_id = pc.category_id
-        WHERE pc.post_id = ?`, postID)
+		SELECT p.post_id, p.user_id, u.nickname, p.title, p.content, p.created_at, p.updated_at
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		ORDER BY p.created_at DESC
+	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var categories []models.Category
+	var posts []models.PostWithUser
 	for rows.Next() {
-		var c models.Category
-		if err := rows.Scan(&c.ID, &c.Name); err != nil {
+		var p models.PostWithUser
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
-		categories = append(categories, c)
+		posts = append(posts, p)
 	}
-	return categories, nil
+
+	return posts, nil
 }
 
-// GetPostsReactedByUser returns posts that the given user has reacted to either
-// directly or via reactions on comments. The posts are ordered by creation time
-// descending.
-// func (r *PostRepository) GetPostsReactedByUser(userID string) ([]models.PostWithUser, error) {
-// 	query := `SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
-//                 FROM posts p
-//                 JOIN user u ON p.user_id = u.user_id
-//                 WHERE p.post_id IN (
-//                         SELECT post_id FROM reactions WHERE user_id = ? AND post_id IS NOT NULL
-//                         UNION
-//                         SELECT c.post_id FROM reactions r JOIN comments c ON r.comment_id = c.comment_id WHERE r.user_id = ?
-//                 )
-//                 ORDER BY p.created_at DESC`
+// CheckOwnership verifies if a user owns a specific post
+func (r *PostRepository) CheckOwnership(postID, userID string) (bool, error) {
+	var count int
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM posts WHERE post_id = ? AND user_id = ?`,
+		postID, userID,
+	).Scan(&count)
 
-// 	rows, err := r.db.Query(query, userID, userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
+	if err != nil {
+		return false, err
+	}
 
-// 	var posts []models.PostWithUser
-// 	for rows.Next() {
-// 		var p models.PostWithUser
-// 		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
-// 			return nil, err
-// 		}
-// 		posts = append(posts, p)
-// 	}
-// 	return posts, nil
-// }
+	return count > 0, nil
+}
 
+// GetPostsReactedByUser returns posts that the given user has reacted to (liked)
+// Returns posts where user has reaction_type = 1 (like)
 func (r *PostRepository) GetPostsReactedByUser(userID string) ([]models.PostWithUser, error) {
 	query := `
-		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
+		SELECT DISTINCT p.post_id, p.user_id, u.nickname, p.title, p.content, p.created_at, p.updated_at
 		FROM posts p
 		JOIN user u ON p.user_id = u.user_id
-		WHERE p.post_id IN (
-			SELECT post_id FROM reactions
-			WHERE user_id = ? AND reaction_type = 1 AND post_id IS NOT NULL
-		)
-		ORDER BY p.created_at DESC
-	`
-
-	rows, err := r.db.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var posts []models.PostWithUser
-	for rows.Next() {
-		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt); err != nil {
-			return nil, err
-		}
-		posts = append(posts, p)
-	}
-	return posts, nil
-}
-
-// func (r *PostRepository) GetPostsReactedByUser(userID string) ([]models.PostWithUser, error) {
-// 	query := `
-// 		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
-// 		FROM posts p
-// 		JOIN user u ON p.user_id = u.user_id
-// 		WHERE p.post_id IN (
-// 			SELECT post_id FROM reactions
-// 			WHERE user_id = ? AND reaction_type = 1 AND post_id IS NOT NULL
-// 			UNION
-// 			SELECT c.post_id FROM reactions r
-// 			JOIN comments c ON r.comment_id = c.comment_id
-// 			WHERE r.user_id = ? AND r.reaction_type = 1
-// 		)
-// 		ORDER BY p.created_at DESC
-// 	`
-
-// 	rows, err := r.db.Query(query, userID, userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	var posts []models.PostWithUser
-// 	for rows.Next() {
-// 		var p models.PostWithUser
-// 		if err := rows.Scan(&p.ID, &p.UserID, &p.Username, &p.Title, &p.Content, &p.CreatedAt); err != nil {
-// 			return nil, err
-// 		}
-// 		posts = append(posts, p)
-// 	}
-// 	return posts, nil
-// }
-
-// GetPostsDislikedByUser returns posts that the given user has disliked (reaction_type = 2)
-func (r *PostRepository) GetPostsDislikedByUser(userID string) ([]models.PostWithUser, error) {
-	query := `
-		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at
-		FROM posts p
-		JOIN user u ON p.user_id = u.user_id
-		WHERE p.post_id IN (
-			SELECT post_id FROM reactions
-			WHERE user_id = ? AND reaction_type = 2 AND post_id IS NOT NULL
-		)
-		ORDER BY p.created_at DESC
-	`
-
-	rows, err := r.db.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var posts []models.PostWithUser
-	for rows.Next() {
-		var p models.PostWithUser
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt); err != nil {
-			return nil, err
-		}
-		posts = append(posts, p)
-	}
-	return posts, nil
-}
-
-// GetPostsCommentedByUser returns posts that the given user has commented on
-func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWithUser, error) {
-	query := `
-		SELECT DISTINCT p.post_id, p.user_id, u.username, p.title, p.content, p.created_at, p.updated_at
-		FROM posts p
-		JOIN user u ON p.user_id = u.user_id
-		WHERE p.post_id IN (
-			SELECT post_id FROM comments WHERE user_id = ?
-		)
+		JOIN reactions r ON p.post_id = r.post_id
+		WHERE r.user_id = ? AND r.reaction_type = 1
 		ORDER BY p.created_at DESC
 	`
 
@@ -323,51 +224,65 @@ func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWi
 		}
 		posts = append(posts, p)
 	}
+
 	return posts, nil
 }
 
-// GetPostByID retrieves a post by its ID
-func (r *PostRepository) GetPostByID(postID string) (*models.Post, error) {
-	var post models.Post
-	err := r.db.QueryRow(`
-		SELECT post_id, user_id, title, content, created_at, updated_at 
-		FROM posts WHERE post_id = ?`, postID).Scan(
-		&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt, &post.UpdatedAt)
+// GetPostsDislikedByUser returns posts that the given user has disliked
+// Returns posts where user has reaction_type = 2 (dislike)
+func (r *PostRepository) GetPostsDislikedByUser(userID string) ([]models.PostWithUser, error) {
+	query := `
+		SELECT DISTINCT p.post_id, p.user_id, u.nickname, p.title, p.content, p.created_at, p.updated_at
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		JOIN reactions r ON p.post_id = r.post_id
+		WHERE r.user_id = ? AND r.reaction_type = 2
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := r.db.Query(query, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrPostNotFound
-		}
 		return nil, err
 	}
-	return &post, nil
+	defer rows.Close()
+
+	var posts []models.PostWithUser
+	for rows.Next() {
+		var p models.PostWithUser
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+
+	return posts, nil
 }
 
-// UpdatePost updates the title and content of a post and sets updated_at
-func (r *PostRepository) UpdatePost(postID string, title, content *string) error {
-	setClauses := []string{}
-	args := []interface{}{}
+// GetPostsCommentedByUser returns posts where the user has left comments
+func (r *PostRepository) GetPostsCommentedByUser(userID string) ([]models.PostWithUser, error) {
+	query := `
+		SELECT DISTINCT p.post_id, p.user_id, u.nickname, p.title, p.content, p.created_at, p.updated_at
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		JOIN comments c ON p.post_id = c.post_id
+		WHERE c.user_id = ?
+		ORDER BY p.created_at DESC
+	`
 
-	if title != nil {
-		setClauses = append(setClauses, "title = ?")
-		args = append(args, title)
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
 	}
-	if content != nil {
-		setClauses = append(setClauses, "content = ?")
-		args = append(args, content)
-	}
-	if len(setClauses) == 0 {
-		return nil // nothing to update
-	}
-	setClauses = append(setClauses, "updated_at = ?")
-	args = append(args, time.Now(), postID)
+	defer rows.Close()
 
-	query := "UPDATE posts SET " + strings.Join(setClauses, ", ") + " WHERE post_id = ?"
-	_, err := r.db.Exec(query, args...)
-	return err
-}
+	var posts []models.PostWithUser
+	for rows.Next() {
+		var p models.PostWithUser
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Nickname, &p.Title, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
 
-// SoftDeletePost sets title and content to NULL and updates updated_at
-func (r *PostRepository) SoftDeletePost(postID string) error {
-	_, err := r.db.Exec(`UPDATE posts SET title = NULL, content = NULL, updated_at = ? WHERE post_id = ?`, time.Now(), postID)
-	return err
+	return posts, nil
 }

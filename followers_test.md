@@ -21,7 +21,7 @@ curl -s -X POST http://localhost:8080/api/v1/register \
 curl -s -c ./alice1.cookies \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/login \
-  -d '{"login":"alice2@example.com","password":"Pass1234"}'
+  -d '{"login":"alice1@example.com","password":"Pass1234"}'
 
 curl -s -c ./bob1.cookies \
   -H 'Content-Type: application/json' \

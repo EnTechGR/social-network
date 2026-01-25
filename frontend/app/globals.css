@@ -147,7 +147,7 @@ body {
   .label {
     font-family: var(--font-display), monospace;
     font-size: var(--text-regular);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-weight-medium);
     line-height: var(--leading-relaxed);
     text-transform: uppercase;
   }
@@ -156,7 +156,7 @@ body {
   .label-lg {
     font-family: var(--font-display), monospace;
     font-size: var(--text-h5);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-weight-medium);
     line-height: var(--leading-relaxed);
     letter-spacing: -0.01em;
   }

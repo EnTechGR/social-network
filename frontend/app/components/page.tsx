@@ -18,11 +18,13 @@ import SearchSuggestions from '@/components/ui/SearchSuggestions';
 import { Navbar } from '@/components/ui/Navbar';
 import Header from '@/components/Header';
 import AuthLayout from '@/components/auth/AuthLayout';
+import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
 
 export default function ComponentsPage() {
   const [inputValue, setInputValue] = useState('');
   const [toggleOn, setToggleOn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [privateProfileModalOpen, setPrivateProfileModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-parea-white p-8">
@@ -181,6 +183,39 @@ export default function ComponentsPage() {
         <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Followers Modal</h2>
         <FollowersModal isOpen={false} onClose={() => { }} heading="Followers" preview />
       </section>
+
+      {/* Private Profile Modal */}
+<section className="mb-12">
+  <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Private Profile Modal</h2>
+  <div className="space-y-8">
+    <div>
+      <p className="text-small mb-4">Preview (First State)</p>
+      <PrivateProfileModal
+        isOpen={false}
+        onClose={() => {}}
+        userName="John Green"
+        avatarSrc="/test-avatar.png"
+        preview
+      />
+    </div>
+    <div>
+      <p className="text-small mb-4">Interactive Test</p>
+      <Button
+        variant="primary"
+        size="md"
+        onClick={() => setPrivateProfileModalOpen(true)}
+      >
+        OPEN PRIVATE PROFILE MODAL
+      </Button>
+      <PrivateProfileModal
+        isOpen={privateProfileModalOpen}
+        onClose={() => setPrivateProfileModalOpen(false)}
+        userName="John Green"
+        avatarSrc="/test-avatar.png"
+      />
+    </div>
+  </div>
+</section>
 
       {/* Profile Wrap */}
       <section className="mb-12">

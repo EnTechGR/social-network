@@ -18,7 +18,7 @@ func NewNotificationRepository(db *sql.DB) *NotificationRepository {
 }
 
 // Create inserts a new notification
-func (r *NotificationRepository) Create(n models.Notification) error {
+func (r *NotificationRepository) Create(n *models.Notification) error {
 	n.ID = utils.GenerateUUID()
 	n.CreatedAt = time.Now()
 	n.Visible = true

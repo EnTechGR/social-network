@@ -102,7 +102,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				PostID:     post.ID,
 			}
 			
-			if err := h.NotificationRepo.Create(n); err != nil {
+			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[ReactionHandler] Failed to create notification: %v", err)
 			} else {
 				// ✅ Send real-time notification via WebSocket
@@ -134,7 +134,7 @@ func (h *ReactionHandler) CreateReact(w http.ResponseWriter, r *http.Request) {
 				CommentID:  &comment.ID,
 			}
 			
-			if err := h.NotificationRepo.Create(n); err != nil {
+			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[ReactionHandler] Failed to create notification: %v", err)
 			} else {
 				// ✅ Send real-time notification via WebSocket

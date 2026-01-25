@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -175,8 +176,30 @@ func GenerateCSRFToken() (string, error) {
 // GetLastPathParam extracts the last parameter from a URL path
 // Example: /api/posts/123 -> "123"
 func GetLastPathParam(r interface{}) string {
-	// This is a placeholder - implement based on your router
-	// For standard http, you might parse r.URL.Path manually
+	var path string
+	switch v := r.(type) {
+	case *http.Request:
+		if v == nil || v.URL == nil {
+			return ""
+		}
+		path = v.URL.Path
+	case string:
+		path = v
+	default:
+		return ""
+	}
+
+	path = strings.TrimSuffix(path, "/")
+	if path == "" {
+		return ""
+	}
+
+	parts := strings.Split(path, "/")
+	for i := len(parts) - 1; i >= 0; i-- {
+		if parts[i] != "" {
+			return parts[i]
+		}
+	}
 	return ""
 }
 

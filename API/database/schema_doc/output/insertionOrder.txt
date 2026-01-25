@@ -1,5 +1,4 @@
 user
-categories
 images_core
 groups
 posts
@@ -18,7 +17,6 @@ group_members
 group_message_images
 message_images
 post_allowed_users
-post_categories
 post_images
 user_avatars
 group_event_votes

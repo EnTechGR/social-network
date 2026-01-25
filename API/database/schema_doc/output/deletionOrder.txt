@@ -6,7 +6,6 @@ group_invites
 group_event_votes
 user_avatars
 post_images
-post_categories
 post_allowed_users
 message_images
 group_message_images
@@ -25,5 +24,4 @@ comments
 posts
 groups
 images_core
-categories
 user

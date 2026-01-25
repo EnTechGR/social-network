@@ -212,7 +212,7 @@ Categories populated (duplicates ignored).
 #### Step 3: Verify in Database
 
 ```bash
-sqlite3 API/database/forum.db
+sqlite3 API/database/social-network.db
 
 -- Check if table was created
 .schema likes
@@ -391,27 +391,27 @@ cd API
 
 # Run migrations up
 migrate -path pkg/db/migrations/sqlite \
-        -database "sqlite3://database/forum.db?_foreign_keys=on" \
+        -database "sqlite3://database/social-network.db?_foreign_keys=on" \
         up
 
 # Run migrations down (rollback all)
 migrate -path pkg/db/migrations/sqlite \
-        -database "sqlite3://database/forum.db?_foreign_keys=on" \
+        -database "sqlite3://database/social-network.db?_foreign_keys=on" \
         down
 
 # Rollback specific number of migrations
 migrate -path pkg/db/migrations/sqlite \
-        -database "sqlite3://database/forum.db?_foreign_keys=on" \
+        -database "sqlite3://database/social-network.db?_foreign_keys=on" \
         down 2  # Rollback last 2 migrations
 
 # Go to specific version
 migrate -path pkg/db/migrations/sqlite \
-        -database "sqlite3://database/forum.db?_foreign_keys=on" \
+        -database "sqlite3://database/social-network.db?_foreign_keys=on" \
         goto 3
 
 # Check current version
 migrate -path pkg/db/migrations/sqlite \
-        -database "sqlite3://database/forum.db?_foreign_keys=on" \
+        -database "sqlite3://database/social-network.db?_foreign_keys=on" \
         version
 ```
 
@@ -592,7 +592,7 @@ To manually roll back the last migration:
 
 ```bash
 # Using migrate CLI
-migrate -path migrations -database "sqlite3://forum.db" down 1
+migrate -path migrations -database "sqlite3://social-network.db" down 1
 
 # Or programmatically in Go
 m, err := migrate.NewWithDatabaseInstance(...)
@@ -705,8 +705,8 @@ import (
 
 func TestDatabaseInitialization(t *testing.T) {
     // Use test database
-    os.Setenv("DB_PATH", "test_forum.db")
-    defer os.Remove("test_forum.db")
+    os.Setenv("DB_PATH", "test_social-network.db")
+    defer os.Remove("test_social-network.db")
 
     // Initialize database
     db, err := InitDB()
@@ -945,15 +945,15 @@ Error: Dirty database version 5. Fix and force version.
 **Solution:**
 ```bash
 # 1. Check what's in the database
-sqlite3 database/forum.db ".schema"
+sqlite3 database/social-network.db ".schema"
 
 # 2. Manually fix the schema if needed
 
 # 3. Force the version back
-migrate -path migrations -database "sqlite3://forum.db" force 4
+migrate -path migrations -database "sqlite3://social-network.db" force 4
 
 # 4. Re-run migrations
-migrate -path migrations -database "sqlite3://forum.db" up
+migrate -path migrations -database "sqlite3://social-network.db" up
 ```
 
 ---
@@ -979,7 +979,7 @@ CREATE TABLE IF NOT EXISTS posts (...);
 **Solution 2: Mark as applied:**
 ```bash
 # If you know the table is correct, just mark migration as applied
-migrate -path migrations -database "sqlite3://forum.db" force 5
+migrate -path migrations -database "sqlite3://social-network.db" force 5
 ```
 
 ---
@@ -1125,22 +1125,22 @@ touch API/pkg/db/migrations/sqlite/000XXX_description.down.sql
 go run cmd/main.go
 
 # Run migrations (manual via CLI)
-migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/forum.db" up
+migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/social-network.db" up
 
 # Rollback last migration
-migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/forum.db" down 1
+migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/social-network.db" down 1
 
 # Check current version
-migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/forum.db" version
+migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/social-network.db" version
 
 # Force version (after manual fixes)
-migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/forum.db" force VERSION
+migrate -path pkg/db/migrations/sqlite -database "sqlite3://database/social-network.db" force VERSION
 
 # Check schema
-sqlite3 database/forum.db ".schema TABLE_NAME"
+sqlite3 database/social-network.db ".schema TABLE_NAME"
 
 # Check migrations table
-sqlite3 database/forum.db "SELECT * FROM schema_migrations;"
+sqlite3 database/social-network.db "SELECT * FROM schema_migrations;"
 ```
 
 ---

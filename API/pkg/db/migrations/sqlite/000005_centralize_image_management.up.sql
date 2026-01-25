@@ -59,33 +59,6 @@ CREATE TABLE IF NOT EXISTS post_images (
 CREATE INDEX IF NOT EXISTS idx_post_images_post ON post_images(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_images_image ON post_images(image_id);
 
--- C. Comment Images (1:1 relationship - one image per comment)
-CREATE TABLE IF NOT EXISTS comment_images (
-    comment_image_id TEXT PRIMARY KEY,
-    comment_id TEXT NOT NULL UNIQUE,
-    image_id TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE,
-    FOREIGN KEY (image_id) REFERENCES images_core(image_id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_comment_images_comment ON comment_images(comment_id);
-CREATE INDEX IF NOT EXISTS idx_comment_images_image ON comment_images(image_id);
-
--- D. Message Images (1:N relationship - multiple images per message possible)
-CREATE TABLE IF NOT EXISTS message_images (
-    message_image_id TEXT PRIMARY KEY,
-    message_id TEXT NOT NULL,
-    image_id TEXT NOT NULL,
-    display_order INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
-    FOREIGN KEY (image_id) REFERENCES images_core(image_id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_message_images_message ON message_images(message_id);
-CREATE INDEX IF NOT EXISTS idx_message_images_image ON message_images(image_id);
-
 -- E. Group Message Images (1:N relationship - multiple images per group message possible)
 CREATE TABLE IF NOT EXISTS group_message_images_new (
     group_message_image_id TEXT PRIMARY KEY,
@@ -188,50 +161,7 @@ SELECT
     created_at
 FROM images;
 
--- 3C. Migrate comment images
--- Only migrate comments that have image_path set (not NULL)
-INSERT INTO images_core (
-    image_id,
-    uploader_user_id,
-    filename,
-    original_filename,
-    file_path,
-    thumbnail_path,
-    file_size,
-    mime_type,
-    width,
-    height,
-    uploaded_at
-)
-SELECT 
-    'comment_' || comment_id as image_id,
-    user_id as uploader_user_id,
-    COALESCE(
-        substr(image_path, instr(image_path, '/') + 1),
-        'unknown.jpg'
-    ) as filename,
-    'comment_image.jpg' as original_filename,
-    image_path as file_path,
-    COALESCE(image_thumbnail_path, image_path) as thumbnail_path,
-    0 as file_size,
-    'image/jpeg' as mime_type,
-    0 as width,
-    0 as height,
-    created_at as uploaded_at
-FROM comments
-WHERE image_path IS NOT NULL;
-
--- Link comments to their images
-INSERT INTO comment_images (comment_image_id, comment_id, image_id, created_at)
-SELECT 
-    'cmt_img_' || comment_id as comment_image_id,
-    comment_id,
-    'comment_' || comment_id as image_id,
-    created_at
-FROM comments
-WHERE image_path IS NOT NULL;
-
--- 3D. Migrate chat images (1:1 messages)
+-- 3C. Migrate chat images (1:1 messages)
 -- Copy image metadata to images_core
 INSERT INTO images_core (
     image_id,
@@ -260,17 +190,7 @@ SELECT
     uploaded_at
 FROM chat_images;
 
--- Create message-to-image relationships
-INSERT INTO message_images (message_image_id, message_id, image_id, display_order, created_at)
-SELECT 
-    'msg_img_' || image_id as message_image_id,
-    message_id,
-    image_id,
-    1 as display_order,
-    uploaded_at as created_at
-FROM chat_images;
-
--- 3E. Migrate group message images
+-- 3D. Migrate group message images
 -- Copy image metadata to images_core
 INSERT INTO images_core (
     image_id,
@@ -412,31 +332,16 @@ INNER JOIN post_images pi ON p.post_id = pi.post_id
 INNER JOIN images_core ic ON pi.image_id = ic.image_id
 ORDER BY p.post_id, pi.display_order;
 
--- View to get comment images with all details
-CREATE VIEW IF NOT EXISTS v_comment_images AS
-SELECT 
-    c.comment_id,
-    c.post_id,
-    c.user_id as comment_author_id,
-    ci.comment_image_id,
-    ic.image_id,
-    ic.file_path,
-    ic.thumbnail_path,
-    ic.mime_type,
-    ic.uploaded_at
-FROM comments c
-INNER JOIN comment_images ci ON c.comment_id = ci.comment_id
-INNER JOIN images_core ic ON ci.image_id = ic.image_id;
-
 -- ============================================================================
 -- Migration Complete
 -- ============================================================================
 
 -- Summary of changes:
 -- ✅ Created centralized images_core table for all image metadata
--- ✅ Created relationship tables: user_avatars, post_images, comment_images, message_images, group_message_images
+-- ✅ Created relationship tables: user_avatars, post_images, group_message_images
 -- ✅ Migrated all existing image data to new schema
--- ✅ Removed image columns from user and comments tables
+-- ✅ Removed image columns from user table
 -- ✅ Replaced old images, chat_images, group_message_images tables
--- ✅ Created helper views for easier querying
+-- ✅ Created helper view for easier querying
 -- ✅ All foreign keys and indexes properly set up
+-- ✅ Comment images and message images use post_images relationship (centralized)

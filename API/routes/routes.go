@@ -43,6 +43,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	commentHandler := handlers.NewCommentHandler(commentRepo, postRepo, notificationRepo, hub)
+	commentHandler.SetImageRepo(imageRepo) // ✅ Enable image uploads for comments
 	reactionHandler := handlers.NewReactionHandler(reactionRepo, postRepo, commentRepo, notificationRepo, hub)
 	imageHTTPHandler := handlers.NewImageHTTPHandler(imageRepo, postRepo)
 

@@ -184,6 +184,7 @@ export default function ComponentsPage() {
         <FollowersModal isOpen={false} onClose={() => { }} heading="Followers" preview />
       </section>
 
+
       {/* Private Profile Modal */}
 <section className="mb-12">
   <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Private Profile Modal</h2>

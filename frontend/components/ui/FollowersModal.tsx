@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import IconButton from './IconButtons';
 import { Search } from 'lucide-react';
+import Button from './Button';
+import Image from 'next/image';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -14,6 +16,20 @@ interface FollowersModalProps {
 export default function FollowersModal({ isOpen, onClose, heading = 'Followers', preview = false }: FollowersModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // State for follow/following toggle (only needed when heading === 'Following')
+  const [followingStates, setFollowingStates] = useState<Record<number, boolean>>({
+    1: true,
+    2: true,
+    3: true,
+    4: true,
+    5: true,
+    6: true,
+    7: true,
+    8: true,
+    9: true,
+    10: true,
+  });
 
   const mockUsers = [
     { id: 1, name: 'John Doe' },
@@ -30,40 +46,33 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
 
   if (!isOpen && !preview) return null;
 
+  const handleFollowToggle = (userId: number) => {
+    setFollowingStates((prev) => ({
+      ...prev,
+      [userId]: !prev[userId],
+    }));
+    // TODO: Call API to follow/unfollow user
+  };
+
   const modalContent = (
-    <div
-      className="
-        relative
-        w-full
-        max-w-145
-        bg-parea-white
-        border
-        border-parea-black
-        overflow-hidden
-      "
-    >
+    <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
       {/* Header */}
-      <div
-        className="
-          relative
-          h-18
-          border-b
-        "
-      >
-        {/* Close Button */}
+      <div className="relative h-17 border-b border-parea-black overflow-hidden bg-parea-white">
+        <Image
+          src="/modal-header-pattern.svg"
+          alt=""
+          fill
+          className="object-cover"
+        />
         <IconButton
           variant="close"
           onClick={onClose}
           aria-label="Close modal"
-          className="
-            absolute
-            top-4
-            right-4
-          "
+          className="absolute top-4 right-8 z-10"
         />
       </div>
 
-      {/* Content - Followers will go here */}
+      {/* Content */}
       <div
         className="
             flex
@@ -75,7 +84,7 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
             overflow-hidden
         "
       >
-        {/* Heading */}
+        {/* Heading - displays the prop value: "Followers", "Following", or "Members" */}
         <h4
           className="
             text-[32px]
@@ -87,7 +96,7 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
           {heading}
         </h4>
 
-        {/* Followers Container */}
+        {/* Container */}
         <div
           className="
             flex
@@ -148,7 +157,7 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
             </div>
           </div>
 
-          {/* Followers List Container */}
+          {/* List Container */}
           <div
             className="
               flex
@@ -216,34 +225,34 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
                   </p>
                 </div>
 
-                {/* Action Button */}
-                <button
-                  className="
-                    flex
-                    justify-center
-                    items-center
-                    text-black
-                    hover:opacity-80
-                    transition-opacity
-                  "
-                >
-                  <span
-                    className="
-                      text-base
-                      font-medium
-                      uppercase
-                      leading-[150%]
-                      border-b-2
-                      border-parea-black
-                    "
-                    style={{
-                      fontFamily: '"IBM Plex Mono"',
-                      letterSpacing: '-0.16px',
+                {/* Action Button - Conditional rendering based on heading prop */}
+                {heading === 'Followers' ? (
+                  // Case 1: Followers modal - Show "Remove" button
+                  <Button
+                    variant="tertiary"
+                    onClick={() => {
+                      // TODO: Handle remove follower action
+                      console.log('Remove follower:', user.id);
                     }}
                   >
-                    {heading === 'Followers' ? 'Remove' : 'Following'}
-                  </span>
-                </button>
+                    Remove
+                  </Button>
+                ) : heading === 'Following' ? (
+                  // Case 2: Following modal - Show follow/following toggle button
+                  <Button
+                    variant="tertiary"
+                    isActive={followingStates[user.id]}
+                    onActiveChange={() => handleFollowToggle(user.id)}
+                    activeText="FOLLOW"
+                    inactiveText="FOLLOWING"
+                    onClick={() => {
+                      // onClick is handled by onActiveChange
+                    }}
+                  />
+                ) : (
+                  // Case 3: Members modal - No button (null)
+                  null
+                )}
               </div>
             ))}
           </div>

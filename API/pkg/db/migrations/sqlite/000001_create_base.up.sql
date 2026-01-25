@@ -57,12 +57,6 @@ CREATE TABLE IF NOT EXISTS oauth_states (
     expires_at TIMESTAMP NOT NULL
 );
 
--- Categories
-CREATE TABLE IF NOT EXISTS categories (
-    category_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE CHECK (LENGTH(name) <= 100)
-);
-
 -- Groups
 CREATE TABLE IF NOT EXISTS groups (
     group_id TEXT PRIMARY KEY,
@@ -151,14 +145,6 @@ CREATE TABLE IF NOT EXISTS posts (
     deleted_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
     FOREIGN KEY (group_id) REFERENCES groups(group_id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS post_categories (
-    post_id TEXT NOT NULL,
-    category_id INTEGER NOT NULL,
-    PRIMARY KEY (post_id, category_id),
-    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_allowed_users (
@@ -313,8 +299,6 @@ CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
 CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_visibility ON posts(visibility);
 CREATE INDEX IF NOT EXISTS idx_posts_group ON posts(group_id);
-CREATE INDEX IF NOT EXISTS idx_post_categories_post ON post_categories(post_id);
-CREATE INDEX IF NOT EXISTS idx_post_categories_cat ON post_categories(category_id);
 CREATE INDEX IF NOT EXISTS idx_post_allowed_user ON post_allowed_users(user_id);
 CREATE INDEX IF NOT EXISTS idx_images_post ON images(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);

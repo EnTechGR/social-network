@@ -43,36 +43,6 @@ CREATE TABLE IF NOT EXISTS user_avatars (
 
 CREATE INDEX IF NOT EXISTS idx_user_avatars_image ON user_avatars(image_id);
 
--- B. Post Images (1:N relationship - multiple images per post possible)
--- We'll rename the existing 'images' table and convert it to a relationship table
-CREATE TABLE IF NOT EXISTS post_images (
-    post_image_id TEXT PRIMARY KEY,
-    post_id TEXT NOT NULL,
-    image_id TEXT NOT NULL,
-    display_order INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-    FOREIGN KEY (image_id) REFERENCES images_core(image_id) ON DELETE CASCADE,
-    UNIQUE(post_id, display_order)
-);
-
-CREATE INDEX IF NOT EXISTS idx_post_images_post ON post_images(post_id);
-CREATE INDEX IF NOT EXISTS idx_post_images_image ON post_images(image_id);
-
--- E. Group Message Images (1:N relationship - multiple images per group message possible)
-CREATE TABLE IF NOT EXISTS group_message_images_new (
-    group_message_image_id TEXT PRIMARY KEY,
-    group_message_id TEXT NOT NULL,
-    image_id TEXT NOT NULL,
-    display_order INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (group_message_id) REFERENCES group_messages(message_id) ON DELETE CASCADE,
-    FOREIGN KEY (image_id) REFERENCES images_core(image_id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_group_message_images_new_message ON group_message_images_new(group_message_id);
-CREATE INDEX IF NOT EXISTS idx_group_message_images_new_image ON group_message_images_new(image_id);
-
 -- ============================================================================
 -- STEP 3: Migrate existing data from old schema to new schema
 -- ============================================================================
@@ -119,49 +89,7 @@ SELECT
 FROM user
 WHERE avatar_path IS NOT NULL;
 
--- 3B. Migrate post images from existing 'images' table
--- First, copy the image metadata to images_core
-INSERT INTO images_core (
-    image_id,
-    uploader_user_id,
-    filename,
-    original_filename,
-    file_path,
-    thumbnail_path,
-    file_size,
-    mime_type,
-    width,
-    height,
-    uploaded_at
-)
-SELECT 
-    image_id,
-    user_id as uploader_user_id,
-    COALESCE(
-        substr(file_path, instr(file_path, '/') + 1),
-        'unknown.jpg'
-    ) as filename,
-    'post_image.jpg' as original_filename,                  -- We don't have the original name stored
-    file_path,
-    thumbnail_path,
-    0 as file_size,                                         -- Unknown from old schema
-    'image/jpeg' as mime_type,                              -- Default assumption
-    0 as width,                                             -- Unknown from old schema
-    0 as height,                                            -- Unknown from old schema
-    created_at as uploaded_at
-FROM images;
-
--- Create the post-to-image relationships
-INSERT INTO post_images (post_image_id, post_id, image_id, display_order, created_at)
-SELECT 
-    'post_img_' || image_id as post_image_id,
-    post_id,
-    image_id,
-    1 as display_order,                                     -- Single image per post in old schema
-    created_at
-FROM images;
-
--- 3C. Migrate chat images (1:1 messages)
+-- 3B. Migrate chat images (1:1 messages)
 -- Copy image metadata to images_core
 INSERT INTO images_core (
     image_id,
@@ -190,7 +118,7 @@ SELECT
     uploaded_at
 FROM chat_images;
 
--- 3D. Migrate group message images
+-- 3C. Migrate group message images
 -- Copy image metadata to images_core
 INSERT INTO images_core (
     image_id,
@@ -279,11 +207,11 @@ ALTER TABLE comments_temp RENAME TO comments;
 CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
 
--- 4C. Drop old images table (now replaced by images_core + post_images)
+-- 4C. Drop old images table (now replaced by images_core)
 DROP TABLE images;
 DROP INDEX IF EXISTS idx_images_post;
 
--- 4D. Drop old chat_images table (now replaced by images_core + message_images)
+-- 4D. Drop old chat_images table (now replaced by images_core)
 DROP TABLE chat_images;
 DROP INDEX IF EXISTS idx_chat_images_message;
 
@@ -313,35 +241,15 @@ FROM user u
 LEFT JOIN user_avatars ua ON u.user_id = ua.user_id
 LEFT JOIN images_core ic ON ua.image_id = ic.image_id;
 
--- View to get post images with all details
-CREATE VIEW IF NOT EXISTS v_post_images AS
-SELECT 
-    p.post_id,
-    p.user_id as post_author_id,
-    pi.post_image_id,
-    pi.display_order,
-    ic.image_id,
-    ic.file_path,
-    ic.thumbnail_path,
-    ic.mime_type,
-    ic.width,
-    ic.height,
-    ic.uploaded_at
-FROM posts p
-INNER JOIN post_images pi ON p.post_id = pi.post_id
-INNER JOIN images_core ic ON pi.image_id = ic.image_id
-ORDER BY p.post_id, pi.display_order;
-
 -- ============================================================================
 -- Migration Complete
 -- ============================================================================
 
 -- Summary of changes:
 -- ✅ Created centralized images_core table for all image metadata
--- ✅ Created relationship tables: user_avatars, post_images, group_message_images
+-- ✅ Created relationship tables: user_avatars, group_message_images
 -- ✅ Migrated all existing image data to new schema
 -- ✅ Removed image columns from user table
 -- ✅ Replaced old images, chat_images, group_message_images tables
--- ✅ Created helper view for easier querying
+-- ✅ All images stored in centralized images_core table
 -- ✅ All foreign keys and indexes properly set up
--- ✅ Comment images and message images use post_images relationship (centralized)

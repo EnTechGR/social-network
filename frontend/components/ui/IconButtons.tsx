@@ -11,7 +11,7 @@
 function ArrowIcon({ direction = 'right', className = '' }: { direction?: 'left' | 'right'; className?: string }) {
   const baseRotation = direction === 'left' ? 'rotate-180' : '';
   const hoverRotation = direction === 'left' ? 'group-hover:rotate-135' : 'group-hover:-rotate-45';
-  
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -19,7 +19,7 @@ function ArrowIcon({ direction = 'right', className = '' }: { direction?: 'left'
       height="15"
       viewBox="0 0 15 15"
       fill="none"
-      className={`w-[0.875rem] h-[0.875rem] shrink-0 transition-transform duration-300 ease-in-out ${baseRotation} ${hoverRotation} ${className}`}
+      className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-in-out ${baseRotation} ${hoverRotation} ${className}`}
     >
       <path
         d="M0.5 7.5H14.5M14.5 7.5L7.5 0.5M14.5 7.5L7.5 14.5"
@@ -40,27 +40,30 @@ interface IconButtonProps {
   'aria-label': string;
   text?: string; // Optional text to display next to the icon
   type?: 'button' | 'submit' | 'reset';
+  size?: 'sm' | 'md'; // sm = 24px, md = 36px (default)
+  transparent?: boolean; // If true, no background color
 }
 
-// Close icon SVG
-const closeIcon = (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    className="w-[0.875rem] h-[0.875rem] shrink-0"
-  >
-    <path
-      d="M11.5 0.5L0.5 11.5M0.5 0.5L11.5 11.5"
-      stroke="black"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+function CloseIcon({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className={`${size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'} shrink-0`}
+    >
+      <path
+        d="M11.5 0.5L0.5 11.5M0.5 0.5L11.5 11.5"
+        stroke="black"
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function IconButton({
   variant,
@@ -70,15 +73,17 @@ export default function IconButton({
   'aria-label': ariaLabel,
   text,
   type = 'button',
+  size = 'md',
+  transparent = false,
 }: IconButtonProps) {
+  const sizeStyles = size === 'sm' ? 'w-6 h-6 p-1.5' : 'w-[2.25rem] h-[2.25rem] p-3';
+
   const iconButtonStyles = `
     group
     flex
     justify-center
     items-center
-    w-[2.25rem]
-    h-[2.25rem]
-    p-3
+    ${sizeStyles}
     rounded-[6.25rem]
     border
     border-parea-black
@@ -108,7 +113,7 @@ export default function IconButton({
     ) : variant === 'arrow-right' ? (
       <ArrowIcon direction="right" />
     ) : (
-      closeIcon
+      <CloseIcon size={size} />
     );
 
   // If text is provided, render icon + text (no background on button, only on icon circle)
@@ -131,13 +136,13 @@ export default function IconButton({
         }}
       >
         {variant === 'arrow-left' && (
-          <div style={{ backgroundColor: '#DDFF30' }} className="w-[2.25rem] h-[2.25rem] rounded-[6.25rem] border border-parea-black flex items-center justify-center">
+          <div style={{ backgroundColor: '#DDFF30' }} className="w-9 h-9 rounded-[6.25rem] border border-parea-black flex items-center justify-center">
             {icon}
           </div>
         )}
         <span>{text}</span>
         {(variant === 'arrow-right' || variant === 'close') && (
-          <div style={{ backgroundColor: '#DDFF30' }} className="w-[2.25rem] h-[2.25rem] rounded-[6.25rem] border border-parea-black flex items-center justify-center">
+          <div style={{ backgroundColor: '#DDFF30' }} className="w-9 h-9 rounded-[6.25rem] border border-parea-black flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -157,7 +162,7 @@ export default function IconButton({
         ${disabledStyles}
         ${className}
       `}
-      style={{ backgroundColor: '#DDFF30' }}
+      style={transparent ? undefined : { backgroundColor: '#DDFF30' }}
     >
       {icon}
     </button>

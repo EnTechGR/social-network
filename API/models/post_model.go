@@ -11,6 +11,9 @@ type Post struct {
 	// The ID of the user who created the post
 	// example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
 	UserID string `json:"user_id"`
+	// The visibility of the post: public, followers, or private
+	// example: public
+	Visibility string `json:"visibility"`
 	// The title of the post
 	// example: How to use Go with Docker?
 	Title *string `json:"title"`
@@ -37,6 +40,9 @@ type PostWithUser struct {
 	// The display name of the author
 	// example: gopher_expert
 	Nickname string `json:"nickname"`
+	// The visibility of the post: public, followers, or private
+	// example: public
+	Visibility string `json:"visibility"`
 	// The title of the post
 	Title *string `json:"title"`
 	// The body content of the post

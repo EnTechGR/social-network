@@ -147,6 +147,20 @@ SELECT
     uploaded_at
 FROM group_message_images;
 
+-- Create the new group_message_images relationship table
+CREATE TABLE IF NOT EXISTS group_message_images_new (
+    group_message_image_id TEXT PRIMARY KEY,
+    group_message_id TEXT NOT NULL,
+    image_id TEXT NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_message_id) REFERENCES group_messages(message_id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images_core(image_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_message_images_new_msg ON group_message_images_new(group_message_id);
+CREATE INDEX IF NOT EXISTS idx_group_message_images_new_img ON group_message_images_new(image_id);
+
 -- Create group-message-to-image relationships
 INSERT INTO group_message_images_new (group_message_image_id, group_message_id, image_id, display_order, created_at)
 SELECT 

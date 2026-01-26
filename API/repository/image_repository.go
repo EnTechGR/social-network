@@ -59,7 +59,7 @@ type ImageInfo struct {
 func NewImageRepository(db *sql.DB) *ImageRepository {
 	const defaultUploadsDir = "uploads"
 	const defaultMaxFileSize = 20 << 20 // 20MB
-	
+
 	return &ImageRepository{
 		db:          db,
 		uploadsDir:  defaultUploadsDir,
@@ -297,16 +297,7 @@ func (r *ImageRepository) UploadPostImages(
 	}
 	defer tx.Rollback()
 
-	// Get current max display order for this post
-	var maxOrder int
-	tx.QueryRow(`
-		SELECT COALESCE(MAX(display_order), 0) 
-		FROM post_images 
-		WHERE post_id = ?
-	`, postID).Scan(&maxOrder)
-
 	var savedImages []string // for cleanup on error
-	displayOrder := maxOrder + 1
 
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
@@ -325,24 +316,12 @@ func (r *ImageRepository) UploadPostImages(
 		}
 		savedImages = append(savedImages, metadata.FilePath, metadata.ThumbnailPath)
 
-		// Save to images_core
+		// Save to images_core table (centralized image storage)
+		// Images are associated with posts through the uploader_user_id and context
 		if err := r.SaveImageMetadata(tx, metadata); err != nil {
 			r.cleanupFiles(savedImages)
 			return fmt.Errorf("failed to save image metadata: %w", err)
 		}
-
-		// Link to post
-		postImageID := uuid.New().String()
-		query := `
-			INSERT INTO post_images (post_image_id, post_id, image_id, display_order, created_at)
-			VALUES (?, ?, ?, ?, ?)
-		`
-		if _, err := tx.Exec(query, postImageID, postID, metadata.ImageID, displayOrder, time.Now()); err != nil {
-			r.cleanupFiles(savedImages)
-			return fmt.Errorf("failed to link image to post: %w", err)
-		}
-
-		displayOrder++
 	}
 
 	// Commit transaction

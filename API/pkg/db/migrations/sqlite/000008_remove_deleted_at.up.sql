@@ -47,27 +47,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_visibility ON posts(visibility);
 CREATE INDEX IF NOT EXISTS idx_posts_group ON posts(group_id);
 
 -- ============================================================================
--- STEP 4: Recreate v_post_images view
--- ============================================================================
-CREATE VIEW IF NOT EXISTS v_post_images AS
-SELECT 
-    p.post_id,
-    p.user_id as post_author_id,
-    pi.post_image_id,
-    pi.display_order,
-    ic.image_id,
-    ic.file_path,
-    ic.thumbnail_path,
-    ic.mime_type,
-    ic.width,
-    ic.height,
-    ic.uploaded_at
-FROM posts p
-INNER JOIN post_images pi ON p.post_id = pi.post_id
-INNER JOIN images_core ic ON pi.image_id = ic.image_id
-ORDER BY p.post_id, pi.display_order;
-
--- ============================================================================
 -- Migration Complete
 -- ============================================================================
 -- Summary:
@@ -76,4 +55,4 @@ ORDER BY p.post_id, pi.display_order;
 -- ✅ Migrated all active posts (deleted_at IS NULL)
 -- ✅ Deleted posts are permanently removed
 -- ✅ Recreated posts indexes
--- ✅ Recreated v_post_images view
+-- ✅ v_post_images view no longer needed (using images_core directly)

@@ -10,7 +10,6 @@ digraph "oneDegreeRelationshipsDiagram" {
   "notifications":"user_id":w -> "user":"user_id":e [arrowhead=none dir=back arrowtail=crowodot];
   "post_allowed_users":"post_id":w -> "posts":"post_id.type":e [arrowhead=none dir=back arrowtail=crowodot];
   "post_allowed_users":"user_id":w -> "user":"user_id":e [arrowhead=none dir=back arrowtail=crowodot];
-  "post_categories":"post_id":w -> "posts":"post_id.type":e [arrowhead=none dir=back arrowtail=crowodot];
   "post_images":"post_id":w -> "posts":"post_id.type":e [arrowhead=none dir=back arrowtail=crowodot];
   "posts":"group_id":w -> "groups":"group_id":e [arrowhead=none dir=back arrowtail=crowodot];
   "posts":"user_id":w -> "user":"user_id":e [arrowhead=none dir=back arrowtail=crowodot];
@@ -25,7 +24,7 @@ digraph "oneDegreeRelationshipsDiagram" {
       <TR><TD PORT="post_id" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"><IMG SRC="../../images/foreignKeys.png"/></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="81" HEIGHT="16">post_id</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="user_id" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"><IMG SRC="../../images/foreignKeys.png"/></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="81" HEIGHT="16">user_id</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="elipses" COLSPAN="3" ALIGN="LEFT">...</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">0 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">3 &gt;</TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">2 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">3 &gt;</TD></TR>
     </TABLE>>
     URL="comments.html"
     target="_top"
@@ -76,18 +75,6 @@ digraph "oneDegreeRelationshipsDiagram" {
     target="_top"
     tooltip="post_allowed_users"
   ];
-  "post_categories" [
-   label=<
-    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" BGCOLOR="#ffffff">
-      <TR><TD COLSPAN="3"  BGCOLOR="#f5f5f5"><TABLE BORDER="0" CELLSPACING="0"><TR><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="106" HEIGHT="16"><B>post_categories</B></TD><TD ALIGN="RIGHT">[table]</TD></TR></TABLE></TD></TR>
-      <TR><TD PORT="post_id" COLSPAN="3" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"><IMG SRC="../../images/primaryKeys.png"/></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="106" HEIGHT="16">post_id</TD></TR></TABLE></TD></TR>
-      <TR><TD PORT="category_id" COLSPAN="3" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"><IMG SRC="../../images/primaryKeys.png"/></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="106" HEIGHT="16">category_id</TD></TR></TABLE></TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">0 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
-    </TABLE>>
-    URL="post_categories.html"
-    target="_top"
-    tooltip="post_categories"
-  ];
   "post_images" [
    label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" BGCOLOR="#ffffff">
@@ -97,7 +84,7 @@ digraph "oneDegreeRelationshipsDiagram" {
       <TR><TD PORT="image_id" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"><IMG SRC="../../images/foreignKeys.png"/></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="95" HEIGHT="16">image_id</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="display_order" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="95" HEIGHT="16">display_order</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="elipses" COLSPAN="3" ALIGN="LEFT">...</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">0 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">2 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
     </TABLE>>
     URL="post_images.html"
     target="_top"
@@ -115,8 +102,7 @@ digraph "oneDegreeRelationshipsDiagram" {
       <TR><TD PORT="content" COLSPAN="2" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="76" HEIGHT="16">content</TD></TR></TABLE></TD><TD PORT="content.type" ALIGN="LEFT">text[2000000000]</TD></TR>
       <TR><TD PORT="created_at" COLSPAN="2" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="76" HEIGHT="16">created_at</TD></TR></TABLE></TD><TD PORT="created_at.type" ALIGN="LEFT">timestamp[2000000000,10]</TD></TR>
       <TR><TD PORT="updated_at" COLSPAN="2" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="76" HEIGHT="16">updated_at</TD></TR></TABLE></TD><TD PORT="updated_at.type" ALIGN="LEFT">timestamp[2000000000,10]</TD></TR>
-      <TR><TD PORT="deleted_at" COLSPAN="2" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="76" HEIGHT="16">deleted_at</TD></TR></TABLE></TD><TD PORT="deleted_at.type" ALIGN="LEFT">timestamp[2000000000,10]</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">0 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">6 &gt;</TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">3 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">5 &gt;</TD></TR>
     </TABLE>>
     URL="posts.html"
     target="_top"
@@ -144,7 +130,7 @@ digraph "oneDegreeRelationshipsDiagram" {
       <TR><TD PORT="email" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="88" HEIGHT="16">email</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="nickname" COLSPAN="3" BGCOLOR="#ffffff" ALIGN="LEFT"><TABLE BORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR ALIGN="LEFT"><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="15" HEIGHT="16"></TD><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="88" HEIGHT="16">nickname</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="elipses" COLSPAN="3" ALIGN="LEFT">...</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">4 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">23 &gt;</TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">2 rows</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">23 &gt;</TD></TR>
     </TABLE>>
     URL="user.html"
     target="_top"

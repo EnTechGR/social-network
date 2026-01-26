@@ -23,7 +23,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	userRepo := user_repository.NewUserRepository(db)
 	sessionRepo := session.NewSessionRepository(db)
 	followRepo := repository.NewFollowRepository(db)
-	categoryRepo := repository.NewCategoryRepository(db)
 	postRepo := repository.NewPostRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
 	reactionRepo := repository.NewReactionRepository(db)
@@ -40,15 +39,14 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
 	userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
 	followHandler := handlers.NewFollowHandler(followRepo, userRepo)
-	categoryHandler := handlers.NewCategoryHandler(categoryRepo, postRepo, imageRepo)
-	postHandler := handlers.NewPostHandler(postRepo)
+	postHandler := handlers.NewPostHandler(postRepo, imageRepo)
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	commentHandler := handlers.NewCommentHandler(commentRepo, postRepo, notificationRepo, hub)
+	commentHandler.SetImageRepo(imageRepo) // ✅ Enable image uploads for comments
 	reactionHandler := handlers.NewReactionHandler(reactionRepo, postRepo, commentRepo, notificationRepo, hub)
 	imageHTTPHandler := handlers.NewImageHTTPHandler(imageRepo, postRepo)
 
-	guestHandler := handlers.NewGuestHandler(categoryRepo, postRepo, commentRepo, reactionRepo, imageRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, hub)
 	messageHandler := handlers.NewMessageHandler(messageRepo, hub)     // ✅ Pass hub to handler
 	chatImageHandler := handlers.NewChatImageHandler(messageRepo, hub) // ✅ Chat image handler
@@ -64,11 +62,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Serve uploaded images from the API container
 	fs := http.FileServer(http.Dir("./uploads"))
 	apiMux.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	// Public routes
-	apiMux.Handle("/api/v1/categories", corsMiddleware.Handler(http.HandlerFunc(categoryHandler.GetCategories)))
-	apiMux.Handle("/api/v1/category", corsMiddleware.Handler(http.HandlerFunc(categoryHandler.GetCategoryByID)))
-	apiMux.Handle("/api/v1/feed", corsMiddleware.Handler(http.HandlerFunc(guestHandler.GetGuestData)))
 
 	// Authentication routes (guest only)
 	guestOnly := func(h http.Handler) http.Handler {
@@ -105,7 +98,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/posts/delete/", protected(http.HandlerFunc(postHandler.DeletePost)))
 	apiMux.Handle("/api/v1/posts/edit-title/", protected(http.HandlerFunc(postHandler.EditPostTitle)))
 	apiMux.Handle("/api/v1/posts/edit-content/", protected(http.HandlerFunc(postHandler.EditPostContent)))
+	apiMux.Handle("/api/v1/posts/update-visibility/", protected(http.HandlerFunc(postHandler.UpdatePostVisibility)))
+	apiMux.Handle("/api/v1/posts/add-allowed-user/", protected(http.HandlerFunc(postHandler.AddAllowedUser)))
+	apiMux.Handle("/api/v1/posts/remove-allowed-user/", protected(http.HandlerFunc(postHandler.RemoveAllowedUser)))
 	apiMux.Handle("/api/v1/user/posts", protected(http.HandlerFunc(myPostsHandler.GetMyPosts)))
+	apiMux.Handle("/api/v1/users/posts/", protected(http.HandlerFunc(postHandler.GetUserPosts)))
 	apiMux.Handle("/api/v1/user/liked", protected(http.HandlerFunc(likedPostsHandler.GetLikedPosts)))
 	apiMux.Handle("/api/v1/user/disliked", protected(http.HandlerFunc(likedPostsHandler.GetDislikedPosts)))
 	apiMux.Handle("/api/v1/comments/create", protected(http.HandlerFunc(commentHandler.CreateComment)))
@@ -121,9 +118,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Additional protected routes for user management
 	// User profile endpoint (handles both GET and PUT via method switching in handler)
 	apiMux.Handle("/api/v1/user/profile", protected(http.HandlerFunc(userHandler.GetProfile)))
-
-	// Toggle profile privacy (public/private)
 	apiMux.Handle("/api/v1/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
+	apiMux.Handle("/api/v1/users/", protected(http.HandlerFunc(userHandler.GetUserProfile)))
+
 	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))
 	apiMux.Handle("/api/v1/follow/accept/", protected(http.HandlerFunc(followHandler.AcceptFollowRequest)))
 	apiMux.Handle("/api/v1/follow/requests", protected(http.HandlerFunc(followHandler.GetFollowRequests)))

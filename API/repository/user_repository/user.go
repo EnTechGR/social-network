@@ -619,3 +619,199 @@ func (r *UserRepository) GetCompleteProfile(userID string) (*models.UserWithAvat
 
 	return profile, nil
 }
+
+// IsFollowing checks if followerID follows followeeID with accepted status
+func (r *UserRepository) IsFollowing(followerID, followeeID string) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`
+		SELECT COUNT(*) 
+		FROM follow_relationships 
+		WHERE follower_id = ? AND followee_id = ? AND status = 'accepted'
+	`, followerID, followeeID).Scan(&count)
+	
+	if err != nil {
+		return false, err
+	}
+	
+	return count > 0, nil
+}
+
+// GetUserPosts returns all posts made by a user
+func (r *UserRepository) GetUserPosts(userID string) ([]interface{}, error) {
+	rows, err := r.DB.Query(`
+		SELECT 
+			p.post_id, 
+			p.user_id, 
+			p.title, 
+			p.content, 
+			p.created_at, 
+			p.updated_at,
+			u.nickname,
+			u.first_name,
+			u.last_name
+		FROM posts p
+		JOIN user u ON p.user_id = u.user_id
+		WHERE p.user_id = ?
+		ORDER BY p.created_at DESC
+	`, userID)
+	
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []interface{}
+	for rows.Next() {
+		var post struct {
+			PostID    string  `json:"post_id"`
+			UserID    string  `json:"user_id"`
+			Title     string  `json:"title"`
+			Content   string  `json:"content"`
+			CreatedAt string  `json:"created_at"`
+			UpdatedAt *string `json:"updated_at,omitempty"`
+			Nickname  string  `json:"nickname"`
+			FirstName string  `json:"first_name"`
+			LastName  string  `json:"last_name"`
+		}
+		
+		err := rows.Scan(
+			&post.PostID,
+			&post.UserID,
+			&post.Title,
+			&post.Content,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			&post.Nickname,
+			&post.FirstName,
+			&post.LastName,
+		)
+		
+		if err != nil {
+			return nil, err
+		}
+		
+		posts = append(posts, post)
+	}
+	
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	
+	return posts, nil
+}
+
+// GetFollowers returns all accepted followers of a user
+func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
+	rows, err := r.DB.Query(`
+		SELECT 
+			u.user_id,
+			u.nickname,
+			u.first_name,
+			u.last_name,
+			u.email,
+			u.is_private,
+			fr.created_at as followed_at
+		FROM follow_relationships fr
+		JOIN user u ON fr.follower_id = u.user_id
+		WHERE fr.followee_id = ? AND fr.status = 'accepted'
+		ORDER BY fr.created_at DESC
+	`, userID)
+	
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var followers []interface{}
+	for rows.Next() {
+		var follower struct {
+			UserID     string `json:"user_id"`
+			Nickname   string `json:"nickname"`
+			FirstName  string `json:"first_name"`
+			LastName   string `json:"last_name"`
+			Email      string `json:"email"`
+			IsPrivate  bool   `json:"is_private"`
+			FollowedAt string `json:"followed_at"`
+		}
+		
+		err := rows.Scan(
+			&follower.UserID,
+			&follower.Nickname,
+			&follower.FirstName,
+			&follower.LastName,
+			&follower.Email,
+			&follower.IsPrivate,
+			&follower.FollowedAt,
+		)
+		
+		if err != nil {
+			return nil, err
+		}
+		
+		followers = append(followers, follower)
+	}
+	
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	
+	return followers, nil
+}
+
+// GetFollowing returns all users that the given user follows (accepted status)
+func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
+	rows, err := r.DB.Query(`
+		SELECT 
+			u.user_id,
+			u.nickname,
+			u.first_name,
+			u.last_name,
+			u.email,
+			u.is_private,
+			fr.created_at as followed_at
+		FROM follow_relationships fr
+		JOIN user u ON fr.followee_id = u.user_id
+		WHERE fr.follower_id = ? AND fr.status = 'accepted'
+		ORDER BY fr.created_at DESC
+	`, userID)
+	
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var following []interface{}
+	for rows.Next() {
+		var followee struct {
+			UserID     string `json:"user_id"`
+			Nickname   string `json:"nickname"`
+			FirstName  string `json:"first_name"`
+			LastName   string `json:"last_name"`
+			Email      string `json:"email"`
+			IsPrivate  bool   `json:"is_private"`
+			FollowedAt string `json:"followed_at"`
+		}
+		
+		err := rows.Scan(
+			&followee.UserID,
+			&followee.Nickname,
+			&followee.FirstName,
+			&followee.LastName,
+			&followee.Email,
+			&followee.IsPrivate,
+			&followee.FollowedAt,
+		)
+		
+		if err != nil {
+			return nil, err
+		}
+		
+		following = append(following, followee)
+	}
+	
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	
+	return following, nil
+}

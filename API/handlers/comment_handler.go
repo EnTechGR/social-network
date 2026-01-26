@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"social-network/middleware"
 	"social-network/models"
@@ -17,6 +19,7 @@ type CommentHandler struct {
 	CommentRepo      *repository.CommentRepository
 	PostRepo         *repository.PostRepository
 	NotificationRepo *repository.NotificationRepository
+	ImageRepo        *repository.ImageRepository
 	Hub              *websocket.Hub // ✅ Add Hub reference
 }
 
@@ -31,23 +34,31 @@ func NewCommentHandler(
 		CommentRepo:      commentRepo,
 		PostRepo:         postRepo,
 		NotificationRepo: notifRepo,
+		ImageRepo:        nil, // Will be set later if needed
 		Hub:              hub,
 	}
 }
 
+// SetImageRepo sets the image repository for comment image uploads
+func (h *CommentHandler) SetImageRepo(imageRepo *repository.ImageRepository) {
+	h.ImageRepo = imageRepo
+}
 
-// CreateComment creates a new comment on a post
+// CreateComment creates a new comment on a post with optional image uploads
 // @Summary      Create a comment
-// @Description  Adds a new comment to a specific post. Triggers a real-time notification for the post owner via WebSocket.
+// @Description  Adds a new comment to a specific post. Optionally upload images. Triggers a real-time notification for the post owner via WebSocket.
 // @Tags         Comments
 // @Security     CookieAuth
-// @Accept       json
+// @Accept       multipart/form-data
 // @Produce      json
-// @Success      201      {object}  models.Comment
+// @Param        post_id  formData  string  true   "Post ID"
+// @Param        content  formData  string  true   "Comment content"
+// @Param        image    formData  file    false  "Images to attach (multiple allowed)"
+// @Success      201      {object}  map[string]interface{} "Comment with images_uploaded count"
 // @Failure      400      {object}  models.ErrorResponse "Missing PostID or Content"
 // @Failure      401      {object}  models.ErrorResponse "Unauthorized"
 // @Failure      500      {object}  models.ErrorResponse "Database error"
-// @Router       /api/v1/comments [post]
+// @Router       /api/v1/comments/create [post]
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -60,23 +71,48 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		PostID  string `json:"post_id"`
-		Content string `json:"content"`
+	var postID, content string
+	contentType := r.Header.Get("Content-Type")
+
+	// Check if it's multipart (includes boundary info)
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Parse as multipart/form-data
+		const maxCommentSize = 20 << 20 // 20MB
+		log.Printf("DEBUG: Attempting to parse comment as multipart/form-data")
+		if err := r.ParseMultipartForm(maxCommentSize); err != nil {
+			log.Printf("ERROR parsing multipart form: %v", err)
+			utils.ErrorResponse(w, fmt.Sprintf("Failed to parse multipart form: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		postID = r.FormValue("post_id")
+		content = r.FormValue("content")
+		log.Printf("DEBUG: Extracted from multipart - post_id: %s, content: %s", postID, content)
+	} else {
+		// Parse as JSON (backward compatibility)
+		log.Printf("DEBUG: Attempting to parse comment as JSON")
+		var req struct {
+			PostID  string `json:"post_id"`
+			Content string `json:"content"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		postID = req.PostID
+		content = req.Content
+		log.Printf("DEBUG: Extracted from JSON - post_id: %s, content: %s", postID, content)
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	if req.PostID == "" || req.Content == "" {
+
+	if postID == "" || content == "" {
 		utils.ErrorResponse(w, "Post ID and content are required", http.StatusBadRequest)
 		return
 	}
 
 	comment := models.Comment{
-		PostID:  req.PostID,
+		PostID:  postID,
 		UserID:  user.ID,
-		Content: &req.Content,
+		Content: &content,
 	}
 
 	created, err := h.CommentRepo.Create(comment)
@@ -85,16 +121,42 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle optional image uploads (only for multipart requests)
+	var uploadedCount int
+	if strings.Contains(contentType, "multipart/form-data") && r.MultipartForm != nil && h.ImageRepo != nil {
+		form := r.MultipartForm
+		files := form.File["image"]
+		if len(files) == 0 {
+			files = form.File["images"]
+		}
+
+		if len(files) > 0 {
+			// Note: Using post ID for image storage since comments share the same image table
+			// This associates images with the post but tracks them via comment context
+			if err := h.ImageRepo.UploadPostImages(files, postID, user.ID); err != nil {
+				log.Printf("Warning: Failed to upload images for comment %s: %v", created.ID, err)
+				// Don't fail the comment creation if image upload fails
+				utils.JSONResponse(w, map[string]interface{}{
+					"comment":         created,
+					"images_uploaded": 0,
+					"warning":         fmt.Sprintf("Comment created but image upload failed: %v", err),
+				}, http.StatusCreated)
+				return
+			}
+			uploadedCount = len(files)
+		}
+	}
+
 	// ✅ Notify post owner about new comment
-	if post, err := h.PostRepo.GetByID(req.PostID); err == nil && post != nil && post.UserID != user.ID {
+	if post, err := h.PostRepo.GetByID(postID); err == nil && post != nil && post.UserID != user.ID {
 		n := models.Notification{
 			UserID:     post.UserID,
 			FromUserID: user.ID,
 			Type:       "comment",
-			PostID:     req.PostID,
+			PostID:     postID,
 			CommentID:  &created.ID,
 		}
-		
+
 		if err := h.NotificationRepo.Create(&n); err != nil {
 			log.Printf("[CommentHandler] Failed to create notification: %v", err)
 		} else {
@@ -104,20 +166,30 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 					ID:        n.ID,
 					Nickname:  user.Nickname,
 					Type:      "comment",
-					PostID:    req.PostID,
+					PostID:    postID,
 					CommentID: &created.ID,
 					CreatedAt: n.CreatedAt,
 					Read:      false,
 					Visible:   true,
 				}
-				
+
 				log.Printf("[CommentHandler] Sending WebSocket notification to user %s", post.UserID)
 				h.Hub.SendNotification(post.UserID, notificationView)
 			}
 		}
 	}
 
-	utils.JSONResponse(w, created, http.StatusCreated)
+	// Return success with upload count
+	response := map[string]interface{}{
+		"comment":         created,
+		"images_uploaded": uploadedCount,
+	}
+
+	if uploadedCount > 0 {
+		response["message"] = fmt.Sprintf("Comment created with %d image(s)", uploadedCount)
+	}
+
+	utils.JSONResponse(w, response, http.StatusCreated)
 }
 
 // EditComment updates an existing comment
@@ -189,7 +261,7 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 				PostID:     comment.PostID,
 				CommentID:  &comment.ID,
 			}
-			
+
 			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[CommentHandler] Failed to create edit notification: %v", err)
 			} else {
@@ -205,13 +277,13 @@ func (h *CommentHandler) EditComment(w http.ResponseWriter, r *http.Request) {
 						Read:      false,
 						Visible:   true,
 					}
-					
+
 					h.Hub.SendNotification(post.UserID, notificationView)
 				}
 			}
 		}
 	}
-	
+
 	utils.JSONResponse(w, map[string]string{"status": "updated"}, http.StatusOK)
 }
 
@@ -273,7 +345,7 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 				PostID:     comment.PostID,
 				CommentID:  &comment.ID,
 			}
-			
+
 			if err := h.NotificationRepo.Create(&n); err != nil {
 				log.Printf("[CommentHandler] Failed to create delete notification: %v", err)
 			} else {
@@ -289,12 +361,12 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 						Read:      false,
 						Visible:   true,
 					}
-					
+
 					h.Hub.SendNotification(post.UserID, notificationView)
 				}
 			}
 		}
 	}
-	
+
 	utils.JSONResponse(w, map[string]string{"status": "deleted"}, http.StatusOK)
 }

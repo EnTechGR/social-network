@@ -26,6 +26,124 @@ func NewUserHandler(userRepo *user_repository.UserRepository, imageRepo *reposit
 	}
 }
 
+// GetUserProfile returns another user's profile based on privacy settings
+// @Summary      Get user profile by ID
+// @Description  Returns profile details of any user. For private profiles, only followers can see full details.
+// @Tags         User Profile
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id   path      string  true  "User ID"
+// @Success      200  {object}  map[string]interface{} "User profile data with posts, followers, and following"
+// @Failure      400  {object}  models.ErrorResponse "Missing user ID"
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      403  {object}  models.ErrorResponse "Private profile - not a follower"
+// @Failure      404  {object}  models.ErrorResponse "User not found"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/v1/users/{id} [get]
+func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	currentUser := middleware.GetCurrentUser(r)
+	if currentUser == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get target user ID from URL path
+	targetUserID := utils.GetLastPathParam(r)
+	if targetUserID == "" {
+		utils.ErrorResponse(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get target user's basic info
+	targetUser, err := h.UserRepo.GetByID(targetUserID)
+	if err != nil {
+		if err == repository.ErrUserNotFound {
+			utils.ErrorResponse(w, "User not found", http.StatusNotFound)
+		} else {
+			log.Printf("Failed to get user %s: %v", targetUserID, err)
+			utils.ErrorResponse(w, "Failed to retrieve user", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Check if viewing own profile
+	isOwnProfile := currentUser.ID == targetUserID
+
+	// Check privacy settings
+	if targetUser.IsPrivate && !isOwnProfile {
+		// Check if current user follows target user
+		isFollowing, err := h.UserRepo.IsFollowing(currentUser.ID, targetUserID)
+		if err != nil {
+			log.Printf("Failed to check follow status: %v", err)
+			utils.ErrorResponse(w, "Failed to verify access", http.StatusInternalServerError)
+			return
+		}
+
+		if !isFollowing {
+			// Private profile and not a follower - return limited info
+			utils.JSONResponse(w, map[string]interface{}{
+				"user_id":    targetUser.ID,
+				"nickname":   targetUser.Nickname,
+				"first_name": targetUser.FirstName,
+				"last_name":  targetUser.LastName,
+				"is_private": targetUser.IsPrivate,
+				"message":    "This profile is private. Follow to see their content.",
+			}, http.StatusForbidden)
+			return
+		}
+	}
+
+	// User has access - get full profile data
+	userWithAvatar, err := h.UserRepo.GetUserWithAvatar(targetUserID)
+	if err != nil {
+		log.Printf("Failed to get user profile: %v", err)
+		utils.ErrorResponse(w, "Failed to retrieve profile", http.StatusInternalServerError)
+		return
+	}
+
+	// Get user's posts
+	posts, err := h.UserRepo.GetUserPosts(targetUserID)
+	if err != nil {
+		log.Printf("Failed to get user posts: %v", err)
+		posts = []interface{}{} // Return empty array on error
+	}
+
+	// Get followers count and list
+	followers, err := h.UserRepo.GetFollowers(targetUserID)
+	if err != nil {
+		log.Printf("Failed to get followers: %v", err)
+		followers = []interface{}{}
+	}
+
+	// Get following count and list
+	following, err := h.UserRepo.GetFollowing(targetUserID)
+	if err != nil {
+		log.Printf("Failed to get following: %v", err)
+		following = []interface{}{}
+	}
+
+	// Build response
+	response := map[string]interface{}{
+		"user":      userWithAvatar,
+		"posts":     posts,
+		"followers": followers,
+		"following": following,
+		"counts": map[string]int{
+			"posts":     len(posts),
+			"followers": len(followers),
+			"following": len(following),
+		},
+		"is_own_profile": isOwnProfile,
+	}
+
+	utils.JSONResponse(w, response, http.StatusOK)
+}
+
 // GetProfile returns the complete user profile with avatar
 // @Summary      Get current user profile
 // @Description  Returns the full profile details of the currently authenticated user including avatar information.

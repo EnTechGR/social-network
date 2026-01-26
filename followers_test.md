@@ -21,12 +21,12 @@ curl -s -X POST http://localhost:8080/api/v1/register \
 curl -s -c ./alice1.cookies \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/login \
-  -d '{"login":"alice2@example.com","password":"Pass1234"}'
+  -d '{"login":"alice1@example.com","password":"Pass1234"}'
 
 curl -s -c ./bob1.cookies \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/login \
-  -d '{"login":"bob2@example.com","password":"Pass1234"}'
+  -d '{"login":"bob1@example.com","password":"Pass1234"}'
 
 
 curl -i -b ./alice.cookies \
@@ -36,15 +36,15 @@ curl -i -b ./alice.cookies \
   -d '{"followee_id":"c7f62be6-0cbd-4f46-bed5-dc27ef9ef49f"}'
 
 curl -i -b ./bob1.cookies \
-  -H "X-CSRF-Token: Zehh8mtg-F9nwDEJKH2FNC7ZGp6FNZ9Qa-AHvo4lGTM=" \
+  -H "X-CSRF-Token: S0XOOLHwvm4gUOycu1grPyO-zy3k1sY0PhImiXAAaUQ=" \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/follow \
-  -d '{"followee_id":"01e97e7d-7a57-4df4-8623-e98977e5bead"}'
+  -d '{"followee_id":"e140e66d-4ce3-4727-b421-eb9ca1481605"}'
 
-curl -i -b ./alice.cookies \
-  -H "X-CSRF-Token: 1BGnF2882u5tyx3Rpn_99G2zVwaH-zvMXurbS0ITQ3k=" \
+curl -i -b ./alice1.cookies \
+  -H "X-CSRF-Token: AWcyqjRX-0ZQFIUITk-PL2CpI27asTFoqXnCc-1DMdU=" \
   -H 'Content-Type: application/json' \
-  -X PUT http://localhost:8080/api/user/privacy \
+  -X PUT http://localhost:8080/api/v1/user/privacy \
   -d '{"is_private": true}'
 
 curl -s -c ./bob.cookies \
@@ -82,6 +82,6 @@ curl -i -b ./alice1.cookies \
   -d '{"is_private": true}'
 
 curl -i -b ./alice1.cookies \
-  -H "X-CSRF-Token: 5x-CpcwbtBtWBIAq3aE5yMrYeyqmh6cfijvc5wGQedQ=" \
+  -H "X-CSRF-Token: AWcyqjRX-0ZQFIUITk-PL2CpI27asTFoqXnCc-1DMdU=" \
   -H 'Content-Type: application/json' \
-  -X PUT http://localhost:8080/api/v1/follow/accept/c7f62be6-0cbd-4f46-bed5-dc27ef9ef49f
+  -X PUT http://localhost:8080/api/v1/follow/accept/b354fbb9-868c-4de7-b289-00a9d572b04d

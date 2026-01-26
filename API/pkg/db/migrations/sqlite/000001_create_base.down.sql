@@ -31,10 +31,6 @@ DROP INDEX IF EXISTS idx_images_post;
 DROP TABLE IF EXISTS post_allowed_users;
 DROP INDEX IF EXISTS idx_post_allowed_user;
 
-DROP TABLE IF EXISTS post_categories;
-DROP INDEX IF EXISTS idx_post_categories_cat;
-DROP INDEX IF EXISTS idx_post_categories_post;
-
 DROP TABLE IF EXISTS posts;
 DROP INDEX IF EXISTS idx_posts_group;
 DROP INDEX IF EXISTS idx_posts_visibility;
@@ -53,8 +49,6 @@ DROP INDEX IF EXISTS idx_group_members_status;
 
 DROP TABLE IF EXISTS groups;
 DROP INDEX IF EXISTS idx_groups_public;
-
-DROP TABLE IF EXISTS categories;
 
 DROP TABLE IF EXISTS oauth_states;
 DROP INDEX IF EXISTS idx_oauth_states_expires;

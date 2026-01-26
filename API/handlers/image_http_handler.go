@@ -134,14 +134,16 @@ func (h *ImageHTTPHandler) UploadPostImages(w http.ResponseWriter, r *http.Reque
 	}
 
 	// 4. Authorization - Check ownership (only post owner can upload images)
-	post, err := h.postRepo.GetPostByID(postID)
+	// FIXED: Changed GetPostByID to GetByID
+	post, err := h.postRepo.GetByID(postID)
 	if err != nil {
-		if err == repository.ErrPostNotFound {
-			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
-		} else {
-			log.Printf("Failed to retrieve post %s: %v", postID, err)
-			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
-		}
+		log.Printf("Failed to retrieve post %s: %v", postID, err)
+		utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		return
+	}
+
+	if post == nil {
+		utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
 		return
 	}
 
@@ -210,14 +212,16 @@ func (h *ImageHTTPHandler) DeletePostImages(w http.ResponseWriter, r *http.Reque
 	}
 
 	// 3. Authorization - Check ownership
-	post, err := h.postRepo.GetPostByID(postID)
+	// FIXED: Changed GetPostByID to GetByID
+	post, err := h.postRepo.GetByID(postID)
 	if err != nil {
-		if err == repository.ErrPostNotFound {
-			utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
-		} else {
-			log.Printf("Failed to retrieve post %s: %v", postID, err)
-			utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
-		}
+		log.Printf("Failed to retrieve post %s: %v", postID, err)
+		utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		return
+	}
+
+	if post == nil {
+		utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
 		return
 	}
 

@@ -9,6 +9,7 @@
 'use client';
 
 import { useState } from 'react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 
@@ -47,37 +48,39 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-parea-white px-16 py-12">
-      <div className="max-w-[1280px] mx-auto">
-        {/* Profile Card */}
-        <ProfileWrap
-          user={{
-            ...mockUser,
-            isPublic, // Use local state for toggle
-          }}
-          isSelf={true}
-          onTogglePublic={handleTogglePublic}
-          onFollowersClick={handleFollowersClick}
-          onFollowingClick={handleFollowingClick}
-        />
+    <ProtectedRoute>
+      <main className="min-h-screen bg-parea-white px-16 py-12">
+        <div className="max-w-[1280px] mx-auto">
+          {/* Profile Card */}
+          <ProfileWrap
+            user={{
+              ...mockUser,
+              isPublic, // Use local state for toggle
+            }}
+            isSelf={true}
+            onTogglePublic={handleTogglePublic}
+            onFollowersClick={handleFollowersClick}
+            onFollowingClick={handleFollowingClick}
+          />
 
-        {/* Placeholder for tabs and content below */}
-        <div className="mt-8">
-          <Tabs
-          tabs={['Posts', 'Events', 'Reactions', 'Groups']}
-          defaultTab="Posts"
-          onTabChange={(tab) => setActiveTab(tab)}
-        />
-  
-        {/* Tab content placeholder */}
-        <div className="mt-6">
-          {activeTab === 'Posts' && <p>Posts content...</p>}
-          {activeTab === 'Events' && <p>Events content...</p>}
-          {activeTab === 'Reactions' && <p>Reactions content...</p>}
-          {activeTab === 'Groups' && <p>Groups content...</p>}
+          {/* Placeholder for tabs and content below */}
+          <div className="mt-8">
+            <Tabs
+            tabs={['Posts', 'Events', 'Reactions', 'Groups']}
+            defaultTab="Posts"
+            onTabChange={(tab) => setActiveTab(tab)}
+          />
+    
+          {/* Tab content placeholder */}
+          <div className="mt-6">
+            {activeTab === 'Posts' && <p>Posts content...</p>}
+            {activeTab === 'Events' && <p>Events content...</p>}
+            {activeTab === 'Reactions' && <p>Reactions content...</p>}
+            {activeTab === 'Groups' && <p>Groups content...</p>}
+          </div>
         </div>
       </div>
-    </div>
-  </main>
+    </main>
+    </ProtectedRoute>
   );
 }

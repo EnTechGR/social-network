@@ -333,10 +333,10 @@ function SignUpStep2({
         about_me: aboutMe,
       });
 
-      // Store auth data
+      // Store CSRF token and user data (actual auth is via HttpOnly cookie)
       if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', response.csrf_token);
-        localStorage.setItem('user_id', response.id);
+        localStorage.setItem('csrf_token', response.csrf_token);
+        localStorage.setItem('user_data', JSON.stringify(response.user));
       }
 
       router.push('/feed');

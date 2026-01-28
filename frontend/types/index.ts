@@ -97,6 +97,14 @@ export interface AuthResponse {
 }
 
 /**
+ * Verify Session Response type
+ */
+export interface VerifyResponse {
+  csrf_token: string;
+  user: AuthUser;
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {

@@ -5,7 +5,7 @@
  * These functions abstract away fetch calls and provide type-safe interfaces.
  */
 
-import type { AuthResponse, ApiErrorResponse, LoginRequest, RegisterStep1Request, RegisterStep2Request } from '@/types';
+import type { AuthResponse, ApiErrorResponse, LoginRequest, RegisterStep1Request, RegisterStep2Request, VerifyResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -25,6 +25,7 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include', // Include cookies for session management
     });
 
     if (!response.ok) {
@@ -34,6 +35,14 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
         message: response.statusText,
       }));
       throw new Error(errorData.message || errorData.error || `API Error: ${response.statusText}`);
+    }
+
+    // Handle empty responses (e.g., 204 No Content or empty body)
+    const contentType = response.headers.get('content-type');
+    const contentLength = response.headers.get('content-length');
+    
+    if (contentLength === '0' || !contentType?.includes('application/json')) {
+      return undefined as T;
     }
 
     return response.json();
@@ -144,5 +153,27 @@ export async function registerStep2(userId: string, data: RegisterStep2Request, 
       'X-CSRF-Token': csrfToken,
     },
     body: formData,
+  });
+}
+
+/**
+ * Verify current session
+ * GET /api/v1/verify
+ * Returns current user and CSRF token if authenticated
+ */
+export async function verifyAuth(): Promise<VerifyResponse> {
+  return fetchAPI<VerifyResponse>('/api/v1/verify', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Logout current user
+ * POST /api/v1/logout
+ * Clears session and logs out the user
+ */
+export async function logout(): Promise<void> {
+  return fetchAPI<void>('/api/v1/logout', {
+    method: 'POST',
   });
 }

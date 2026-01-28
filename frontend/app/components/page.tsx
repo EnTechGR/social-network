@@ -19,6 +19,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import Header from '@/components/Header';
 import AuthLayout from '@/components/auth/AuthLayout';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
+import ChatModal from '@/components/ui/ChatModal';
 
 export default function ComponentsPage() {
   const [inputValue, setInputValue] = useState('');
@@ -184,6 +185,12 @@ export default function ComponentsPage() {
         <FollowersModal isOpen={false} onClose={() => { }} heading="Followers" preview />
       </section>
 
+
+      {/* Chat Modal */}
+      <section className="mb-12">
+        <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Chat Modal</h2>
+        <ChatModal isOpen={false} onClose={() => {}} userName="Jennifer White" preview />
+      </section>
 
       {/* Private Profile Modal */}
 <section className="mb-12">

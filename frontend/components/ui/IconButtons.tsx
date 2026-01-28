@@ -52,7 +52,7 @@ function CloseIcon({ size = 'md' }: { size?: 'sm' | 'md' }) {
       height="12"
       viewBox="0 0 12 12"
       fill="none"
-      className={`${size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'} shrink-0`}
+      className={`${size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'} shrink-0 transition-transform duration-300 ease-in-out group-hover:-rotate-90`}
     >
       <path
         d="M11.5 0.5L0.5 11.5M0.5 0.5L11.5 11.5"

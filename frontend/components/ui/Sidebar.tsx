@@ -4,13 +4,17 @@
 import React, { useState } from 'react';
 import { MessageCircle, Bell, LogOut, CircleX } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import SidebarToggle from './SidebarToggle';
 import Tabs from './Tabs';
 import Button from './Button';
+import { logout } from '@/lib/api';
+import { clearAuth } from '@/lib/auth';
 
 type DrawerType = 'chat' | 'notifications' | null;
 
 export default function Sidebar() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>(null);
 
@@ -28,6 +32,21 @@ export default function Sidebar() {
 
   const handleDrawerClose = () => {
     setActiveDrawer(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear session on backend
+      await logout();
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+      // Continue with client-side logout even if API fails
+    } finally {
+      // Clear client-side auth data
+      clearAuth();
+      // Redirect to login page
+      router.push('/login');
+    }
   };
 
   // ============ DEFAULT SIDEBAR (ICONS ONLY) - Shows when drawer is open OR when both closed ============
@@ -122,6 +141,7 @@ export default function Sidebar() {
             </div>
 
             <button
+              onClick={handleLogout}
               className="p-2 rounded-lg transition-colors group"
               aria-label="Logout"
             >
@@ -631,6 +651,7 @@ export default function Sidebar() {
 
           {/* Logout item */}
           <button
+            onClick={handleLogout}
             className="
               flex
               px-2

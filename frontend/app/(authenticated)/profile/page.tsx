@@ -48,27 +48,27 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-parea-white px-16 py-12">
-        <div className="max-w-[1280px] mx-auto">
-          {/* Profile Card */}
-          <ProfileWrap
-            user={{
-              ...mockUser,
-              isPublic, // Use local state for toggle
-            }}
-            isSelf={true}
-            onTogglePublic={handleTogglePublic}
-            onFollowersClick={handleFollowersClick}
-            onFollowingClick={handleFollowingClick}
-          />
+      <div className="max-w-7xl mx-auto">
+        {/* Profile Card */}
+        <ProfileWrap
+          user={{
+            ...mockUser,
+            isPublic, // Use local state for toggle
+          }}
+          isSelf={true}
+          onTogglePublic={handleTogglePublic}
+          onFollowersClick={handleFollowersClick}
+          onFollowingClick={handleFollowingClick}
+        />
 
-          {/* Placeholder for tabs and content below */}
-          <div className="mt-8">
-            <Tabs
+        {/* Placeholder for tabs and content below */}
+        <div className="mt-8">
+          <Tabs
             tabs={['Posts', 'Events', 'Reactions', 'Groups']}
             defaultTab="Posts"
             onTabChange={(tab) => setActiveTab(tab)}
           />
-    
+
           {/* Tab content placeholder */}
           <div className="mt-6">
             {activeTab === 'Posts' && <p>Posts content...</p>}

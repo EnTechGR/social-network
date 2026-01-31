@@ -12,7 +12,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -25,7 +24,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [registerData, setRegisterData] = useState<any>(null);
-  const [gender, setGender] = useState<'male'|'female'|'other'|'prefer_not_to_say'>('prefer_not_to_say');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say'>('prefer_not_to_say');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,10 +41,10 @@ export default function SignUpPage() {
   const handleDateChange = (value: string) => {
     // Remove all non-digit characters
     const digits = value.replace(/\D/g, '');
-    
+
     // Limit to 8 digits (MMDDYYYY)
     const limited = digits.slice(0, 8);
-    
+
     // Format with slashes: MM/DD/YYYY
     let formatted = '';
     if (limited.length > 0) {
@@ -57,7 +56,7 @@ export default function SignUpPage() {
         formatted += '/' + limited.slice(4, 8);
       }
     }
-    
+
     setDateOfBirth(formatted);
   };
 
@@ -255,9 +254,9 @@ export default function SignUpPage() {
           </form>
 
           <div className="w-full py-4">
-            <div className="w-full border-t border-parea-black h-[0.0625rem]"></div>
+            <div className="w-full border-t border-parea-black h-px"></div>
           </div>
-          
+
           <Button
             type="button"
             variant="secondary"
@@ -388,7 +387,7 @@ function SignUpStep2({
                 onChange={(e) => setAboutMe(e.target.value)}
                 className="
                   flex
-                  min-h-[120px]
+                  min-h-30
                   px-4 py-2
                   items-start
                   gap-2
@@ -440,9 +439,9 @@ function SignUpStep2({
           </form>
 
           <div className="w-full py-4">
-            <div className="w-full border-t border-parea-black h-[0.0625rem]"></div>
+            <div className="w-full border-t border-parea-black h-px"></div>
           </div>
-          
+
           <Button
             type="button"
             variant="secondary"

@@ -20,6 +20,7 @@ import Header from '@/components/Header';
 import AuthLayout from '@/components/auth/AuthLayout';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
 import ChatModal from '@/components/ui/ChatModal';
+import UserCard from '@/components/UserCard';
 
 export default function ComponentsPage() {
   const [inputValue, setInputValue] = useState('');
@@ -224,6 +225,29 @@ export default function ComponentsPage() {
     </div>
   </div>
 </section>
+
+      {/* User Card */}
+      <section className="mb-12">
+        <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">User Card</h2>
+        <div className="max-w-lg space-y-4">
+          <UserCard
+            user={{
+              id: '1',
+              name: 'Olivia Winter',
+              email: 'olivia@mail.com',
+              bio: 'Urban explorer and coffee enthusiast.',
+            }}
+            onFollow={(id) => console.log('Follow user', id)}
+          />
+          <UserCard
+            user={{
+              id: '2',
+              name: 'Alex Donham',
+              email: 'alex@mail.com',
+            }}
+          />
+        </div>
+      </section>
 
       {/* Profile Wrap */}
       <section className="mb-12">

@@ -44,28 +44,28 @@ export default function GroupPage() {
 
   return (
     <main className="min-h-screen bg-parea-white px-16 py-12">
-        <div className="max-w-[1280px] mx-auto space-y-8">
-          {/* Toggle for testing */}
-          <div className="flex gap-4 items-center">
-            <span className="font-medium">Test Mode:</span>
-            <button
-              onClick={() => setIsMember(!isMember)}
-              className="px-4 py-2 bg-parea-yellow border border-parea-black rounded"
-            >
-              {isMember ? 'Switch to Non-Member View' : 'Switch to Member View'}
-            </button>
-          </div>
-
-          {/* Group Card */}
-          <GroupWrap
-            group={mockGroup}
-            isMember={isMember}
-            onJoin={handleJoin}
-            onInvite={handleInvite}
-            onLeaveGroup={handleLeaveGroup}
-            onMembersClick={handleMembersClick}
-          />
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Toggle for testing */}
+        <div className="flex gap-4 items-center">
+          <span className="font-medium">Test Mode:</span>
+          <button
+            onClick={() => setIsMember(!isMember)}
+            className="px-4 py-2 bg-parea-yellow border border-parea-black rounded"
+          >
+            {isMember ? 'Switch to Non-Member View' : 'Switch to Member View'}
+          </button>
         </div>
+
+        {/* Group Card */}
+        <GroupWrap
+          group={mockGroup}
+          isMember={isMember}
+          onJoin={handleJoin}
+          onInvite={handleInvite}
+          onLeaveGroup={handleLeaveGroup}
+          onMembersClick={handleMembersClick}
+        />
+      </div>
     </main>
   );
 }

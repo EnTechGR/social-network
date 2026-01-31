@@ -93,9 +93,9 @@ export default function LoginPage() {
           </form>
 
           <div className="w-full py-4">
-            <div className="w-full border-t border-parea-black h-[0.0625rem]"></div>
+            <div className="w-full border-t border-parea-black h-px"></div>
           </div>
-          
+
           <Button
             type="button"
             variant="secondary"

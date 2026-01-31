@@ -9,7 +9,6 @@
 'use client';
 
 import { useState } from 'react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 
@@ -48,8 +47,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <ProtectedRoute>
-      <main className="min-h-screen bg-parea-white px-16 py-12">
+    <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-[1280px] mx-auto">
           {/* Profile Card */}
           <ProfileWrap
@@ -81,6 +79,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </main>
-    </ProtectedRoute>
   );
 }

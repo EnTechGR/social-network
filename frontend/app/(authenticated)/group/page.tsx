@@ -9,7 +9,6 @@
 'use client';
 
 import { useState } from 'react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import GroupWrap from '@/components/ui/GroupWrap';
 
 // Mock group data for testing
@@ -44,8 +43,7 @@ export default function GroupPage() {
   };
 
   return (
-    <ProtectedRoute>
-      <main className="min-h-screen bg-parea-white px-16 py-12">
+    <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-[1280px] mx-auto space-y-8">
           {/* Toggle for testing */}
           <div className="flex gap-4 items-center">
@@ -68,7 +66,6 @@ export default function GroupPage() {
             onMembersClick={handleMembersClick}
           />
         </div>
-      </main>
-    </ProtectedRoute>
+    </main>
   );
 }

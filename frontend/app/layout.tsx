@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import NavbarWrapper from "@/components/ui/NavbarWrapper";
-import Sidebar from "@/components/ui/Sidebar";
 
 // Inter - for body text and headings
 const inter = Inter({
@@ -37,21 +35,14 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-    <body className={`${inter.variable} ${ibmPlexMono.variable} antialiased relative`}>
-      {/* Global noise overlay - applies to all pages */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-[9999]"
-        style={noiseStyle}
-      />
-      <Sidebar />
-      {/* Everything to the right of sidebar */}
-      <div className="ml-[72px]">
-        <NavbarWrapper />
-        <main>
-          {children}
-        </main>
-      </div>
-    </body>
-  </html>
+      <body className={`${inter.variable} ${ibmPlexMono.variable} antialiased relative`}>
+        {/* Global noise overlay - applies to all pages */}
+        <div
+          className="fixed inset-0 pointer-events-none z-9999"
+          style={noiseStyle}
+        />
+        {children}
+      </body>
+    </html>
   );
 }

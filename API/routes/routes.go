@@ -7,6 +7,7 @@ import (
 	"social-network/handlers"
 	"social-network/middleware"
 	"social-network/repository"
+	"social-network/repository/group"
 	"social-network/repository/message"
 	"social-network/repository/session"
 	"social-network/repository/user_repository"
@@ -29,6 +30,12 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	imageRepo := repository.NewImageRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
 	messageRepo := message.NewMessageRepository(db)
+	// Group repositories
+	groupRepo := group.NewGroupRepository(db)
+	groupMemberRepo := group.NewGroupMemberRepository(db)
+	groupInviteRepo := group.NewGroupInviteRepository(db)
+	groupRequestRepo := group.NewGroupJoinRequestRepository(db)
+	groupEventRepo := group.NewGroupEventRepository(db)
 
 	// ✅ Create and start WebSocket hub
 	hub := websocket.NewHub()
@@ -50,6 +57,12 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, hub)
 	messageHandler := handlers.NewMessageHandler(messageRepo, hub)     // ✅ Pass hub to handler
 	chatImageHandler := handlers.NewChatImageHandler(messageRepo, hub) // ✅ Chat image handler
+	// Group handlers - UPDATED
+	groupHandler := handlers.NewGroupHandler(groupRepo, groupMemberRepo, groupInviteRepo)
+	groupMemberHandler := handlers.NewGroupMemberHandler(groupMemberRepo, groupRepo)
+	groupInviteHandler := handlers.NewGroupInviteHandler(groupInviteRepo, groupMemberRepo, groupRepo)
+	groupRequestHandler := handlers.NewGroupJoinRequestHandler(groupRequestRepo, groupMemberRepo, groupRepo)
+	groupEventHandler := handlers.NewGroupEventHandler(groupEventRepo, groupMemberRepo, groupRepo)
 
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
@@ -150,6 +163,36 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/chat/images/delete/", protected(http.HandlerFunc(chatImageHandler.DeleteChatImage)))
 	apiMux.Handle("/api/v1/chat/images/stats", protected(http.HandlerFunc(chatImageHandler.GetUserImageStats)))
 
+	// Core group operations
+	apiMux.Handle("/api/v1/groups/create", protected(http.HandlerFunc(groupHandler.CreateGroup)))
+	apiMux.Handle("/api/v1/groups", protected(http.HandlerFunc(groupHandler.BrowseAllGroups)))
+	apiMux.Handle("/api/v1/groups/my-groups", protected(http.HandlerFunc(groupHandler.GetMyGroups)))
+	apiMux.Handle("/api/v1/groups/", protected(http.HandlerFunc(groupHandler.GetGroupByID)))       // GET /api/v1/groups/{id}
+	apiMux.Handle("/api/v1/groups/update/", protected(http.HandlerFunc(groupHandler.UpdateGroup))) // PUT /api/v1/groups/{id}
+	apiMux.Handle("/api/v1/groups/delete/", protected(http.HandlerFunc(groupHandler.DeleteGroup))) // DELETE /api/v1/groups/{id}
+
+	// Group member management
+	apiMux.Handle("/api/v1/groups/members/", protected(http.HandlerFunc(groupMemberHandler.GetGroupMembers)))     // GET /api/v1/groups/{id}/members
+	apiMux.Handle("/api/v1/groups/members/remove/", protected(http.HandlerFunc(groupMemberHandler.RemoveMember))) // DELETE /api/v1/groups/{id}/members/{userId}
+
+	// Group invitations
+	apiMux.Handle("/api/v1/groups/invite/", protected(http.HandlerFunc(groupInviteHandler.InviteUser)))             // POST /api/v1/groups/{id}/invite
+	apiMux.Handle("/api/v1/groups/invites", protected(http.HandlerFunc(groupInviteHandler.GetMyInvites)))           // GET /api/v1/groups/invites
+	apiMux.Handle("/api/v1/groups/invites/accept/", protected(http.HandlerFunc(groupInviteHandler.AcceptInvite)))   // PUT /api/v1/groups/invites/{id}/accept
+	apiMux.Handle("/api/v1/groups/invites/decline/", protected(http.HandlerFunc(groupInviteHandler.DeclineInvite))) // PUT /api/v1/groups/invites/{id}/decline
+
+	// Group join requests
+	apiMux.Handle("/api/v1/groups/request/", protected(http.HandlerFunc(groupRequestHandler.RequestToJoin)))           // POST /api/v1/groups/{id}/request
+	apiMux.Handle("/api/v1/groups/requests/", protected(http.HandlerFunc(groupRequestHandler.GetPendingRequests)))     // GET /api/v1/groups/{id}/requests
+	apiMux.Handle("/api/v1/groups/requests/approve/", protected(http.HandlerFunc(groupRequestHandler.ApproveRequest))) // PUT /api/v1/groups/requests/{id}/approve
+	apiMux.Handle("/api/v1/groups/requests/deny/", protected(http.HandlerFunc(groupRequestHandler.DenyRequest)))       // PUT /api/v1/groups/requests/{id}/deny
+
+	// Group events and RSVP
+	apiMux.Handle("/api/v1/groups/events/create/", protected(http.HandlerFunc(groupEventHandler.CreateEvent))) // POST /api/v1/groups/{id}/events
+	apiMux.Handle("/api/v1/groups/events/", protected(http.HandlerFunc(groupEventHandler.GetGroupEvents)))     // GET /api/v1/groups/{id}/events
+	apiMux.Handle("/api/v1/events/", protected(http.HandlerFunc(groupEventHandler.GetEventDetails)))           // GET /api/v1/events/{id}
+	apiMux.Handle("/api/v1/events/vote/", protected(http.HandlerFunc(groupEventHandler.VoteOnEvent)))          // POST /api/v1/events/{id}/vote
+	apiMux.Handle("/api/v1/events/delete/", protected(http.HandlerFunc(groupEventHandler.DeleteEvent)))        // DELETE /api/v1/events/{id}
 	// =========================================================================
 	// 2. Wrap the API Mux with the authentication middleware
 	apiHandler := authMiddleware.Authenticate(apiMux)

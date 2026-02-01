@@ -80,3 +80,23 @@ curl -i -b ./alice1.cookies \
   -H "X-CSRF-Token: AWcyqjRX-0ZQFIUITk-PL2CpI27asTFoqXnCc-1DMdU=" \
   -H 'Content-Type: application/json' \
   -X PUT http://localhost:8080/api/v1/follow/accept/b354fbb9-868c-4de7-b289-00a9d572b04d
+
+curl -X POST http://localhost:8080/api/v1/groups/create \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: gptJAu-_2nIsmZkKkG68mZYyM0hsJtXhTgN-sJF7hMU=" \
+  -b alice.cookies \
+  -d '{"title": "Test Group", "description": "Test"}'
+
+curl -X POST http://localhost:8080/api/v1/groups/create \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: gptJAu-_2nIsmZkKkG68mZYyM0hsJtXhTgN-sJF7hMU=" \
+  -b alice.cookies \
+  -d "{
+    \"title\": \"Photography Club\",
+    \"description\": \"For photography enthusiasts\",
+    \"invitees\": [\"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"]
+  }"
+
+curl -X PUT http://localhost:8080/api/v1/groups/invites/accept/ec158bb4-5392-49b3-8d1c-d009ac76cd11 \
+  -H "X-CSRF-Token: Uj2rMunYZY18N3-Yx9_Vv4_Rj_sw4sncvvViqjCNVyc=" \
+  -b bob.cookies

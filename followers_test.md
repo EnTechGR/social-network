@@ -18,6 +18,16 @@ curl -s -X POST http://localhost:8080/api/v1/register \
   -F 'nickname=bob' \
   -F 'is_private=false' > ./bob_register.json
 
+curl -s -X POST http://localhost:8080/api/v1/register \
+  -F 'email=paul@example.com' \
+  -F 'password=Pass1234' \
+  -F 'first_name=Paul' \
+  -F 'last_name=Three' \
+  -F 'date_of_birth=1991-02-02' \
+  -F 'gender=male' \
+  -F 'nickname=paul' \
+  -F 'is_private=false' > ./paul_register.json
+
 curl -s -c ./alice.cookies \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/login \
@@ -27,6 +37,11 @@ curl -s -c ./bob.cookies \
   -H 'Content-Type: application/json' \
   -X POST http://localhost:8080/api/v1/login \
   -d '{"login":"bob@example.com","password":"Pass1234"}' > bob_login.json
+
+curl -s -c ./paul.cookies \
+  -H 'Content-Type: application/json' \
+  -X POST http://localhost:8080/api/v1/login \
+  -d '{"login":"paul@example.com","password":"Pass1234"}' > paul_login.json
 
 
 curl -i -b ./alice.cookies \
@@ -83,9 +98,9 @@ curl -i -b ./alice1.cookies \
 
 curl -X POST http://localhost:8080/api/v1/groups/create \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: gptJAu-_2nIsmZkKkG68mZYyM0hsJtXhTgN-sJF7hMU=" \
+  -H "X-CSRF-Token: kKlTASjRe5j2Ka0iMkxtMCg9mHXlkpyDbVoKW-fOHm8=" \
   -b alice.cookies \
-  -d '{"title": "Test Group", "description": "Test"}'
+  -d '{"title": "Photography Club", "description": "For photography enthusiasts"}'
 
 curl -X POST http://localhost:8080/api/v1/groups/create \
   -H "Content-Type: application/json" \
@@ -97,6 +112,35 @@ curl -X POST http://localhost:8080/api/v1/groups/create \
     \"invitees\": [\"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"]
   }"
 
-curl -X PUT http://localhost:8080/api/v1/groups/invites/accept/ec158bb4-5392-49b3-8d1c-d009ac76cd11 \
-  -H "X-CSRF-Token: Uj2rMunYZY18N3-Yx9_Vv4_Rj_sw4sncvvViqjCNVyc=" \
+curl -X PUT http://localhost:8080/api/v1/groups/invites/accept/ef2bcb2e-0187-47c6-95e9-653919770ab6 \
+  -H "X-CSRF-Token: DKMB-9HPJSmZ5i1bVAJXnXJNbVlhKGVyRqNQzWQzVR0=" \
   -b bob.cookies
+
+curl -X POST http://localhost:8080/api/v1/groups/invite/514a4942-be40-4fb0-851e-ed6c3d228b26 \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: DKMB-9HPJSmZ5i1bVAJXnXJNbVlhKGVyRqNQzWQzVR0=" \
+  -b bob.cookies \
+  -d "{\"user_id\": \"c6a8dc2c-6136-4068-8b1e-91b95e524905\"}"
+
+curl -X POST http://localhost:8080/api/v1/groups/invite/514a4942-be40-4fb0-851e-ed6c3d228b26 \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: W9liVUS1ufD1UcNl_8pst8ve_xcDErbhMufmSYR2VIc=" \
+  -b alice.cookies \
+  -d "{\"user_id\": \"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"}"
+
+curl -X GET http://localhost:8080/api/v1/groups \
+  -b bob.cookies
+
+curl -X POST http://localhost:8080/api/v1/groups/request/ea7c7ac8-6df2-4ec9-afec-9785d5a9b36e \
+  -H "X-CSRF-Token: DKMB-9HPJSmZ5i1bVAJXnXJNbVlhKGVyRqNQzWQzVR0=" \
+  -b bob.cookies
+
+curl -X GET http://localhost:8080/api/v1/groups/requests/ea7c7ac8-6df2-4ec9-afec-9785d5a9b36e \
+  -b alice.cookies
+
+curl -X PUT http://localhost:8080/api/v1/groups/requests/approve/7d6005d4-687e-40b9-953a-e34edd49d618 \
+  -H "X-CSRF-Token: 6HoCMR82r-p0bLoe3SNQT5LZPuLi2y4iQ4ey7njJJSo=" \
+  -b alice.cookies
+
+curl -X GET http://localhost:8080/api/v1/groups/members/ea7c7ac8-6df2-4ec9-afec-9785d5a9b36e \
+  -b alice.cookies

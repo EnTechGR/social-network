@@ -51,7 +51,8 @@ func (h *GroupJoinRequestHandler) RequestToJoin(w http.ResponseWriter, r *http.R
 	}
 
 	// Extract group ID from URL
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/request")
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/request/")
+	groupID = strings.TrimSpace(groupID)
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)
@@ -131,8 +132,9 @@ func (h *GroupJoinRequestHandler) GetPendingRequests(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Extract group ID from URL
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/requests")
+
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/requests/")
+	groupID = strings.TrimSpace(groupID)
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)

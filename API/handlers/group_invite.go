@@ -55,7 +55,9 @@ func (h *GroupInviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Extract group ID from URL
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/invite")
+	// URL format: /api/v1/groups/invite/{groupID}
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/invite/")
+	groupID = strings.TrimSpace(groupID)
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)

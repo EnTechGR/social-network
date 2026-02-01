@@ -48,7 +48,9 @@ func (h *GroupMemberHandler) GetGroupMembers(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Extract group ID from URL path
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/members")
+	// URL format: /api/v1/groups/members/{groupID}
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/members/")
+	groupID = strings.TrimSpace(groupID)
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)
@@ -107,14 +109,17 @@ func (h *GroupMemberHandler) RemoveMember(w http.ResponseWriter, r *http.Request
 	}
 
 	// Extract IDs from URL path
-	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(parts) < 5 {
+	// URL format: /api/v1/groups/members/remove/{groupID}/{userID}
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/members/remove/")
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 2 {
 		utils.ErrorResponse(w, "Invalid URL format", http.StatusBadRequest)
 		return
 	}
 
-	groupID := parts[3]  // /api/v1/groups/{groupID}/members/{userID}
-	targetUserID := parts[5]
+	groupID := strings.TrimSpace(parts[0])
+	targetUserID := strings.TrimSpace(parts[1])
 
 	if groupID == "" || targetUserID == "" {
 		utils.ErrorResponse(w, "Group ID and User ID are required", http.StatusBadRequest)

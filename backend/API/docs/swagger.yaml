@@ -1,37 +1,5 @@
 basePath: /api/v1
 definitions:
-  handlers.CategoryInfo:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  handlers.CategoryResponse:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-      posts:
-        items:
-          $ref: '#/definitions/handlers.PostResponse'
-        type: array
-    type: object
-  handlers.CategoryWithPostsResponse:
-    description: Response containing category info and its associated post list
-    properties:
-      id:
-        example: 1
-        type: integer
-      name:
-        example: Technology
-        type: string
-      posts:
-        items:
-          $ref: '#/definitions/models.Post'
-        type: array
-    type: object
   handlers.CommentResponse:
     properties:
       content:
@@ -51,19 +19,8 @@ definitions:
       user_id:
         type: string
     type: object
-  handlers.GuestResponse:
-    properties:
-      categories:
-        items:
-          $ref: '#/definitions/handlers.CategoryResponse'
-        type: array
-    type: object
   handlers.MyPostResponse:
     properties:
-      categories:
-        items:
-          $ref: '#/definitions/handlers.CategoryInfo'
-        type: array
       comments:
         items:
           $ref: '#/definitions/handlers.CommentResponse'
@@ -85,41 +42,6 @@ definitions:
       thumbnail_url:
         type: string
       title:
-        type: string
-      updated_at:
-        type: string
-      user_id:
-        type: string
-    type: object
-  handlers.PostResponse:
-    properties:
-      category_id:
-        type: integer
-      category_name:
-        description: NEW FIELD
-        type: string
-      comments:
-        items:
-          $ref: '#/definitions/handlers.CommentResponse'
-        type: array
-      content:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      image_url:
-        type: string
-      nickname:
-        type: string
-      reactions:
-        items:
-          $ref: '#/definitions/handlers.ReactionResponse'
-        type: array
-      thumbnail_url:
-        type: string
-      title:
-        description: Optional title field
         type: string
       updated_at:
         type: string
@@ -155,52 +77,6 @@ definitions:
       set_at:
         type: string
       thumbnail_path:
-        type: string
-    type: object
-  models.Category:
-    properties:
-      id:
-        description: |-
-          The unique identifier for the category.
-          example: 1
-        type: integer
-      name:
-        description: |-
-          The name of the category.
-          example: Technology
-        type: string
-    type: object
-  models.Comment:
-    properties:
-      content:
-        description: |-
-          The text content of the comment
-          example: This is a very insightful comment!
-        type: string
-      created_at:
-        description: |-
-          The timestamp when the comment was created
-          example: 2025-12-21T10:00:00Z
-        type: string
-      id:
-        description: |-
-          The unique identifier for the comment (UUID)
-          example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      post_id:
-        description: |-
-          The ID of the post this comment belongs to
-          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
-        type: string
-      updated_at:
-        description: |-
-          The timestamp when the comment was last updated
-          example: 2025-12-21T12:30:00Z
-        type: string
-      user_id:
-        description: |-
-          The ID of the user who authored the comment
-          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
         type: string
     type: object
   models.CreateMessageRequest:
@@ -239,6 +115,24 @@ definitions:
           example: Invalid request body or validation failed.
         type: string
     type: object
+  models.FollowRelationship:
+    properties:
+      created_at:
+        description: When the relationship was created.
+        type: string
+      followee_id:
+        description: The ID of the user being followed.
+        type: string
+      follower_id:
+        description: The ID of the user who follows.
+        type: string
+      status:
+        description: 'Relationship status: pending, accepted, blocked.'
+        type: string
+      updated_at:
+        description: When the relationship was last updated.
+        type: string
+    type: object
   models.LoginResponse:
     properties:
       csrf_token:
@@ -255,46 +149,6 @@ definitions:
         allOf:
         - $ref: '#/definitions/models.User'
         description: The details of the successfully logged-in user.
-    type: object
-  models.Post:
-    properties:
-      category_id:
-        description: |-
-          A list of category IDs associated with this post
-          example: [1, 2, 5]
-        items:
-          type: integer
-        type: array
-      content:
-        description: |-
-          The main body content of the post
-          example: I am trying to containerize my Go application...
-        type: string
-      created_at:
-        description: |-
-          The timestamp when the post was created
-          example: 2025-12-29T18:00:00Z
-        type: string
-      id:
-        description: |-
-          The unique identifier for the post (UUID)
-          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
-        type: string
-      title:
-        description: |-
-          The title of the post
-          example: How to use Go with Docker?
-        type: string
-      updated_at:
-        description: |-
-          The timestamp when the post was last updated
-          example: 2025-12-29T19:30:00Z
-        type: string
-      user_id:
-        description: |-
-          The ID of the user who created the post
-          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
-        type: string
     type: object
   models.ReactionWithUser:
     properties:
@@ -448,58 +302,6 @@ info:
   title: Social-network Application API
   version: "1.0"
 paths:
-  /api/v1/categories:
-    get:
-      description: Retrieves a list of all discussion categories available on the
-        platform.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Category'
-            type: array
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      summary: Get all categories
-      tags:
-      - Categories
-  /api/v1/categories/detail:
-    get:
-      description: Retrieves a specific category's details along with a list of posts
-        belonging to it.
-      parameters:
-      - description: Category ID
-        in: query
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.CategoryWithPostsResponse'
-        "400":
-          description: Invalid or missing ID
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: Category not found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      summary: Get category by ID
-      tags:
-      - Categories
   /api/v1/chat/gallery:
     get:
       description: Returns a list of image metadata shared between the user and a
@@ -648,36 +450,6 @@ paths:
       summary: Upload chat image
       tags:
       - Messaging
-  /api/v1/comments:
-    post:
-      consumes:
-      - application/json
-      description: Adds a new comment to a specific post. Triggers a real-time notification
-        for the post owner via WebSocket.
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Comment'
-        "400":
-          description: Missing PostID or Content
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Database error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - CookieAuth: []
-      summary: Create a comment
-      tags:
-      - Comments
   /api/v1/comments/{id}:
     delete:
       description: Performs a soft-delete on a comment. Only the author can perform
@@ -743,40 +515,302 @@ paths:
       summary: Edit a comment
       tags:
       - Comments
-  /api/v1/guest/data:
+  /api/v1/comments/create:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Adds a new comment to a specific post. Optionally upload images.
+        Triggers a real-time notification for the post owner via WebSocket.
+      parameters:
+      - description: Post ID
+        in: formData
+        name: post_id
+        required: true
+        type: string
+      - description: Comment content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Images to attach (multiple allowed)
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Comment with images_uploaded count
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Missing PostID or Content
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Database error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create a comment
+      tags:
+      - Comments
+  /api/v1/follow:
+    post:
+      consumes:
+      - application/json
+      description: Creates an accepted follow relationship when both the follower
+        and followee are public profiles.
+      parameters:
+      - description: Follow target {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.FollowRelationship'
+        "400":
+          description: Invalid request or self-follow
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Only public profiles are supported
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Already following
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Follow a public user
+      tags:
+      - Follow
+  /api/v1/follow/accept/{id}:
+    put:
+      description: Accepts a pending follow request for the authenticated user.
+      parameters:
+      - description: Follower ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: accepted'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Missing follower ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Follow request not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Accept a follow request
+      tags:
+      - Follow
+  /api/v1/follow/delete/{id}:
+    delete:
+      description: Removes an accepted or pending follow relationship for the authenticated
+        user.
+      parameters:
+      - description: Followee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: unfollowed'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Missing followee ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Follow relationship not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Unfollow a user
+      tags:
+      - Follow
+  /api/v1/follow/requests:
     get:
-      description: Retrieves a full hierarchical tree of categories, including their
-        posts, comments, and reactions.
+      description: Returns pending and accepted follow requests for the authenticated
+        user.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.GuestResponse'
+            additionalProperties:
+              items:
+                $ref: '#/definitions/models.FollowRelationship'
+              type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Get structured guest data
+      security:
+      - CookieAuth: []
+      summary: Get follow requests
       tags:
-      - Guest
-  /api/v1/guest/view:
+      - Follow
+  /api/v1/follow/requests/pending:
     get:
-      description: Retrieves all public posts, comments, and reactions in separate
-        flat lists.
+      description: Returns pending follow requests for the authenticated user.
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/models.FollowRelationship'
+              type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Get raw guest view data
+      security:
+      - CookieAuth: []
+      summary: Get pending follow requests
       tags:
-      - Guest
+      - Follow
+  /api/v1/followers:
+    get:
+      description: Returns accepted followers for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/models.FollowRelationship'
+              type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get followers
+      tags:
+      - Follow
+  /api/v1/followers/delete/{id}:
+    delete:
+      description: Removes an accepted or pending follower relationship for the authenticated
+        user.
+      parameters:
+      - description: Follower ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: removed'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Missing follower ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Follow relationship not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Remove a follower
+      tags:
+      - Follow
   /api/v1/images/delete/{postId}:
     delete:
       description: Removes all image associations for a post. Only the post owner
@@ -1098,7 +1132,7 @@ paths:
   /api/v1/my-posts:
     get:
       description: Retrieves a full list of posts created by the logged-in user, including
-        nested categories, comments, and reactions.
+        nested comments and reactions.
       produces:
       - application/json
       responses:
@@ -1165,26 +1199,35 @@ paths:
       summary: Hide notification
       tags:
       - Notifications
-  /api/v1/posts:
+  /api/v1/posts/create:
     post:
       consumes:
-      - application/json
-      description: Creates a new post for the authenticated user with a title, content,
-        and multiple categories.
+      - multipart/form-data
+      description: Creates a new post for the authenticated user with title and content.
+        Optionally upload images in the same request.
       parameters:
-      - description: Post Data (category_ids, title, content)
-        in: body
-        name: post
+      - description: Post title (max 200 chars)
+        in: formData
+        name: title
         required: true
-        schema:
-          type: object
+        type: string
+      - description: Post content (max 2000 chars)
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Images to attach (multiple allowed, max 20MB total)
+        in: formData
+        name: image
+        type: file
       produces:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Post with optional images uploaded count
           schema:
-            $ref: '#/definitions/models.Post'
+            additionalProperties: true
+            type: object
         "400":
           description: Invalid request body or missing fields
           schema:
@@ -1202,7 +1245,7 @@ paths:
       summary: Create a post
       tags:
       - Posts
-  /api/v1/posts/{id}:
+  /api/v1/posts/delete/{id}:
     delete:
       description: Marks a post as deleted without removing it from the database.
         Only the owner can delete it.
@@ -1214,7 +1257,11 @@ paths:
         type: string
       responses:
         "200":
-          description: OK
+          description: 'status: deleted'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "403":
           description: Forbidden
           schema:
@@ -1226,77 +1273,6 @@ paths:
       security:
       - CookieAuth: []
       summary: Delete post
-      tags:
-      - Posts
-  /api/v1/posts/{id}/content:
-    put:
-      consumes:
-      - application/json
-      description: Allows the post owner to update only the main text content of their
-        post.
-      parameters:
-      - description: Post ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: New Content
-        in: body
-        name: content
-        required: true
-        schema:
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "403":
-          description: 'Forbidden: Not the owner'
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: Post not found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - CookieAuth: []
-      summary: Edit post content
-      tags:
-      - Posts
-  /api/v1/posts/{id}/title:
-    put:
-      consumes:
-      - application/json
-      description: Allows the post owner to update only the title of their post.
-      parameters:
-      - description: Post ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: New Title
-        in: body
-        name: title
-        required: true
-        schema:
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "403":
-          description: 'Forbidden: Not the owner'
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: Post not found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - CookieAuth: []
-      summary: Edit post title
       tags:
       - Posts
   /api/v1/posts/disliked:
@@ -1325,6 +1301,109 @@ paths:
       summary: Get disliked posts
       tags:
       - User Engagement
+  /api/v1/posts/edit-content/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Allows the post owner to update only the main text content of their
+        post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New content {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: content updated'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or missing content
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not the post owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Edit post content
+      tags:
+      - Posts
+  /api/v1/posts/edit-title/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Allows the post owner to update only the title of their post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New title {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: title updated'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or missing title
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not the post owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Edit post title
+      tags:
+      - Posts
   /api/v1/posts/liked:
     get:
       description: Returns a list of all posts the authenticated user has reacted
@@ -1601,6 +1680,49 @@ paths:
       security:
       - CookieAuth: []
       summary: Update user profile
+      tags:
+      - User Profile
+  /api/v1/users/{id}:
+    get:
+      description: Returns profile details of any user. For private profiles, only
+        followers can see full details.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile data with posts, followers, and following
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Missing user ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Private profile - not a follower
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get user profile by ID
       tags:
       - User Profile
   /api/v1/verify:

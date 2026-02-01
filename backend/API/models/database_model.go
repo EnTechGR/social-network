@@ -3,11 +3,10 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"social-network/config"
-	dbmigrate "social-network/pkg/db/sqlite"
 	"io"
 	"os"
 	"path/filepath"
+	dbmigrate "social-network/pkg/db/sqlite"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -49,10 +48,6 @@ func InitDB() (*sql.DB, error) {
 	// Seed default categories idempotently
 	// Note: Categories are seeded by application code, not migrations
 	// This allows easy customization without creating new migration files
-	if err := populateCategories(db, config.Categories); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to populate categories: %v", err)
-	}
 
 	return db, nil
 }
@@ -151,12 +146,12 @@ func cleanupOldBackups(maxAgeDays int) error {
 		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "social_network_backup" {
 			continue
 		}
-		
+
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
-		
+
 		if info.ModTime().Before(cutoff) {
 			path := filepath.Join(backupDir, entry.Name())
 			if err := os.Remove(path); err == nil {
@@ -164,7 +159,7 @@ func cleanupOldBackups(maxAgeDays int) error {
 			}
 		}
 	}
-	
+
 	if deleted > 0 {
 		fmt.Printf("🧹 Cleaned up %d old backup(s)\n", deleted)
 	}
@@ -236,12 +231,12 @@ func ListBackups() ([]string, error) {
 		if filepath.Ext(entry.Name()) != ".db" || len(entry.Name()) < 12 || entry.Name()[:12] != "social_network_backup" {
 			continue
 		}
-		
+
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
-		
+
 		path := filepath.Join(backupDir, entry.Name())
 		backups = append(backups, fmt.Sprintf(
 			"%s (size: %d bytes, modified: %s)",

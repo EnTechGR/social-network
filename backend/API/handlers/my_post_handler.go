@@ -9,6 +9,8 @@ import (
 	"social-network/utils"
 )
 
+const apiStaticBase = "http://localhost:8080/static/"
+
 type MyPostsHandler struct {
 	PostRepo     *repository.PostRepository
 	CommentRepo  *repository.CommentRepository
@@ -20,11 +22,25 @@ func NewMyPostsHandler(postRepo *repository.PostRepository, commentRepo *reposit
 	return &MyPostsHandler{PostRepo: postRepo, CommentRepo: commentRepo, ReactionRepo: reactionRepo, ImageRepo: imageRepo}
 }
 
-// CategoryInfo represents a simplified category object
-// swagger:model CategoryInfo
-type CategoryInfo struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+// ReactionResponse represents a simplified reaction
+// swagger:model ReactionResponse
+type ReactionResponse struct {
+	UserID       string    `json:"user_id"`
+	Nickname     string    `json:"nickname"`
+	ReactionType int       `json:"reaction_type"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// CommentResponse represents a simplified comment
+// swagger:model CommentResponse
+type CommentResponse struct {
+	ID        string             `json:"id"`
+	UserID    string             `json:"user_id"`
+	Nickname  string             `json:"nickname"`
+	Content   string             `json:"content"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
+	Reactions []ReactionResponse `json:"reactions,omitempty"`
 }
 
 // MyPostResponse represents a post with full context for the user's engagement view
@@ -33,7 +49,6 @@ type MyPostResponse struct {
 	ID           string             `json:"id"`
 	UserID       string             `json:"user_id"`
 	Nickname     string             `json:"nickname"`
-	Categories   []CategoryInfo     `json:"categories"`
 	Title        string             `json:"title"`
 	Content      string             `json:"content"`
 	ImageURL     string             `json:"image_url,omitempty"`
@@ -46,7 +61,7 @@ type MyPostResponse struct {
 
 // GetMyPosts retrieves all posts created by the authenticated user
 // @Summary      Get own posts
-// @Description  Retrieves a full list of posts created by the logged-in user, including nested categories, comments, and reactions.
+// @Description  Retrieves a full list of posts created by the logged-in user, including nested comments and reactions.
 // @Tags         User Activity
 // @Security     CookieAuth
 // @Produce      json
@@ -74,16 +89,6 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 
 	var response []MyPostResponse
 	for _, post := range posts {
-		categories, err := h.PostRepo.GetCategoriesByPostID(post.ID)
-		if err != nil {
-			utils.ErrorResponse(w, "Failed to load categories", http.StatusInternalServerError)
-			return
-		}
-		var catInfo []CategoryInfo
-		for _, c := range categories {
-			catInfo = append(catInfo, CategoryInfo{ID: c.ID, Name: c.Name})
-		}
-
 		comments, err := h.CommentRepo.GetCommentsByPostWithUser(post.ID)
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to load comments", http.StatusInternalServerError)
@@ -146,7 +151,6 @@ func (h *MyPostsHandler) GetMyPosts(w http.ResponseWriter, r *http.Request) {
 			ID:           post.ID,
 			UserID:       post.UserID,
 			Nickname:     post.Nickname,
-			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
 			ImageURL:     imgURL,
@@ -191,16 +195,6 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 
 	var response []MyPostResponse
 	for _, post := range posts {
-		categories, err := h.PostRepo.GetCategoriesByPostID(post.ID)
-		if err != nil {
-			utils.ErrorResponse(w, "Failed to load categories", http.StatusInternalServerError)
-			return
-		}
-		var catInfo []CategoryInfo
-		for _, c := range categories {
-			catInfo = append(catInfo, CategoryInfo{ID: c.ID, Name: c.Name})
-		}
-
 		comments, err := h.CommentRepo.GetCommentsByPostWithUser(post.ID)
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to load comments", http.StatusInternalServerError)
@@ -263,7 +257,6 @@ func (h *MyPostsHandler) GetCommentedPosts(w http.ResponseWriter, r *http.Reques
 			ID:           post.ID,
 			UserID:       post.UserID,
 			Nickname:     post.Nickname,
-			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
 			ImageURL:     imgURL,

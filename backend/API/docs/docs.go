@@ -15,82 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/categories": {
-            "get": {
-                "description": "Retrieves a list of all discussion categories available on the platform.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get all categories",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Category"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/categories/detail": {
-            "get": {
-                "description": "Retrieves a specific category's details along with a list of posts belonging to it.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get category by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Category ID",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.CategoryWithPostsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid or missing ID",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Category not found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/chat/gallery": {
             "get": {
                 "security": [
@@ -317,16 +241,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/comments": {
+        "/api/v1/comments/create": {
             "post": {
                 "security": [
                     {
                         "CookieAuth": []
                     }
                 ],
-                "description": "Adds a new comment to a specific post. Triggers a real-time notification for the post owner via WebSocket.",
+                "description": "Adds a new comment to a specific post. Optionally upload images. Triggers a real-time notification for the post owner via WebSocket.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -335,11 +259,34 @@ const docTemplate = `{
                     "Comments"
                 ],
                 "summary": "Create a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comment content",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Images to attach (multiple allowed)",
+                        "name": "image",
+                        "in": "formData"
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Comment with images_uploaded count",
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
@@ -462,21 +409,70 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/guest/data": {
-            "get": {
-                "description": "Retrieves a full hierarchical tree of categories, including their posts, comments, and reactions.",
+        "/api/v1/follow": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates an accepted follow relationship when both the follower and followee are public profiles.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Guest"
+                    "Follow"
                 ],
-                "summary": "Get structured guest data",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                "summary": "Follow a public user",
+                "parameters": [
+                    {
+                        "description": "Follow target {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.GuestResponse"
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.FollowRelationship"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or self-follow",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Only public profiles are supported",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Already following",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
@@ -488,19 +484,308 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/guest/view": {
-            "get": {
-                "description": "Retrieves all public posts, comments, and reactions in separate flat lists.",
+        "/api/v1/follow/accept/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Accepts a pending follow request for the authenticated user.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Guest"
+                    "Follow"
                 ],
-                "summary": "Get raw guest view data",
+                "summary": "Accept a follow request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Follower ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "status: accepted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing follower ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Follow request not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/follow/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Removes an accepted or pending follow relationship for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Unfollow a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Followee ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: unfollowed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing followee ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Follow relationship not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/follow/requests": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns pending and accepted follow requests for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Get follow requests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.FollowRelationship"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/follow/requests/pending": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns pending follow requests for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Get pending follow requests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.FollowRelationship"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/followers": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns accepted followers for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Get followers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.FollowRelationship"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/followers/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Removes an accepted or pending follower relationship for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Remove a follower",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Follower ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: removed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing follower ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Follow relationship not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
@@ -1009,7 +1294,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Retrieves a full list of posts created by the logged-in user, including nested categories, comments, and reactions.",
+                "description": "Retrieves a full list of posts created by the logged-in user, including nested comments and reactions.",
                 "produces": [
                     "application/json"
                 ],
@@ -1110,16 +1395,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/posts": {
+        "/api/v1/posts/create": {
             "post": {
                 "security": [
                     {
                         "CookieAuth": []
                     }
                 ],
-                "description": "Creates a new post for the authenticated user with a title, content, and multiple categories.",
+                "description": "Creates a new post for the authenticated user with title and content. Optionally upload images in the same request.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1130,20 +1415,32 @@ const docTemplate = `{
                 "summary": "Create a post",
                 "parameters": [
                     {
-                        "description": "Post Data (category_ids, title, content)",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
+                        "type": "string",
+                        "description": "Post title (max 200 chars)",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post content (max 2000 chars)",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Images to attach (multiple allowed, max 20MB total)",
+                        "name": "image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Post with optional images uploaded count",
                         "schema": {
-                            "$ref": "#/definitions/models.Post"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
@@ -1160,6 +1457,52 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/posts/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Marks a post as deleted without removing it from the database. Only the owner can delete it.",
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Delete post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: deleted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1207,6 +1550,164 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/posts/edit-content/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to update only the main text content of their post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Edit post content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New content {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: content updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing content",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not the post owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/posts/edit-title/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to update only the title of their post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Edit post title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New title {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: title updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing title",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not the post owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/posts/liked": {
             "get": {
                 "security": [
@@ -1234,156 +1735,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/posts/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Marks a post as deleted without removing it from the database. Only the owner can delete it.",
-                "tags": [
-                    "Posts"
-                ],
-                "summary": "Delete post",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Post ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Post not found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/posts/{id}/content": {
-            "put": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Allows the post owner to update only the main text content of their post.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Posts"
-                ],
-                "summary": "Edit post content",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Post ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New Content",
-                        "name": "content",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden: Not the owner",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Post not found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/posts/{id}/title": {
-            "put": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Allows the post owner to update only the title of their post.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Posts"
-                ],
-                "summary": "Edit post title",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Post ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New Title",
-                        "name": "title",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden: Not the owner",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Post not found",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1774,6 +2125,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns profile details of any user. For private profiles, only followers can see full details.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Get user profile by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile data with posts, followers, and following",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Missing user ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Private profile - not a follower",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/verify": {
             "get": {
                 "security": [
@@ -1949,54 +2365,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.CategoryInfo": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.CategoryResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "posts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.PostResponse"
-                    }
-                }
-            }
-        },
-        "handlers.CategoryWithPostsResponse": {
-            "description": "Response containing category info and its associated post list",
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Technology"
-                },
-                "posts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Post"
-                    }
-                }
-            }
-        },
         "handlers.CommentResponse": {
             "type": "object",
             "properties": {
@@ -2026,26 +2394,9 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.GuestResponse": {
-            "type": "object",
-            "properties": {
-                "categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.CategoryResponse"
-                    }
-                }
-            }
-        },
         "handlers.MyPostResponse": {
             "type": "object",
             "properties": {
-                "categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.CategoryInfo"
-                    }
-                },
                 "comments": {
                     "type": "array",
                     "items": {
@@ -2077,58 +2428,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.PostResponse": {
-            "type": "object",
-            "properties": {
-                "category_id": {
-                    "type": "integer"
-                },
-                "category_name": {
-                    "description": "NEW FIELD",
-                    "type": "string"
-                },
-                "comments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.CommentResponse"
-                    }
-                },
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "nickname": {
-                    "type": "string"
-                },
-                "reactions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.ReactionResponse"
-                    }
-                },
-                "thumbnail_url": {
-                    "type": "string"
-                },
-                "title": {
-                    "description": "Optional title field",
                     "type": "string"
                 },
                 "updated_at": {
@@ -2187,48 +2486,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Category": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "description": "The unique identifier for the category.\nexample: 1",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "The name of the category.\nexample: Technology",
-                    "type": "string"
-                }
-            }
-        },
-        "models.Comment": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "description": "The text content of the comment\nexample: This is a very insightful comment!",
-                    "type": "string"
-                },
-                "created_at": {
-                    "description": "The timestamp when the comment was created\nexample: 2025-12-21T10:00:00Z",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "The unique identifier for the comment (UUID)\nexample: 550e8400-e29b-41d4-a716-446655440000",
-                    "type": "string"
-                },
-                "post_id": {
-                    "description": "The ID of the post this comment belongs to\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
-                    "type": "string"
-                },
-                "updated_at": {
-                    "description": "The timestamp when the comment was last updated\nexample: 2025-12-21T12:30:00Z",
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "The ID of the user who authored the comment\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-                    "type": "string"
-                }
-            }
-        },
         "models.CreateMessageRequest": {
             "type": "object",
             "required": [
@@ -2263,6 +2520,31 @@ const docTemplate = `{
                 }
             }
         },
+        "models.FollowRelationship": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "When the relationship was created.",
+                    "type": "string"
+                },
+                "followee_id": {
+                    "description": "The ID of the user being followed.",
+                    "type": "string"
+                },
+                "follower_id": {
+                    "description": "The ID of the user who follows.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Relationship status: pending, accepted, blocked.",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "When the relationship was last updated.",
+                    "type": "string"
+                }
+            }
+        },
         "models.LoginResponse": {
             "type": "object",
             "properties": {
@@ -2281,42 +2563,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.User"
                         }
                     ]
-                }
-            }
-        },
-        "models.Post": {
-            "type": "object",
-            "properties": {
-                "category_id": {
-                    "description": "A list of category IDs associated with this post\nexample: [1, 2, 5]",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "content": {
-                    "description": "The main body content of the post\nexample: I am trying to containerize my Go application...",
-                    "type": "string"
-                },
-                "created_at": {
-                    "description": "The timestamp when the post was created\nexample: 2025-12-29T18:00:00Z",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "The unique identifier for the post (UUID)\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
-                    "type": "string"
-                },
-                "title": {
-                    "description": "The title of the post\nexample: How to use Go with Docker?",
-                    "type": "string"
-                },
-                "updated_at": {
-                    "description": "The timestamp when the post was last updated\nexample: 2025-12-29T19:30:00Z",
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "The ID of the user who created the post\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-                    "type": "string"
                 }
             }
         },

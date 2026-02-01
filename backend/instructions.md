@@ -1,10 +1,7 @@
 # Instructions
 
-## Guest view
-curl  http://localhost:8080/forum/api/guest
 
-## Get categories
-curl http://localhost:8080/forum/api/categories
+
 
 ## Register a new user:
 
@@ -28,23 +25,40 @@ curl -X POST http://localhost:8080/forum/api/session/logout \
 
  ## Create a Post
 
- curl -X POST http://localhost:8080/forum/api/posts \
+ curl -s -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: OZAWt-K_X-Lu5ooC0vQgKSLZpz1o9bYhfwlsvXPqRHg=" \
   -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{"category_id":1,"title":"My first post","content":"Hello forum!"}'
+  -b alice1.cookies \
+  -d '{
+    "title": "My First Post",
+    "content": "This is the content of my post"
+  }'
 
-  curl -X POST http://localhost:8080/forum/api/posts/create \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{"title":"My first TITLE","content":"Hello new forum!","category_ids":[1,2]}'
+curl -X POST http://localhost:8080/api/v1/posts/create \ 
+  -H "X-CSRF-Token: LbbbDcANt3sVv5joaKOzOtdITcd2JMje2NlraytIugs=" \
+  -b alice1.cookies \
+  -F "title=My Post with Images" \            
+  -F "content=Check out these amazing pictures \
+  -F "image=@./social-network/3551739.jpg"
 
 ## Create a comment
 
-curl -X POST http://localhost:8080/forum/api/comments \
+curl -s -X POST http://localhost:8080/api/v1/comments/create \
   -H "Content-Type: application/json" \
-  -d '{"post_id":"<POST_ID>","content":"Nice post!"}' \
-  -b cookies.txt
+  -H "X-CSRF-Token: S0XOOLHwvm4gUOycu1grPyO-zy3k1sY0PhImiXAAaUQ=" \
+  -b bob1.cookies \
+  -d '{
+    "post_id": "6651178e-fcf5-4443-9687-d328b7a508b4",
+    "content": "Great post, Alice! Love the pictures!"
+  }'
 
+curl -s -X POST http://localhost:8080/api/v1/comments/create \
+  -H "X-CSRF-Token: -ZwK3QNUxESO-br7eV1s6C_JnmLDiJhnFJHikHy3maU=" \
+  -b bob1.cookies \
+  -F "post_id=0a5aba7f-40ef-4675-abaf-3fdfa660e2bd" \
+  -F "content=Great post Alice! Here's my feedback image:" \
+  -F "image=@/home/entech/win_documents/social-network/3551739.jpg"
+  
 ## React to a post or comment
 
 To like or dislike a post or comment you must be logged in. Use the ID of the
@@ -101,3 +115,9 @@ curl -X DELETE http://localhost:8080/forum/api/comments/delete/{ID} \
   curl -i -X POST http://localhost:8080/forum/api/session/login \
   -H "Content-Type: application/json" \
   -d '{"email":"pat@pat.com","password":"pat123456"}'
+
+
+  curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: nZDzwtvdZ3I0Ppab-M0_AMouafxmOVo0Ffc-Fe4QRAs=" \
+  -H "Content-Type: application/json" \
+  -d '{"category_id":1,"title":"My first post","content":"Hello forum!"}'

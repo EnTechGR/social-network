@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"net/http"
+	
 	"social-network/middleware"
 	"social-network/repository"
 	"social-network/utils"
 )
+
+// NOTE: CommentResponse, ReactionResponse, MyPostResponse, and apiStaticBase
+// are defined in my_post_handler.go and shared across the handlers package
 
 type LikedPostsHandler struct {
 	PostRepo     *repository.PostRepository
@@ -48,16 +52,6 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 
 	var response []MyPostResponse
 	for _, post := range posts {
-		categories, err := h.PostRepo.GetCategoriesByPostID(post.ID)
-		if err != nil {
-			utils.ErrorResponse(w, "Failed to load categories", http.StatusInternalServerError)
-			return
-		}
-		var catInfo []CategoryInfo
-		for _, c := range categories {
-			catInfo = append(catInfo, CategoryInfo{ID: c.ID, Name: c.Name})
-		}
-
 		comments, err := h.CommentRepo.GetCommentsByPostWithUser(post.ID)
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to load comments", http.StatusInternalServerError)
@@ -71,6 +65,7 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
 				Reactions: []ReactionResponse{},
 			}
 			reactions, err := h.ReactionRepo.GetReactionsByCommentWithUser(c.ID)
@@ -119,12 +114,12 @@ func (h *LikedPostsHandler) GetLikedPosts(w http.ResponseWriter, r *http.Request
 			ID:           post.ID,
 			UserID:       post.UserID,
 			Nickname:     post.Nickname,
-			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
 			ImageURL:     imgURL,
 			ThumbnailURL: thumbURL,
 			CreatedAt:    post.CreatedAt,
+			UpdatedAt:    post.UpdatedAt,
 			Comments:     commentResp,
 			Reactions:    reactResp,
 		})
@@ -163,16 +158,6 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 
 	var response []MyPostResponse
 	for _, post := range posts {
-		categories, err := h.PostRepo.GetCategoriesByPostID(post.ID)
-		if err != nil {
-			utils.ErrorResponse(w, "Failed to load categories", http.StatusInternalServerError)
-			return
-		}
-		var catInfo []CategoryInfo
-		for _, c := range categories {
-			catInfo = append(catInfo, CategoryInfo{ID: c.ID, Name: c.Name})
-		}
-
 		comments, err := h.CommentRepo.GetCommentsByPostWithUser(post.ID)
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to load comments", http.StatusInternalServerError)
@@ -186,6 +171,7 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 				Nickname:  c.Nickname,
 				Content:   utils.DerefString(c.Content),
 				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
 				Reactions: []ReactionResponse{},
 			}
 			reactions, err := h.ReactionRepo.GetReactionsByCommentWithUser(c.ID)
@@ -234,12 +220,12 @@ func (h *LikedPostsHandler) GetDislikedPosts(w http.ResponseWriter, r *http.Requ
 			ID:           post.ID,
 			UserID:       post.UserID,
 			Nickname:     post.Nickname,
-			Categories:   catInfo,
 			Title:        utils.DerefString(post.Title),
 			Content:      utils.DerefString(post.Content),
 			ImageURL:     imgURL,
 			ThumbnailURL: thumbURL,
 			CreatedAt:    post.CreatedAt,
+			UpdatedAt:    post.UpdatedAt,
 			Comments:     commentResp,
 			Reactions:    reactResp,
 		})

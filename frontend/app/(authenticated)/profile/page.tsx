@@ -8,9 +8,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
+import { getProfile } from '@/lib/api';
 
 // Mock user data for testing - replace with API call later
 const mockUser = {
@@ -26,9 +27,44 @@ const mockUser = {
 };
 
 export default function ProfilePage() {
-  // Local state to handle toggle (will be replaced with API call)
+  const [user, setUser] = useState(mockUser);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(mockUser.isPublic);
   const [activeTab, setActiveTab] = useState('Posts');
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        setIsLoading(true);
+        const profileData = await getProfile();
+        
+        // Get avatar URL from the avatar object
+        const avatarUrl = profileData.avatar?.file_path || profileData.avatar?.thumbnail_path || '/test-avatar.png';
+        
+        // Map API response to user object
+        setUser({
+          avatarUrl: avatarUrl.startsWith('http') ? avatarUrl : `http://localhost:8080${avatarUrl}`,
+          name: `${profileData.first_name} ${profileData.last_name}`,
+          username: profileData.nickname || profileData.email.split('@')[0],
+          bio: profileData.about_me || '',
+          email: profileData.email,
+          birthDate: profileData.date_of_birth,
+          isPublic: !profileData.is_private,
+          followersCount: profileData.followers_count || 0,
+          followingCount: profileData.following_count || 0,
+        });
+        setIsPublic(!profileData.is_private);
+      } catch (err: any) {
+        console.error('Failed to fetch profile:', err);
+        setError(err.message || 'Failed to load profile');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProfile();
+  }, []);
 
   const handleTogglePublic = (newValue: boolean) => {
     setIsPublic(newValue);
@@ -52,7 +88,7 @@ export default function ProfilePage() {
         {/* Profile Card */}
         <ProfileWrap
           user={{
-            ...mockUser,
+            ...user,
             isPublic, // Use local state for toggle
           }}
           isSelf={true}

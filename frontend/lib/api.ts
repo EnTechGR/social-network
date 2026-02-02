@@ -177,3 +177,14 @@ export async function logout(): Promise<void> {
     method: 'POST',
   });
 }
+
+/**
+ * Get user profile data
+ * GET /api/v1/user/profile
+ * Returns profile information for the current user
+ */
+export async function getProfile(): Promise<any> {
+  return fetchAPI<any>('/api/v1/user/profile', {
+    method: 'GET',
+  });
+}

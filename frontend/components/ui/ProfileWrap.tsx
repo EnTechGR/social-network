@@ -141,7 +141,7 @@ export default function ProfileWrap({
       {/* Column 2: User Details */}
       <div className="flex flex-col items-start gap-3 min-w-[280px]">
         {/* Username */}
-        <InfoRow label="Username">@{user.username}</InfoRow>
+        <InfoRow label="Username">{user.username}</InfoRow>
 
         {/* Email */}
         <InfoRow label="Email">{user.email}</InfoRow>

@@ -1,8 +1,5 @@
 # Instructions
 
-
-
-
 ## Register a new user:
 
 curl -X POST http://localhost:8080/forum/api/register \
@@ -22,24 +19,43 @@ curl -X POST http://localhost:8080/forum/api/session/logout \
   -b cookies.txt
 
 
-
- ## Create a Post
+## Create a Post
 
  curl -s -X POST http://localhost:8080/api/v1/posts/create \
-  -H "X-CSRF-Token: OZAWt-K_X-Lu5ooC0vQgKSLZpz1o9bYhfwlsvXPqRHg=" \
+  -H "X-CSRF-Token: 4ysqu61r4Djik2jPBrhUyvWta_HYVHVZxJs1j6SCd20=" \
   -H "Content-Type: application/json" \
-  -b alice1.cookies \
+  -b alice.cookies \
   -d '{
     "title": "My First Post",
     "content": "This is the content of my post"
   }'
 
-curl -X POST http://localhost:8080/api/v1/posts/create \ 
-  -H "X-CSRF-Token: LbbbDcANt3sVv5joaKOzOtdITcd2JMje2NlraytIugs=" \
-  -b alice1.cookies \
-  -F "title=My Post with Images" \            
-  -F "content=Check out these amazing pictures \
-  -F "image=@./social-network/3551739.jpg"
+curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: 4ysqu61r4Djik2jPBrhUyvWta_HYVHVZxJs1j6SCd20=" \
+  -b alice.cookies \
+  -F "title=My Post with Images" \
+  -F "content=Check out these amazing pictures" \
+  -F "image=@./3551739.jpg"
+
+curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: 4ysqu61r4Djik2jPBrhUyvWta_HYVHVZxJs1j6SCd20=" \
+  -b alice.cookies \
+  -F "title=Followers only" \
+  -F "content=Only followers can see" \
+  -F "visibility=followers"
+
+curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: 4ysqu61r4Djik2jPBrhUyvWta_HYVHVZxJs1j6SCd20=" \
+  -b alice.cookies \
+  -F "title=Private Post" \
+  -F "content=Only selected users" \
+  -F "visibility=private"
+
+curl -X PUT http://localhost:8080/api/v1/posts/update-visibility/c5fd747f-42f4-4851-b486-0ec489d43c05 \
+  -H "X-CSRF-Token: 4ysqu61r4Djik2jPBrhUyvWta_HYVHVZxJs1j6SCd20=" \
+  -b alice.cookies \
+  -H "Content-Type: application/json" \
+  -d '{"visibility": "followers"}'
 
 ## Create a comment
 
@@ -77,6 +93,26 @@ curl -X POST http://localhost:8080/forum/api/react \
 ```
 Reaction type `1` represents a like and `2` represents a dislike. Running the
 command again with the same parameters will toggle the reaction off.
+
+
+# Add allowed users
+
+curl -X POST http://localhost:8080/api/v1/posts/create \
+  -H "X-CSRF-Token: KPWe4foeCTjMm0RHYwfq3gXNKFO7JRXb_hnAOXZM9XY=" \
+  -b alice.cookies \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"title\": \"Private Post for Bob\",
+    \"content\": \"This post is private and only Bob can see it\",
+    \"visibility\": \"private\",
+    \"allowed_user_ids\": [\"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"]
+  }"
+
+curl -X POST http://localhost:8080/api/v1/posts/remove-allowed-user/cf24575c-f69e-40ec-b0bb-647d2f8d0ef3 \
+  -H "X-CSRF-Token: KPWe4foeCTjMm0RHYwfq3gXNKFO7JRXb_hnAOXZM9XY=" \
+  -b alice.cookies \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "7d08e50f-ae3b-4b79-a352-fc2d4c883958"}'
 
 # DOCKER
 

@@ -5,6 +5,7 @@
 .env.production
 backend/API/.env
 **/.env
+frontend/.env.example
 
 # Backend (Go)
 backend/API/*.test

@@ -36,6 +36,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	groupInviteRepo := group.NewGroupInviteRepository(db)
 	groupRequestRepo := group.NewGroupJoinRequestRepository(db)
 	groupEventRepo := group.NewGroupEventRepository(db)
+	groupPostHandler := handlers.NewGroupPostHandler(postRepo, imageRepo)
 
 	// ✅ Create and start WebSocket hub
 	hub := websocket.NewHub()
@@ -170,6 +171,17 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/groups/", protected(http.HandlerFunc(groupHandler.GetGroupByID)))       // GET /api/v1/groups/{id}
 	apiMux.Handle("/api/v1/groups/update/", protected(http.HandlerFunc(groupHandler.UpdateGroup))) // PUT /api/v1/groups/{id}
 	apiMux.Handle("/api/v1/groups/delete/", protected(http.HandlerFunc(groupHandler.DeleteGroup))) // DELETE /api/v1/groups/{id}
+	// Create post in a group (only members can create)
+	apiMux.Handle("/api/v1/groups/posts/create/", protected(http.HandlerFunc(groupPostHandler.CreateGroupPost)))
+	// GET /api/v1/groups/{group_id}/posts/create
+
+	// Get all posts in a group (only members can view)
+	apiMux.Handle("/api/v1/groups/posts/", protected(http.HandlerFunc(groupPostHandler.GetGroupPosts)))
+	// GET /api/v1/groups/{group_id}/posts
+
+	// Get specific group post (only members can view)
+	apiMux.Handle("/api/v1/groups/post/", protected(http.HandlerFunc(groupPostHandler.GetGroupPostByID)))
+	// GET /api/v1/groups/post/{post_id}
 
 	// Group member management
 	apiMux.Handle("/api/v1/groups/members/", protected(http.HandlerFunc(groupMemberHandler.GetGroupMembers)))     // GET /api/v1/groups/{id}/members

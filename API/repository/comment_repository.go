@@ -112,3 +112,58 @@ func (r *CommentRepository) SoftDeleteComment(commentID string) error {
 	_, err := r.db.Exec(`UPDATE comments SET content = NULL, updated_at = ? WHERE comment_id = ?`, time.Now(), commentID)
 	return err
 }
+
+// CheckCommentAccessForGroupPost verifies if a user can comment on a group post
+// Returns true if:
+// - The post is not a group post (groupID is NULL), OR
+// - The user is an active member of the group
+func (r *CommentRepository) CheckCommentAccessForGroupPost(postID, userID string) (bool, error) {
+	// First, get the group_id of the post
+	var groupID sql.NullString
+	err := r.db.QueryRow(`
+		SELECT group_id FROM posts WHERE post_id = ?
+	`, postID).Scan(&groupID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil // Post doesn't exist
+		}
+		return false, err
+	}
+
+	// If this is not a group post, allow access
+	if !groupID.Valid {
+		return true, nil
+	}
+
+	// Check if user is a member of the group
+	var count int
+	err = r.db.QueryRow(`
+		SELECT COUNT(*) FROM group_members 
+		WHERE group_id = ? AND user_id = ?
+	`, groupID.String, userID).Scan(&count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// GetCommentsByPostID should be updated to check group membership
+// This is a conceptual example - actual implementation depends on your CommentRepository structure
+func (r *CommentRepository) GetCommentsByPostIDWithAccess(postID, requesterUserID string) ([]models.Comment, error) {
+	// First check if requester has access to view this post's comments
+	hasAccess, err := r.CheckCommentAccessForGroupPost(postID, requesterUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hasAccess {
+		return []models.Comment{}, nil // Return empty slice if no access
+	}
+
+	// Your existing query to get comments
+	// ... (rest of your implementation)
+	return nil, nil // Placeholder
+}

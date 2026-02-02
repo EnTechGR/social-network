@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Button from './Button';
 import IconButton from './IconButtons';
 import Avatar from './Avatar';
+import DropdownButton from './DropdownButton';
 import { ImagePlus } from 'lucide-react';
 import Image from 'next/image';
+
+const VISIBILITY_OPTIONS = ['PUBLIC', 'FOLLOWERS', 'PRIVATE'] as const;
 
 interface Follower {
   id: string;
@@ -35,12 +38,10 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'>('PUBLIC');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedFollowers, setSelectedFollowers] = useState<Set<string>>(new Set());
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<{ file: File; preview: string } | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,18 +71,6 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
       setIsAtBottom(atBottom);
     }
   };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   if (!isOpen && !preview) return null;
 
@@ -152,74 +141,12 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
           <h4>Create post</h4>
 
           {/* Visibility Dropdown */}
-          <div ref={dropdownRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between w-34 px-5 py-2 bg-white border border-[#222] cursor-pointer shadow-[0.25rem_0.25rem_0_0_#000]"
-              style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-            >
-              <span className="text-base font-medium uppercase tracking-[-0.01em] leading-relaxed">
-                {visibility}
-              </span>
-              <svg
-                width="12"
-                height="7"
-                viewBox="0 0 12 7"
-                fill="none"
-                className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
-              >
-                <path
-                  d="M1 1L6 6L11 1"
-                  stroke="#000000"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 w-34 bg-white border border-[#222] border-t-0 z-10 shadow-[0.25rem_0.25rem_0_0_#000]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisibility('PUBLIC');
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`block w-full px-5 py-2 text-left text-base font-medium uppercase tracking-[-0.01em] leading-relaxed hover:bg-parea-grey transition-colors cursor-pointer ${visibility === 'PUBLIC' ? 'bg-parea-grey' : ''
-                    }`}
-                  style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                >
-                  PUBLIC
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisibility('FOLLOWERS');
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`block w-full px-5 py-2 text-left text-base font-medium uppercase tracking-[-0.01em] leading-relaxed hover:bg-parea-grey transition-colors cursor-pointer ${visibility === 'FOLLOWERS' ? 'bg-parea-grey' : ''
-                    }`}
-                  style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                >
-                  FOLLOWERS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisibility('PRIVATE');
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`block w-full px-5 py-2 text-left text-base font-medium uppercase tracking-[-0.01em] leading-relaxed hover:bg-parea-grey transition-colors cursor-pointer ${visibility === 'PRIVATE' ? 'bg-parea-grey' : ''
-                    }`}
-                  style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                >
-                  PRIVATE
-                </button>
-              </div>
-            )}
-          </div>
+          <DropdownButton
+            options={[...VISIBILITY_OPTIONS]}
+            value={visibility}
+            onValueChange={(v) => setVisibility(v as 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE')}
+            aria-label="Post visibility"
+          />
         </div>
 
         {/* Title Field */}

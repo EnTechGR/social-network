@@ -24,8 +24,8 @@ const sampleComments: CommentItem[] = [
 
 export default function PostPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <div className="min-h-screen bg-parea-white p-8">
-      <div className="max-w-4xl mx-auto w-full">
+    <div className="min-h-screen bg-parea-white px-16 py-12">
+      <div className="w-full">
         <PostDetailFrame
           title="Local Explorer Discovers Hidden Urban Gems"
           avatarSrc="/test-avatar.png"

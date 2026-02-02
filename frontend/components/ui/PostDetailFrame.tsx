@@ -40,7 +40,7 @@ export function PostDetailFrame({
     <div className="flex flex-col items-start gap-9 self-stretch">
       {/* Inner: back button + title */}
       <div className="flex flex-col items-start gap-6 self-stretch">
-        <div className="flex justify-end items-center gap-2 self-stretch">
+        <div className="flex justify-start items-center gap-2 self-stretch">
           <Link href="/feed" aria-label="Back to feed">
             <IconButton
               variant="arrow-left"
@@ -63,8 +63,8 @@ export function PostDetailFrame({
           boxShadow: '8px 8px 0 0 var(--parea-black)',
         }}
       >
-        {/* Top row: avatar (left) + like/comment (right) */}
-        <div className="flex items-center justify-between w-full px-8 pt-6 pb-4">
+        {/* Top row: avatar (left) + like/comment (right); on mobile reactions under avatar */}
+        <div className="flex flex-col gap-4 w-full px-8 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <CardAvatar
             src={avatarSrc}
             alt={avatarAlt}

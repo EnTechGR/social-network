@@ -73,7 +73,7 @@ export default function DatePicker({ selectedDate, onSelectDate }: DatePickerPro
         <button
           type="button"
           onClick={() => setViewDate(new Date(year, month - 1, 1))}
-          className="p-1 hover:bg-parea-black/10 rounded transition-colors"
+          className="p-1 hover:bg-parea-black/10 rounded transition-colors cursor-pointer"
         >
           <ChevronLeft size={20} />
         </button>
@@ -83,7 +83,7 @@ export default function DatePicker({ selectedDate, onSelectDate }: DatePickerPro
         <button
           type="button"
           onClick={() => setViewDate(new Date(year, month + 1, 1))}
-          className="p-1 hover:bg-parea-black/10 rounded transition-colors"
+          className="p-1 hover:bg-parea-black/10 rounded transition-colors cursor-pointer"
         >
           <ChevronRight size={20} />
         </button>
@@ -116,7 +116,7 @@ export default function DatePicker({ selectedDate, onSelectDate }: DatePickerPro
             key={day}
             type="button"
             onClick={() => handleSelectDay(day)}
-            className={`h-6.5 w-full flex items-center justify-center text-[13px] transition-colors
+            className={`h-6.5 w-full flex items-center justify-center text-[13px] transition-colors cursor-pointer
               ${isSelected(day) ? 'bg-parea-yellow text-parea-black font-medium' : 'hover:bg-parea-black/10'}
               ${isToday(day) ? 'border border-parea-black/30' : ''}
             `}

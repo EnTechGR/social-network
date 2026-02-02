@@ -6,6 +6,7 @@
  */
 
 import Image from 'next/image';
+import InteractiveDots from '@/components/ui/InteractiveDots';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -14,18 +15,17 @@ interface AuthLayoutProps {
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      {/* Left Panel - Gradient with dots pattern */}
+      {/* Left Panel - parea yellow to black gradient, interactive dots, logo */}
       <div className="relative w-full md:w-[40%] h-64 md:h-full bg-linear-to-b from-parea-yellow to-parea-black overflow-hidden">
-        {/* Dot Pattern Overlay */}
-        <div 
-          className="absolute inset-0 opacity-100 z-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #121214 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-            backgroundPosition: '0 0',
-          }}
+        {/* Interactive dots (transparent bg so gradient shows through) */}
+        <InteractiveDots
+          backgroundColor="transparent"
+          dotColor="#121214"
+          gridSpacing={20}
+          removeWaveLine
+          animationSpeed={0.005}
         />
-        
+
         {/* Logo */}
         <div className="absolute bottom-8 left-8 z-10">
           <Image

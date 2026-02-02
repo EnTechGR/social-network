@@ -9,7 +9,7 @@ import IconButton from '@/components/ui/IconButtons';
 import { registerStep1 } from '@/lib/api';
 import { isValidEmail, isValidPassword } from '@/lib/validations';
 import Link from 'next/link';
-import Image from 'next/image';
+import Avatar from '@/components/ui/Avatar';
 
 export default function SignUpPage() {
   const [step, setStep] = useState(1);
@@ -24,7 +24,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [registerData, setRegisterData] = useState<any>(null);
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say'>('prefer_not_to_say');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,7 +75,7 @@ export default function SignUpPage() {
     setError('');
 
     // Validation
-    if (!firstName || !lastName || !dateOfBirth || !email || !password) {
+    if (!firstName || !lastName || !dateOfBirth || !gender || !email || !password) {
       setError('Please fill in all required fields');
       return;
     }
@@ -127,44 +127,16 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          {/* Avatar Upload */}
+          {/* Avatar Upload - always use Avatar (dots, yellow bg, frame); empty state shows default user image */}
           <div className="flex justify-center mb-8">
-            <label className="cursor-pointer">
-              <div className="w-32 h-32 rounded-lg border-4 border-parea-yellow overflow-hidden bg-linear-to-br from-parea-yellow to-parea-black relative">
-                {avatarPreview ? (
-                  <Image
-                    src={avatarPreview}
-                    alt="Avatar preview"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="text-parea-white opacity-50"
-                    >
-                      <path
-                        d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
+            <label className="cursor-pointer block">
+              <Avatar
+                type="image"
+                src={avatarPreview ?? undefined}
+                alt="Avatar preview"
+                size="profile"
+                isSelf
+              />
               <input
                 type="file"
                 accept="image/*"
@@ -192,24 +164,27 @@ export default function SignUpPage() {
               />
             </div>
 
-            <Input
-              type="text"
-              placeholder={isDateFocused ? "MM/DD/YYYY" : "BIRTH DATE*"}
-              value={dateOfBirth}
-              onChange={handleDateChange}
-              onFocus={() => setIsDateFocused(true)}
-              onBlur={() => setIsDateFocused(false)}
-              required
-            />
-
-            <div>
-              <label className="text-sm text-parea-black mb-1 block">Gender*</label>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                type="text"
+                placeholder={isDateFocused ? "MM/DD/YYYY" : "BIRTH DATE*"}
+                value={dateOfBirth}
+                onChange={handleDateChange}
+                onFocus={() => setIsDateFocused(true)}
+                onBlur={() => setIsDateFocused(false)}
+                required
+              />
               <select
+                id="gender"
                 value={gender}
-                onChange={(e) => setGender(e.target.value as any)}
-                className="w-full rounded-[3rem] border border-parea-black px-4 py-2 bg-parea-white"
+                onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | 'prefer_not_to_say' | '')}
+                className={`select-chevron w-full h-input rounded-button border border-parea-black px-4 py-2 bg-parea-white text-regular focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed uppercase font-medium ${
+                  gender === '' ? 'text-[#00000099]' : 'text-parea-black'
+                }`}
+                style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
                 required
               >
+                <option value="" disabled>GENDER*</option>
                 <option value="prefer_not_to_say">Prefer not to say</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -348,26 +323,27 @@ function SignUpStep2({
 
   return (
     <AuthLayout>
-      <div className="flex flex-col items-center justify-center h-screen px-8 py-4 md:py-8">
+      <div className="flex flex-col items-center justify-center w-full px-8 py-4">
         <div className="w-full max-w-md">
-          <h1 className="text-4xl font-bold text-parea-black mb-2 text-center">
-            Sign Up
-          </h1>
-          <p className="text-regular text-parea-black mb-6 text-center">
-            Find your people. Join the parea.
-          </p>
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <h1 className="text-4xl font-bold text-parea-black text-center">
+              Sign Up
+            </h1>
+            <p className="text-regular text-parea-black text-center">
+              Find your people. Join the parea.
+            </p>
+          </div>
 
           {/* Avatar Display */}
           {avatarPreview && (
             <div className="flex justify-center mb-8">
-              <div className="w-32 h-32 rounded-lg border-4 border-parea-yellow overflow-hidden relative">
-                <Image
-                  src={avatarPreview}
-                  alt="Avatar"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              <Avatar
+                type="image"
+                src={avatarPreview}
+                alt="Avatar"
+                size="profile"
+                isSelf
+              />
             </div>
           )}
 
@@ -392,7 +368,7 @@ function SignUpStep2({
                   items-start
                   gap-2
                   self-stretch
-                  rounded-[3rem]
+                  rounded-input
                   border
                   border-parea-black
                   bg-parea-white

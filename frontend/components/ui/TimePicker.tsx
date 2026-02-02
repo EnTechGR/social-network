@@ -45,7 +45,7 @@ export default function TimePicker({ selectedTime, onSelectTime }: TimePickerPro
               ref={isSelected ? selectedRef : null}
               type="button"
               onClick={() => onSelectTime?.(time)}
-              className={`px-5 py-2 text-left text-base transition-colors
+              className={`px-5 py-2 text-left text-base transition-colors cursor-pointer
                 ${isSelected ? 'bg-parea-yellow' : 'hover:bg-parea-black/10'}
               `}
             >

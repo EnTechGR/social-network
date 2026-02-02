@@ -141,13 +141,15 @@ export default function ProfileWrap({
       {/* Column 2: User Details */}
       <div className="flex flex-col items-start gap-3 min-w-[280px]">
         {/* Username */}
-        <InfoRow label="Username">{user.username}</InfoRow>
+        <InfoRow label="Username">@{user.username}</InfoRow>
 
         {/* Email */}
         <InfoRow label="Email">{user.email}</InfoRow>
 
-        {/* Birth Date */}
-        <InfoRow label="Birth Date">{user.birthDate}</InfoRow>
+        {/* Birth Date - show date only (strip ISO time if present) */}
+        <InfoRow label="Birth Date">
+          {user.birthDate.includes('T') ? user.birthDate.split('T')[0] : user.birthDate}
+        </InfoRow>
 
         {/* Public Profile Toggle */}
         {isSelf && (

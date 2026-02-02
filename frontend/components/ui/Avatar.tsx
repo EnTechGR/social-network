@@ -18,7 +18,7 @@ interface AvatarProps {
   /** Alt text for accessibility */
   alt?: string;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'profile';
   /** Additional CSS classes */
   className?: string;
 }
@@ -31,42 +31,49 @@ export default function Avatar({
   size = 'lg',
   className = '',
 }: AvatarProps) {
-  // Base styles shared by all avatars
+  // Base styles: black 1px stroke
   const baseStyles = 'rounded-[4px] border border-parea-black bg-parea-yellow flex items-center justify-center overflow-hidden';
 
-  // Size variants
-  const sizeStyles = {
-    sm: 'w-10 h-10',     // 40px
-    md: 'w-20 h-20',     // 80px  
-    lg: 'w-40 h-40',     // 160px
-    xl: 'w-60 h-60',     // 240px - for profile cards
-  };
-
-  // Self vs Not-self shadow styles
-  // Self: yellow shadow | Not-self: black shadow
+  // Shadow: isSelf → yellow (4px x, 4px y); not self → black (4px x, 4px y)
   const shadowStyles = isSelf
     ? 'shadow-[4px_4px_0_0_var(--parea-yellow)]'
     : 'shadow-[4px_4px_0_0_#000]';
 
-  // Render the appropriate avatar content based on type
+  // Size variants
+  const sizeStyles = {
+    sm: 'w-10 h-10',       // 40px
+    md: 'w-20 h-20',       // 80px
+    lg: 'w-40 h-40',       // 160px
+    xl: 'w-60 h-60',       // 240px - for profile cards
+    profile: 'w-32 h-32',   // 128px - signup / profile preview
+  };
+
+  // When type is 'image' and no src = placeholder (e.g. signup): yellow + avatar.png only, no default image (avoids dots from user-avatar-default.png)
+  const isPlaceholderNoImage = type === 'image' && !src;
+
   const renderContent = () => {
-    // If src is provided, use it
+    // type='image' with no src = placeholder only (yellow + avatar.png overlay); never use default user/group image (no dots)
+    if (type === 'image' && !src) return null;
+
+    // If src is provided, use it (unoptimized for data URLs e.g. file preview)
     if (src) {
+      const isDataUrl = src.startsWith('data:');
       return (
         <Image
           src={src}
           alt={alt}
           fill
           className="object-cover"
+          unoptimized={isDataUrl}
         />
       );
     }
-  
-    // Use default image based on type
-    const defaultSrc = type === 'group' 
-      ? '/group-avatar-default.png' 
+
+    // Default image only for type user/group (not for type 'image')
+    const defaultSrc = type === 'group'
+      ? '/group-avatar-default.png'
       : '/user-avatar-default.png';
-  
+
     return (
       <Image
         src={defaultSrc}
@@ -81,15 +88,25 @@ export default function Avatar({
     <div
       className={`
         ${baseStyles}
-        ${sizeStyles[size]}
         ${shadowStyles}
+        ${sizeStyles[size]}
         ${className}
         relative
       `}
       role="img"
       aria-label={alt}
     >
-      {renderContent()}
+      {/* Avatar image (user photo or default); placeholder (type=image, no src) shows only yellow + frame below */}
+      <div className="absolute inset-0">{renderContent()}</div>
+      {/* Frame overlay only when no custom image (placeholder state) */}
+      {isPlaceholderNoImage && (
+        <img
+          src="/avatar.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          aria-hidden
+        />
+      )}
     </div>
   );
 }

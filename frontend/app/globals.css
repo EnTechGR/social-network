@@ -70,8 +70,17 @@
   --font-weight-bold: 700;
   --font-weight-extrabold: 800;
 
+  /* Form / Button dimensions (pill style) */
+  --radius-button: 3rem;
+  --radius-input: 20px;     /* radius for textarea / non-pill inputs */
+  --spacing-input: 2.9375rem;
+
 }
 
+/* Explicit button radius so pill shape always applies (Tailwind may not generate rounded-button from theme) */
+.rounded-button {
+  border-radius: var(--radius-button);
+}
 
 body {
   --font-display: var(--font-ibm-plex-mono);
@@ -170,3 +179,26 @@ body {
   .text-regular { font-size: var(--text-regular); }
   .text-medium { font-size: var(--text-medium); }
   .text-large { font-size: var(--text-large); }
+
+  /* ========================================
+     SELECT CHEVRON (custom dropdown arrow)
+     ======================================== */
+  .select-chevron {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23121214' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+  }
+
+  /* 404 page – click dots (GSAP Physics2D) */
+  .not-found-dot {
+    position: absolute;
+    background-color: #d3dccd;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    will-change: transform, opacity;
+    pointer-events: none;
+  }

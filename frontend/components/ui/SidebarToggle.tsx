@@ -11,6 +11,7 @@ export default function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; on
           flex items-center justify-center
           hover:bg-parea-yellow/10
           transition-colors
+          cursor-pointer
         "
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >

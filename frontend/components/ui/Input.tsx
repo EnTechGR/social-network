@@ -49,12 +49,12 @@ export default function Input({
         disabled={disabled}
         className={`
           flex
-          h-[2.9375rem]
+          h-input
           px-3 py-2
           items-center
           gap-2
           self-stretch
-          rounded-[3rem]
+          rounded-button
           border
           border-parea-black
           bg-parea-white

@@ -88,6 +88,7 @@ export default function IconButton({
     border
     border-parea-black
     text-parea-black
+    cursor-pointer
   `;
 
   const withTextStyles = `
@@ -101,6 +102,7 @@ export default function IconButton({
     border-none
     text-parea-black
     label
+    cursor-pointer
   `;
 
   const baseStyles = text ? withTextStyles : iconButtonStyles;

@@ -64,7 +64,7 @@ export default function Button({
   // Base styles - different for tertiary (no padding, no border, no radius)
   const baseStyles = variant === 'tertiary'
     ? 'focus:outline-none label shrink-0 cursor-pointer p-0 border-0 rounded-none'
-    : 'rounded-[3rem] border border-parea-black focus:outline-none label shrink-0 flex items-center justify-center cursor-pointer';
+    : 'rounded-button border border-parea-black focus:outline-none label shrink-0 flex items-center justify-center cursor-pointer';
 
   const variantStyles = {
     primary: 'text-parea-black transition-colors',
@@ -78,7 +78,7 @@ export default function Button({
     : {
         sm: 'px-3 py-1.5 text-small',
         md: 'px-4 py-2 text-regular',
-        lg: 'px-6 py-3 text-regular h-[2.9375rem]',
+        lg: 'px-6 py-3 text-regular h-input',
       }[size];
 
   const disabledStyles = 'opacity-50 cursor-not-allowed pointer-events-none';
@@ -197,8 +197,8 @@ export default function Button({
           {getDisplayText()}
         </span>
       ) : (
-        // Regular button or non-toggle tertiary: just text
-        <span>
+        // Regular button or non-toggle tertiary: flex row so icon + text stay side by side
+        <span className="inline-flex items-center justify-center gap-2">
           {getDisplayText()}
         </span>
       )}

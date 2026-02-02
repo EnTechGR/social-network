@@ -1,9 +1,10 @@
 // components/ui/Sidebar.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Bell, LogOut, CircleX } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SidebarToggle from './SidebarToggle';
 import Tabs from './Tabs';
@@ -49,10 +50,24 @@ export default function Sidebar() {
     }
   };
 
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen && !activeDrawer) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setActiveDrawer(null);
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, activeDrawer]);
+
   // ============ DEFAULT SIDEBAR (ICONS ONLY) - Shows when drawer is open OR when both closed ============
   if (!isOpen) {
     return (
-      <>
+      <div ref={sidebarRef}>
         <aside
           className="
             fixed
@@ -94,7 +109,7 @@ export default function Sidebar() {
             >
               <button
                 onClick={() => handleDrawerOpen('chat')}
-                className="p-2 rounded-lg transition-colors group"
+                className="p-2 rounded-lg transition-colors group cursor-pointer"
                 aria-label="Messages"
               >
                 <MessageCircle 
@@ -108,7 +123,7 @@ export default function Sidebar() {
 
               <button
                 onClick={() => handleDrawerOpen('notifications')}
-                className="p-2 rounded-lg transition-colors group"
+                className="p-2 rounded-lg transition-colors group cursor-pointer"
                 aria-label="Notifications"
               >
                 <Bell 
@@ -142,7 +157,7 @@ export default function Sidebar() {
 
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg transition-colors group"
+              className="p-2 rounded-lg transition-colors group cursor-pointer"
               aria-label="Logout"
             >
               <LogOut className="w-6 h-6 text-parea-white group-hover:text-parea-yellow transition-colors" />
@@ -415,6 +430,7 @@ export default function Sidebar() {
                             justify-center
                             hover:opacity-70
                             transition-opacity
+                            cursor-pointer
                           "
                         >
                           <CircleX className="w-6 h-6 text-parea-black" />
@@ -443,6 +459,7 @@ export default function Sidebar() {
                 border-parea-black
                 hover:bg-parea-black/90
                 transition-colors
+                cursor-pointer
               "
             >
               <div className="w-9 h-9 rounded-full border border-parea-yellow flex items-center justify-center">
@@ -465,12 +482,13 @@ export default function Sidebar() {
             </button>
           </aside>
         )}
-      </>
+      </div>
     );
   }
 
   // ============ OPEN STATE (DRAWER WITH TEXT) ============
   return (
+    <div ref={sidebarRef}>
     <aside
       className="
         fixed
@@ -549,6 +567,7 @@ export default function Sidebar() {
               rounded-lg
               transition-colors
               group
+              cursor-pointer
             "
           >
             <MessageCircle className="w-6 h-6 text-parea-white group-hover:text-parea-yellow transition-colors" />
@@ -570,6 +589,7 @@ export default function Sidebar() {
               transition-colors
               group
               justify-between
+              cursor-pointer
             "
           >
             <div className="flex items-center gap-2">
@@ -613,7 +633,8 @@ export default function Sidebar() {
           "
         >
           {/* Profile item */}
-          <button
+          <Link
+            href="/profile"
             className="
               flex
               px-2
@@ -623,6 +644,7 @@ export default function Sidebar() {
               rounded-lg
               transition-colors
               group
+              cursor-pointer
             "
           >
             <div
@@ -647,7 +669,7 @@ export default function Sidebar() {
             <span className="text-parea-white font-mono text-sm font-medium uppercase tracking-wide group-hover:text-parea-yellow transition-colors">
               Profile
             </span>
-          </button>
+          </Link>
 
           {/* Logout item */}
           <button
@@ -661,6 +683,7 @@ export default function Sidebar() {
               rounded-lg
               transition-colors
               group
+              cursor-pointer
             "
           >
             <div className="p-2">
@@ -673,5 +696,6 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+    </div>
   );
 }

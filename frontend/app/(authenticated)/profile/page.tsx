@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
-import { getProfile } from '@/lib/api';
+import { getProfile, updatePrivacy } from '@/lib/api';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -72,10 +72,18 @@ export default function ProfilePage() {
     fetchProfile();
   }, []);
 
-  const handleTogglePublic = (newValue: boolean) => {
-    setIsPublic(newValue);
-    // TODO: Call API to update profile visibility
-    console.log('Profile visibility changed to:', newValue ? 'public' : 'private');
+  const handleTogglePublic = async (newValue: boolean) => {
+    const previousValue = isPublic;
+    setIsPublic(newValue); // Optimistic update
+    
+    try {
+      await updatePrivacy(!newValue); // API expects is_private (opposite of isPublic)
+      console.log('Profile visibility changed to:', newValue ? 'public' : 'private');
+    } catch (err: any) {
+      console.error('Failed to update privacy:', err);
+      setIsPublic(previousValue); // Revert on error
+      // You could show a toast notification here
+    }
   };
 
   const handleFollowersClick = () => {

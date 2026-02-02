@@ -188,3 +188,20 @@ export async function getProfile(): Promise<any> {
     method: 'GET',
   });
 }
+
+/**
+ * Update user privacy setting
+ * PUT /api/v1/user/privacy
+ * Toggles profile between public and private
+ */
+export async function updatePrivacy(isPrivate: boolean): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  
+  return fetchAPI<any>('/api/v1/user/privacy', {
+    method: 'PUT',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: JSON.stringify({ is_private: isPrivate }),
+  });
+}

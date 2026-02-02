@@ -19,22 +19,13 @@ export const CardAvatar: React.FC<CardAvatarProps> = ({
       items-end
       gap-4
       self-stretch">
-      <div
-        className="w-12
-          h-12
-          rounded-full
-          flex-shrink-0
-          aspect-square"
-        style={{
-          backgroundImage: `url(${src})`,
-          backgroundColor: '#d0d0d0',
-          backgroundPosition: '-0.597px -14.632px',
-          backgroundSize: '133.406% 198.298%',
-          backgroundRepeat: 'no-repeat',
-        }}
-        role="img"
-        aria-label={alt}
-      />
+      <div className="w-12 h-12 rounded-full shrink-0 aspect-square overflow-hidden bg-parea-grey">
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover object-center"
+        />
+      </div>
       <div className="flex
         flex-col
         items-start

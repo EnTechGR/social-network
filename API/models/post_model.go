@@ -11,6 +11,9 @@ type Post struct {
 	// The ID of the user who created the post
 	// example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
 	UserID string `json:"user_id"`
+	// The ID of the group this post belongs to (null for non-group posts)
+	// example: g1h2i3j4-k5l6-m7n8-o9p0-q1r2s3t4u5v6
+	GroupID *string `json:"group_id,omitempty"`
 	// The visibility of the post: public, followers, or private
 	// example: public
 	Visibility string `json:"visibility"`
@@ -40,6 +43,12 @@ type PostWithUser struct {
 	// The display name of the author
 	// example: gopher_expert
 	Nickname string `json:"nickname"`
+	// The ID of the group this post belongs to (null for non-group posts)
+	// example: g1h2i3j4-k5l6-m7n8-o9p0-q1r2s3t4u5v6
+	GroupID *string `json:"group_id,omitempty"`
+	// The name of the group (if this is a group post)
+	// example: Go Programming Group
+	GroupName *string `json:"group_name,omitempty"`
 	// The visibility of the post: public, followers, or private
 	// example: public
 	Visibility string `json:"visibility"`

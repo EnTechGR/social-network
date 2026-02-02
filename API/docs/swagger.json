@@ -403,6 +403,178 @@
                 }
             }
         },
+        "/api/v1/events/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves event details with RSVP options and vote counts",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get event details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupEventWithDetails"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Deletes an event (creator or group owner only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Delete event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/events/{id}/vote": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Records user's RSVP choice for an event (going/not going/maybe)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Vote on event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Option ID to vote for",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/follow": {
             "post": {
                 "security": [
@@ -783,6 +955,918 @@
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all groups with owner details and member counts",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Browse all groups",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupWithOwner"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/create": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a new group with the authenticated user as owner and optionally invites members",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Create a group",
+                "parameters": [
+                    {
+                        "description": "Group details (title, description, invitees)",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupWithOwner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/invites": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all pending group invitations for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get my group invites",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupInviteWithDetails"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/invites/{id}/accept": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Accepts a group invitation and adds user to the group",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Accept group invite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Invite ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/invites/{id}/decline": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Declines a group invitation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Decline group invite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Invite ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/my-groups": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all groups where the authenticated user is a member",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get user's groups",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupWithOwner"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/requests/{id}/approve": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Approves a join request and adds the user to the group (owner only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Approve join request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/requests/{id}/deny": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Denies a join request (owner only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Deny join request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves group details with owner information and member count",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupWithOwner"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates group details (owner only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Update group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated group details",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Deletes a group (owner only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Delete group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/events": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all events for a group (members only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupEvent"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a new event in a group (members only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Create group event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Event details",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupEventWithDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/invite": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Sends an invitation to a user to join the group (members only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Invite user to group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User ID to invite",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupInvite"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all members of a group (members only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get group members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupMemberWithUser"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/members/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Removes a member from the group (owner only, cannot remove owner)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Remove group member",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID to remove",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/request": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a join request to join a group",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Request to join group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.GroupJoinRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{id}/requests": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all pending join requests for a group (owner only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get pending join requests",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupJoinRequestWithDetails"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1423,6 +2507,12 @@
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Post visibility: public (default), followers, or private",
+                        "name": "visibility",
+                        "in": "formData"
+                    },
+                    {
                         "type": "file",
                         "description": "Images to attach (multiple allowed, max 20MB total)",
                         "name": "image",
@@ -1736,30 +2826,224 @@
                 }
             }
         },
-        "/api/v1/profile": {
-            "get": {
+        "/api/v1/posts/update-visibility/{id}": {
+            "put": {
                 "security": [
                     {
                         "CookieAuth": []
                     }
                 ],
-                "description": "Returns the full profile details of the currently authenticated user.",
+                "description": "Allows the post owner to change the visibility of their post.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Authentication"
+                    "Posts"
                 ],
-                "summary": "Get current user profile",
+                "summary": "Update post visibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New visibility {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "User profile data",
+                        "description": "status: visibility updated",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or invalid visibility",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not the post owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/posts/{id}/add-allowed-user": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to grant access to a specific user for a private post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Add allowed user to post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User to allow {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "status: user added",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not the post owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/posts/{id}/remove-allowed-user": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Allows the post owner to revoke access to a specific user for a private post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Remove allowed user from post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User to remove {\\",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: user removed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not the post owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -2184,6 +3468,58 @@
                 }
             }
         },
+        "/api/v1/users/{id}/posts": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves posts from a specific user based on visibility rules",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get user's posts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of visible posts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.PostWithUser"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/verify": {
             "get": {
                 "security": [
@@ -2514,6 +3850,31 @@
                 }
             }
         },
+        "models.EventOptionWithVotes": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "description": "The ID of the event this option belongs to\nexample: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the option (UUID)\nexample: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "The label for this option: going, not going, maybe\nexample: going",
+                    "type": "string"
+                },
+                "user_voted": {
+                    "description": "Whether the current user voted for this option\nexample: true",
+                    "type": "boolean"
+                },
+                "vote_count": {
+                    "description": "The number of votes for this option\nexample: 15",
+                    "type": "integer"
+                }
+            }
+        },
         "models.FollowRelationship": {
             "type": "object",
             "properties": {
@@ -2539,6 +3900,313 @@
                 }
             }
         },
+        "models.GroupEvent": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the event was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "creator_id": {
+                    "description": "The ID of the user who created the event\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the event\nexample: Join us for a scenic photo walk through Central Park. Bring your camera!",
+                    "type": "string"
+                },
+                "event_time": {
+                    "description": "The date and time of the event\nexample: 2025-12-30T14:00:00Z",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group this event belongs to\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the event (UUID)\nexample: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "The title of the event\nexample: Photo Walk in Central Park",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupEventWithDetails": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the event was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "creator_id": {
+                    "description": "The ID of the user who created the event\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "creator_nickname": {
+                    "description": "The display name of the creator\nexample: photo_master",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the event\nexample: Join us for a scenic photo walk through Central Park. Bring your camera!",
+                    "type": "string"
+                },
+                "event_time": {
+                    "description": "The date and time of the event\nexample: 2025-12-30T14:00:00Z",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group this event belongs to\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "group_title": {
+                    "description": "The title of the group\nexample: Photography Enthusiasts",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the event (UUID)\nexample: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "options": {
+                    "description": "The RSVP options with vote counts",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.EventOptionWithVotes"
+                    }
+                },
+                "title": {
+                    "description": "The title of the event\nexample: Photo Walk in Central Park",
+                    "type": "string"
+                },
+                "user_vote": {
+                    "description": "The option ID the current user voted for (if any)\nexample: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupInvite": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the invite was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "from_user_id": {
+                    "description": "The ID of the user who sent the invite\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the invite (UUID)\nexample: i1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "responded_at": {
+                    "description": "The timestamp when the invite was responded to\nexample: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The status of the invite: pending, accepted, declined\nexample: pending",
+                    "type": "string"
+                },
+                "to_user_id": {
+                    "description": "The ID of the user who received the invite\nexample: b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupInviteWithDetails": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the invite was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "from_nickname": {
+                    "description": "The display name of the user who sent the invite\nexample: photo_master",
+                    "type": "string"
+                },
+                "from_user_id": {
+                    "description": "The ID of the user who sent the invite\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "group_title": {
+                    "description": "The title of the group\nexample: Photography Enthusiasts",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the invite (UUID)\nexample: i1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "responded_at": {
+                    "description": "The timestamp when the invite was responded to\nexample: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The status of the invite: pending, accepted, declined\nexample: pending",
+                    "type": "string"
+                },
+                "to_nickname": {
+                    "description": "The display name of the user who received the invite\nexample: johndoe_99",
+                    "type": "string"
+                },
+                "to_user_id": {
+                    "description": "The ID of the user who received the invite\nexample: b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupJoinRequest": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the request was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the request (UUID)\nexample: r1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "responded_at": {
+                    "description": "The timestamp when the request was responded to\nexample: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The status of the request: pending, approved, denied\nexample: pending",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the user requesting to join\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupJoinRequestWithDetails": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the request was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "first_name": {
+                    "description": "The user's first name\nexample: John",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "group_title": {
+                    "description": "The title of the group\nexample: Photography Enthusiasts",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the request (UUID)\nexample: r1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "last_name": {
+                    "description": "The user's last name\nexample: Doe",
+                    "type": "string"
+                },
+                "responded_at": {
+                    "description": "The timestamp when the request was responded to\nexample: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The status of the request: pending, approved, denied\nexample: pending",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the user requesting to join\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "user_nickname": {
+                    "description": "The display name of the user\nexample: johndoe_99",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupMemberWithUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "The user's email address\nexample: john.doe@example.com",
+                    "type": "string"
+                },
+                "first_name": {
+                    "description": "The user's first name\nexample: John",
+                    "type": "string"
+                },
+                "group_id": {
+                    "description": "The ID of the group\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "is_owner": {
+                    "description": "Whether this user is the owner of the group\nexample: false",
+                    "type": "boolean"
+                },
+                "joined_at": {
+                    "description": "The timestamp when the user joined the group\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "last_name": {
+                    "description": "The user's last name\nexample: Doe",
+                    "type": "string"
+                },
+                "nickname": {
+                    "description": "The display name of the user\nexample: johndoe_99",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the user\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GroupWithOwner": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "The timestamp when the group was created\nexample: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the group\nexample: A group for sharing photography tips and showcasing work",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the group (UUID)\nexample: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+                    "type": "string"
+                },
+                "member_count": {
+                    "description": "The number of members in the group\nexample: 42",
+                    "type": "integer"
+                },
+                "owner_id": {
+                    "description": "The ID of the owner\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "owner_nickname": {
+                    "description": "The display name of the owner\nexample: photo_master",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "The title of the group\nexample: Photography Enthusiasts",
+                    "type": "string"
+                }
+            }
+        },
         "models.LoginResponse": {
             "type": "object",
             "properties": {
@@ -2557,6 +4225,51 @@
                             "$ref": "#/definitions/models.User"
                         }
                     ]
+                }
+            }
+        },
+        "models.PostWithUser": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "The body content of the post",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "example: 2025-12-29T18:00:00Z",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The unique identifier for the post (UUID)\nexample: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL to the full-size image attached to the post\nexample: /uploads/images/posts/7b1a2c3d.jpg",
+                    "type": "string"
+                },
+                "nickname": {
+                    "description": "The display name of the author\nexample: gopher_expert",
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "description": "URL to the thumbnail version of the image\nexample: /uploads/images/thumbnails/7b1a2c3d.jpg",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "The title of the post",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "example: 2025-12-29T19:30:00Z",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The ID of the author\nexample: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+                    "type": "string"
+                },
+                "visibility": {
+                    "description": "The visibility of the post: public, followers, or private\nexample: public",
+                    "type": "string"
                 }
             }
         },

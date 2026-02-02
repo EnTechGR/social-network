@@ -115,6 +115,34 @@ definitions:
           example: Invalid request body or validation failed.
         type: string
     type: object
+  models.EventOptionWithVotes:
+    properties:
+      event_id:
+        description: |-
+          The ID of the event this option belongs to
+          example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      id:
+        description: |-
+          The unique identifier for the option (UUID)
+          example: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      label:
+        description: |-
+          The label for this option: going, not going, maybe
+          example: going
+        type: string
+      user_voted:
+        description: |-
+          Whether the current user voted for this option
+          example: true
+        type: boolean
+      vote_count:
+        description: |-
+          The number of votes for this option
+          example: 15
+        type: integer
+    type: object
   models.FollowRelationship:
     properties:
       created_at:
@@ -133,6 +161,360 @@ definitions:
         description: When the relationship was last updated.
         type: string
     type: object
+  models.GroupEvent:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the event was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      creator_id:
+        description: |-
+          The ID of the user who created the event
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      description:
+        description: |-
+          The description of the event
+          example: Join us for a scenic photo walk through Central Park. Bring your camera!
+        type: string
+      event_time:
+        description: |-
+          The date and time of the event
+          example: 2025-12-30T14:00:00Z
+        type: string
+      group_id:
+        description: |-
+          The ID of the group this event belongs to
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      id:
+        description: |-
+          The unique identifier for the event (UUID)
+          example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      title:
+        description: |-
+          The title of the event
+          example: Photo Walk in Central Park
+        type: string
+    type: object
+  models.GroupEventWithDetails:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the event was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      creator_id:
+        description: |-
+          The ID of the user who created the event
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      creator_nickname:
+        description: |-
+          The display name of the creator
+          example: photo_master
+        type: string
+      description:
+        description: |-
+          The description of the event
+          example: Join us for a scenic photo walk through Central Park. Bring your camera!
+        type: string
+      event_time:
+        description: |-
+          The date and time of the event
+          example: 2025-12-30T14:00:00Z
+        type: string
+      group_id:
+        description: |-
+          The ID of the group this event belongs to
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      group_title:
+        description: |-
+          The title of the group
+          example: Photography Enthusiasts
+        type: string
+      id:
+        description: |-
+          The unique identifier for the event (UUID)
+          example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      options:
+        description: The RSVP options with vote counts
+        items:
+          $ref: '#/definitions/models.EventOptionWithVotes'
+        type: array
+      title:
+        description: |-
+          The title of the event
+          example: Photo Walk in Central Park
+        type: string
+      user_vote:
+        description: |-
+          The option ID the current user voted for (if any)
+          example: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+    type: object
+  models.GroupInvite:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the invite was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      from_user_id:
+        description: |-
+          The ID of the user who sent the invite
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      group_id:
+        description: |-
+          The ID of the group
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      id:
+        description: |-
+          The unique identifier for the invite (UUID)
+          example: i1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      responded_at:
+        description: |-
+          The timestamp when the invite was responded to
+          example: 2025-12-29T19:30:00Z
+        type: string
+      status:
+        description: |-
+          The status of the invite: pending, accepted, declined
+          example: pending
+        type: string
+      to_user_id:
+        description: |-
+          The ID of the user who received the invite
+          example: b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7
+        type: string
+    type: object
+  models.GroupInviteWithDetails:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the invite was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      from_nickname:
+        description: |-
+          The display name of the user who sent the invite
+          example: photo_master
+        type: string
+      from_user_id:
+        description: |-
+          The ID of the user who sent the invite
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      group_id:
+        description: |-
+          The ID of the group
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      group_title:
+        description: |-
+          The title of the group
+          example: Photography Enthusiasts
+        type: string
+      id:
+        description: |-
+          The unique identifier for the invite (UUID)
+          example: i1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      responded_at:
+        description: |-
+          The timestamp when the invite was responded to
+          example: 2025-12-29T19:30:00Z
+        type: string
+      status:
+        description: |-
+          The status of the invite: pending, accepted, declined
+          example: pending
+        type: string
+      to_nickname:
+        description: |-
+          The display name of the user who received the invite
+          example: johndoe_99
+        type: string
+      to_user_id:
+        description: |-
+          The ID of the user who received the invite
+          example: b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7
+        type: string
+    type: object
+  models.GroupJoinRequest:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the request was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      group_id:
+        description: |-
+          The ID of the group
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      id:
+        description: |-
+          The unique identifier for the request (UUID)
+          example: r1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      responded_at:
+        description: |-
+          The timestamp when the request was responded to
+          example: 2025-12-29T19:30:00Z
+        type: string
+      status:
+        description: |-
+          The status of the request: pending, approved, denied
+          example: pending
+        type: string
+      user_id:
+        description: |-
+          The ID of the user requesting to join
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+    type: object
+  models.GroupJoinRequestWithDetails:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the request was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      first_name:
+        description: |-
+          The user's first name
+          example: John
+        type: string
+      group_id:
+        description: |-
+          The ID of the group
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      group_title:
+        description: |-
+          The title of the group
+          example: Photography Enthusiasts
+        type: string
+      id:
+        description: |-
+          The unique identifier for the request (UUID)
+          example: r1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      last_name:
+        description: |-
+          The user's last name
+          example: Doe
+        type: string
+      responded_at:
+        description: |-
+          The timestamp when the request was responded to
+          example: 2025-12-29T19:30:00Z
+        type: string
+      status:
+        description: |-
+          The status of the request: pending, approved, denied
+          example: pending
+        type: string
+      user_id:
+        description: |-
+          The ID of the user requesting to join
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      user_nickname:
+        description: |-
+          The display name of the user
+          example: johndoe_99
+        type: string
+    type: object
+  models.GroupMemberWithUser:
+    properties:
+      email:
+        description: |-
+          The user's email address
+          example: john.doe@example.com
+        type: string
+      first_name:
+        description: |-
+          The user's first name
+          example: John
+        type: string
+      group_id:
+        description: |-
+          The ID of the group
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      is_owner:
+        description: |-
+          Whether this user is the owner of the group
+          example: false
+        type: boolean
+      joined_at:
+        description: |-
+          The timestamp when the user joined the group
+          example: 2025-12-29T18:00:00Z
+        type: string
+      last_name:
+        description: |-
+          The user's last name
+          example: Doe
+        type: string
+      nickname:
+        description: |-
+          The display name of the user
+          example: johndoe_99
+        type: string
+      user_id:
+        description: |-
+          The ID of the user
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+    type: object
+  models.GroupWithOwner:
+    properties:
+      created_at:
+        description: |-
+          The timestamp when the group was created
+          example: 2025-12-29T18:00:00Z
+        type: string
+      description:
+        description: |-
+          The description of the group
+          example: A group for sharing photography tips and showcasing work
+        type: string
+      id:
+        description: |-
+          The unique identifier for the group (UUID)
+          example: g1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
+        type: string
+      member_count:
+        description: |-
+          The number of members in the group
+          example: 42
+        type: integer
+      owner_id:
+        description: |-
+          The ID of the owner
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      owner_nickname:
+        description: |-
+          The display name of the owner
+          example: photo_master
+        type: string
+      title:
+        description: |-
+          The title of the group
+          example: Photography Enthusiasts
+        type: string
+    type: object
   models.LoginResponse:
     properties:
       csrf_token:
@@ -149,6 +531,51 @@ definitions:
         allOf:
         - $ref: '#/definitions/models.User'
         description: The details of the successfully logged-in user.
+    type: object
+  models.PostWithUser:
+    properties:
+      content:
+        description: The body content of the post
+        type: string
+      created_at:
+        description: 'example: 2025-12-29T18:00:00Z'
+        type: string
+      id:
+        description: |-
+          The unique identifier for the post (UUID)
+          example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+        type: string
+      image_url:
+        description: |-
+          URL to the full-size image attached to the post
+          example: /uploads/images/posts/7b1a2c3d.jpg
+        type: string
+      nickname:
+        description: |-
+          The display name of the author
+          example: gopher_expert
+        type: string
+      thumbnail_url:
+        description: |-
+          URL to the thumbnail version of the image
+          example: /uploads/images/thumbnails/7b1a2c3d.jpg
+        type: string
+      title:
+        description: The title of the post
+        type: string
+      updated_at:
+        description: 'example: 2025-12-29T19:30:00Z'
+        type: string
+      user_id:
+        description: |-
+          The ID of the author
+          example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
+        type: string
+      visibility:
+        description: |-
+          The visibility of the post: public, followers, or private
+          example: public
+        type: string
     type: object
   models.ReactionWithUser:
     properties:
@@ -561,6 +988,116 @@ paths:
       summary: Create a comment
       tags:
       - Comments
+  /api/v1/events/{id}:
+    delete:
+      description: Deletes an event (creator or group owner only)
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete event
+      tags:
+      - Groups
+    get:
+      description: Retrieves event details with RSVP options and vote counts
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GroupEventWithDetails'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get event details
+      tags:
+      - Groups
+  /api/v1/events/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Records user's RSVP choice for an event (going/not going/maybe)
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Option ID to vote for
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Vote on event
+      tags:
+      - Groups
   /api/v1/follow:
     post:
       consumes:
@@ -811,6 +1348,586 @@ paths:
       summary: Remove a follower
       tags:
       - Follow
+  /api/v1/groups:
+    get:
+      description: Retrieves all groups with owner details and member counts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupWithOwner'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Browse all groups
+      tags:
+      - Groups
+  /api/v1/groups/{id}:
+    delete:
+      description: Deletes a group (owner only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete group
+      tags:
+      - Groups
+    get:
+      description: Retrieves group details with owner information and member count
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GroupWithOwner'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get group details
+      tags:
+      - Groups
+    put:
+      consumes:
+      - application/json
+      description: Updates group details (owner only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated group details
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update group
+      tags:
+      - Groups
+  /api/v1/groups/{id}/events:
+    get:
+      description: Retrieves all events for a group (members only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupEvent'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get group events
+      tags:
+      - Groups
+    post:
+      consumes:
+      - application/json
+      description: Creates a new event in a group (members only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Event details
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupEventWithDetails'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create group event
+      tags:
+      - Groups
+  /api/v1/groups/{id}/invite:
+    post:
+      consumes:
+      - application/json
+      description: Sends an invitation to a user to join the group (members only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to invite
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupInvite'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Invite user to group
+      tags:
+      - Groups
+  /api/v1/groups/{id}/members:
+    get:
+      description: Retrieves all members of a group (members only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupMemberWithUser'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get group members
+      tags:
+      - Groups
+  /api/v1/groups/{id}/members/{userId}:
+    delete:
+      description: Removes a member from the group (owner only, cannot remove owner)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to remove
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Remove group member
+      tags:
+      - Groups
+  /api/v1/groups/{id}/request:
+    post:
+      description: Creates a join request to join a group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupJoinRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Request to join group
+      tags:
+      - Groups
+  /api/v1/groups/{id}/requests:
+    get:
+      description: Retrieves all pending join requests for a group (owner only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupJoinRequestWithDetails'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get pending join requests
+      tags:
+      - Groups
+  /api/v1/groups/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new group with the authenticated user as owner and optionally
+        invites members
+      parameters:
+      - description: Group details (title, description, invitees)
+        in: body
+        name: group
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupWithOwner'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create a group
+      tags:
+      - Groups
+  /api/v1/groups/invites:
+    get:
+      description: Retrieves all pending group invitations for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupInviteWithDetails'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get my group invites
+      tags:
+      - Groups
+  /api/v1/groups/invites/{id}/accept:
+    put:
+      description: Accepts a group invitation and adds user to the group
+      parameters:
+      - description: Invite ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Accept group invite
+      tags:
+      - Groups
+  /api/v1/groups/invites/{id}/decline:
+    put:
+      description: Declines a group invitation
+      parameters:
+      - description: Invite ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Decline group invite
+      tags:
+      - Groups
+  /api/v1/groups/my-groups:
+    get:
+      description: Retrieves all groups where the authenticated user is a member
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupWithOwner'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get user's groups
+      tags:
+      - Groups
+  /api/v1/groups/requests/{id}/approve:
+    put:
+      description: Approves a join request and adds the user to the group (owner only)
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Approve join request
+      tags:
+      - Groups
+  /api/v1/groups/requests/{id}/deny:
+    put:
+      description: Denies a join request (owner only)
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Deny join request
+      tags:
+      - Groups
   /api/v1/images/delete/{postId}:
     delete:
       description: Removes all image associations for a post. Only the post owner
@@ -1199,6 +2316,102 @@ paths:
       summary: Hide notification
       tags:
       - Notifications
+  /api/v1/posts/{id}/add-allowed-user:
+    post:
+      consumes:
+      - application/json
+      description: Allows the post owner to grant access to a specific user for a
+        private post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to allow {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'status: user added'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not the post owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Add allowed user to post
+      tags:
+      - Posts
+  /api/v1/posts/{id}/remove-allowed-user:
+    post:
+      consumes:
+      - application/json
+      description: Allows the post owner to revoke access to a specific user for a
+        private post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to remove {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: user removed'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not the post owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Remove allowed user from post
+      tags:
+      - Posts
   /api/v1/posts/create:
     post:
       consumes:
@@ -1215,6 +2428,10 @@ paths:
         in: formData
         name: content
         required: true
+        type: string
+      - description: 'Post visibility: public (default), followers, or private'
+        in: formData
+        name: visibility
         type: string
       - description: Images to attach (multiple allowed, max 20MB total)
         in: formData
@@ -1426,26 +2643,57 @@ paths:
       summary: Get liked posts
       tags:
       - User Engagement
-  /api/v1/profile:
-    get:
-      description: Returns the full profile details of the currently authenticated
-        user.
+  /api/v1/posts/update-visibility/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Allows the post owner to change the visibility of their post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New visibility {\
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: User profile data
+          description: 'status: visibility updated'
           schema:
-            $ref: '#/definitions/models.User'
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or invalid visibility
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not the post owner
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
       security:
       - CookieAuth: []
-      summary: Get current user profile
+      summary: Update post visibility
       tags:
-      - Authentication
+      - Posts
   /api/v1/reactions:
     post:
       consumes:
@@ -1725,6 +2973,39 @@ paths:
       summary: Get user profile by ID
       tags:
       - User Profile
+  /api/v1/users/{id}/posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves posts from a specific user based on visibility rules
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of visible posts
+          schema:
+            items:
+              $ref: '#/definitions/models.PostWithUser'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get user's posts
+      tags:
+      - Posts
   /api/v1/verify:
     get:
       description: Checks if the session cookie is valid and returns the current user's

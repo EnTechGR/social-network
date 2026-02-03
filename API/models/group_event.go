@@ -28,20 +28,6 @@ type GroupEvent struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// GroupEventOption represents an RSVP option for an event (going, not going, maybe)
-// swagger:model GroupEventOption
-type GroupEventOption struct {
-	// The unique identifier for the option (UUID)
-	// example: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
-	ID string `json:"id"`
-	// The ID of the event this option belongs to
-	// example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
-	EventID string `json:"event_id"`
-	// The label for this option: going, not going, maybe
-	// example: going
-	Label string `json:"label"`
-}
-
 // GroupEventVote represents a user's RSVP vote for an event
 // swagger:model GroupEventVote
 type GroupEventVote struct {
@@ -62,21 +48,15 @@ type GroupEventVote struct {
 // EventOptionWithVotes represents an option with vote count
 // swagger:model EventOptionWithVotes
 type EventOptionWithVotes struct {
-	// The unique identifier for the option (UUID)
-	// example: o1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
-	ID string `json:"id"`
-	// The ID of the event this option belongs to
-	// example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
-	EventID string `json:"event_id"`
 	// The label for this option: going, not going, maybe
 	// example: going
-	Label string `json:"label"`
+	Label     string `json:"label"`
 	// The number of votes for this option
 	// example: 15
-	VoteCount int `json:"vote_count"`
+	VoteCount int    `json:"vote_count"`
 	// Whether the current user voted for this option
 	// example: true
-	UserVoted bool `json:"user_voted"`
+	UserVoted bool   `json:"user_voted"`
 }
 
 // GroupEventWithDetails represents an event with all related information

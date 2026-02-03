@@ -13,6 +13,15 @@ import (
 	"social-network/utils"
 )
 
+// validChoices is the single source of truth for allowed RSVP values.
+// The DB CHECK constraint mirrors this, but we validate here so the error
+// message is clear and we never hit the database with garbage.
+var validChoices = map[string]bool{
+	"going":     true,
+	"not going": true,
+	"maybe":     true,
+}
+
 // GroupEventHandler handles group event and RSVP operations
 type GroupEventHandler struct {
 	EventRepo  *group.GroupEventRepository
@@ -56,7 +65,7 @@ func (h *GroupEventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Extract group ID from URL
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/events")
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/events/create/")
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)
@@ -164,7 +173,7 @@ func (h *GroupEventHandler) GetGroupEvents(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Extract group ID from URL
-	groupID := extractGroupID(r.URL.Path, "/api/v1/groups/", "/events")
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/events/")
 
 	if groupID == "" {
 		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)
@@ -268,13 +277,13 @@ func (h *GroupEventHandler) GetEventDetails(w http.ResponseWriter, r *http.Reque
 
 // VoteOnEvent records or updates a user's RSVP for an event
 // @Summary      Vote on event
-// @Description  Records user's RSVP choice for an event (going/not going/maybe)
+// @Description  Records user's RSVP choice for an event.  Valid choices: "going", "not going", "maybe".
 // @Tags         Groups
 // @Security     CookieAuth
 // @Accept       json
 // @Produce      json
-// @Param        id    path      string  true  "Event ID"
-// @Param        data  body      object  true  "Option ID to vote for"
+// @Param        id    path      string  true   "Event ID"
+// @Param        data  body      object  true   "Choice to record"
 // @Success      200   {object}  map[string]string
 // @Failure      400   {object}  models.ErrorResponse
 // @Failure      401   {object}  models.ErrorResponse
@@ -293,16 +302,16 @@ func (h *GroupEventHandler) VoteOnEvent(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Extract event ID from URL
-	eventID := extractGroupID(r.URL.Path, "/api/v1/events/", "/vote")
+	eventID := strings.TrimPrefix(r.URL.Path, "/api/v1/events/vote/")
 
 	if eventID == "" {
 		utils.ErrorResponse(w, "Event ID is required", http.StatusBadRequest)
 		return
 	}
 
-	// Parse request body
+	// Parse request body  ───────────────────────────────────────────────────
 	var req struct {
-		OptionID string `json:"option_id"`
+		Choice string `json:"choice"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -310,14 +319,21 @@ func (h *GroupEventHandler) VoteOnEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	req.OptionID = strings.TrimSpace(req.OptionID)
+	req.Choice = strings.TrimSpace(req.Choice)
 
-	if req.OptionID == "" {
-		utils.ErrorResponse(w, "Option ID is required", http.StatusBadRequest)
+	if req.Choice == "" {
+		utils.ErrorResponse(w, "Choice is required", http.StatusBadRequest)
 		return
 	}
 
-	// Get event to verify group membership
+	// Validate before hitting the database.  The CHECK constraint on the table
+	// is the last line of defence; this gives the caller an actionable message.
+	if !validChoices[req.Choice] {
+		utils.ErrorResponse(w, `Invalid choice. Must be one of: "going", "not going", "maybe"`, http.StatusBadRequest)
+		return
+	}
+
+	// Get event to verify group membership ──────────────────────────────────
 	event, err := h.EventRepo.GetEventByID(eventID)
 	if err != nil {
 		log.Printf("Failed to get event: %v", err)
@@ -343,8 +359,8 @@ func (h *GroupEventHandler) VoteOnEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Record vote (this will replace any existing vote)
-	if err := h.EventRepo.VoteOnEvent(eventID, user.ID, req.OptionID); err != nil {
+	// Record vote (replaces any existing vote for this user + event) ─────────
+	if err := h.EventRepo.VoteOnEvent(eventID, user.ID, req.Choice); err != nil {
 		log.Printf("Failed to record vote: %v", err)
 		utils.ErrorResponse(w, "Failed to record vote", http.StatusInternalServerError)
 		return
@@ -380,7 +396,7 @@ func (h *GroupEventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Extract event ID from URL
-	eventID := strings.TrimPrefix(r.URL.Path, "/api/v1/events/")
+	eventID := strings.TrimPrefix(r.URL.Path, "/api/v1/events/delete/")
 
 	if eventID == "" {
 		utils.ErrorResponse(w, "Event ID is required", http.StatusBadRequest)

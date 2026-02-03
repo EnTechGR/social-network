@@ -112,8 +112,22 @@ curl -X POST http://localhost:8080/api/v1/groups/create \
     \"invitees\": [\"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"]
   }"
 
-curl -X PUT http://localhost:8080/api/v1/groups/invites/accept/ef2bcb2e-0187-47c6-95e9-653919770ab6 \
-  -H "X-CSRF-Token: DKMB-9HPJSmZ5i1bVAJXnXJNbVlhKGVyRqNQzWQzVR0=" \
+curl -X POST http://localhost:8080/api/v1/groups/create \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: VrRmZw27r8XIIY-oyKIPnM4ik7WbC-fcUoQ04ZE_8sE=" \
+  -b alice.cookies \
+  -d "{
+    \"title\": \"Post test\",
+    \"description\": \"For post test\",
+    \"invitees\": [\"7d08e50f-ae3b-4b79-a352-fc2d4c883958\"]
+  }"
+
+curl -X GET http://localhost:8080/api/v1/groups/invites \
+  -H "X-CSRF-Token: oMDnDrZn4_C70phc7Z87HBGGc0oZXPbj6OOmIRbgFIc=" \
+  -b bob.cookies
+
+curl -X PUT http://localhost:8080/api/v1/groups/invites/accept/6c355dd0-0a20-42c7-a741-38fa16e5cc9a \
+  -H "X-CSRF-Token: oMDnDrZn4_C70phc7Z87HBGGc0oZXPbj6OOmIRbgFIc=" \
   -b bob.cookies
 
 curl -X POST http://localhost:8080/api/v1/groups/invite/514a4942-be40-4fb0-851e-ed6c3d228b26 \
@@ -144,3 +158,53 @@ curl -X PUT http://localhost:8080/api/v1/groups/requests/approve/7d6005d4-687e-4
 
 curl -X GET http://localhost:8080/api/v1/groups/members/ea7c7ac8-6df2-4ec9-afec-9785d5a9b36e \
   -b alice.cookies
+
+curl -X POST http://localhost:8080/api/v1/groups/posts/create/ded0672e-b8a9-4ea9-8e6d-da64e1a151af \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: SsNEIoSm15qzJSu76UeI6qgzcqLv57qi5TKGoMtSfCA=" \
+  -b bob.cookies \
+  -d '{
+    "title": "My First Group Post",
+    "content": "Hello everyone! This is my first post in the Go Programming Group."
+  }'
+
+curl -X POST  http://localhost:8080/api/v1/comments/create \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: S1kun38Zve7QEBKyt94uhzFjTIKHYSb5JvAnM_9EQEM=" \
+  -b alice.cookies \
+  -d '{
+    "post_id": "ded0672e-b8a9-4ea9-8e6d-da64e1a151af",
+    "content": "Great post, Bob! Welcome to the group!"
+  }'
+
+curl -X GET http://localhost:8080/api/v1/groups/posts/8410dac9-80ee-497f-8e63-4f1a89fe2f9a \
+  -b paul.cookies
+
+curl -s -X POST http://localhost:8080/api/v1/groups/events/create/ded0672e-b8a9-4ea9-8e6d-da64e1a151af \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: 0ZIsMe3LJXdSi5hkIdqR9mkc7KQ52TKSGdIMkjEcAn0=" \
+  -b ./alice.cookies \
+  -d '{
+    "title": "Group Hiking Trip",
+    "description": "A fun hike up the mountain. Bring water and snacks!",
+    "event_time": "2026-06-15T10:00:00Z"
+  }'
+
+  curl -s -X POST http://localhost:8080/api/v1/groups/events/create/514a4942-be40-4fb0-851e-ed6c3d228b26 \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: 0ZIsMe3LJXdSi5hkIdqR9mkc7KQ52TKSGdIMkjEcAn0=" \
+  -b ./alice.cookies \
+  -d '{
+    "title": "Group Hiking Trip2",
+    "description": "A fun hike up the mountain. Bring water and snacks!2",
+    "event_time": "2026-06-15T10:00:00Z"
+  }'
+
+  curl -X GET http://localhost:8080/api/v1/events/41647d38-3e59-4002-8349-0cd248c3631b \
+  -b paul.cookies
+
+curl -s -X POST http://localhost:8080/api/v1/events/vote/41647d38-3e59-4002-8349-0cd248c3631b \
+  -H 'Content-Type: application/json' \
+  -H "X-CSRF-Token: jdUFwWkFqwI4gvcRORzANfnKkVD96RCu2dxHg8fAnv8=" \
+  -b ./bob.cookies \
+  -d '{"choice": "going"}'

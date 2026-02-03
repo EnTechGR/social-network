@@ -148,7 +148,7 @@ export default function ProfileWrap({
 
         {/* Birth Date - show date only (strip ISO time if present) */}
         <InfoRow label="Birth Date">
-          {user.birthDate.includes('T') ? user.birthDate.split('T')[0] : user.birthDate}
+          {user.birthDate ? (user.birthDate.includes('T') ? user.birthDate.split('T')[0] : user.birthDate) : 'N/A'}
         </InfoRow>
 
         {/* Public Profile Toggle */}

@@ -6,6 +6,7 @@ import SearchSuggestions from './SearchSuggestions';
 import { useState, useRef } from 'react';
 import Button from './Button';
 import Link from 'next/link';
+import CreatePostModal from './CreatePostModal';
 
 // --- SearchInputWithDropdown component ---
 function SearchInputWithDropdown() {
@@ -74,7 +75,10 @@ function SearchInputWithDropdown() {
 }
 
 export const Navbar = () => {
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+
   return (
+    <>
     <nav
       className="
         w-full
@@ -198,12 +202,23 @@ export const Navbar = () => {
             </div>
           </Link>
 
-          <Button variant="primary" size="lg" className="cursor-pointer">
+          <Button 
+            variant="primary" 
+            size="lg" 
+            className="cursor-pointer"
+            onClick={() => setIsCreatePostOpen(true)}
+          >
             Create Post
           </Button>
         </div>
       </div>
     </nav>
+
+    <CreatePostModal 
+      isOpen={isCreatePostOpen}
+      onClose={() => setIsCreatePostOpen(false)}
+    />
+    </>
   );
 };
 

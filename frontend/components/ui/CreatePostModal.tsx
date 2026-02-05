@@ -7,6 +7,7 @@ import Avatar from './Avatar';
 import DropdownButton from './DropdownButton';
 import { ImagePlus } from 'lucide-react';
 import Image from 'next/image';
+import { createPost } from '@/lib/api';
 
 const VISIBILITY_OPTIONS = ['PUBLIC', 'FOLLOWERS', 'PRIVATE'] as const;
 
@@ -42,6 +43,8 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
   const [selectedFollowers, setSelectedFollowers] = useState<Set<string>>(new Set());
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<{ file: File; preview: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,7 +103,11 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
 
   const resetModal = () => {
     setStep(1);
+    setTitle('');
+    setDetails('');
+    setVisibility('PUBLIC');
     setSelectedFollowers(new Set());
+    setError(null);
     handleRemoveImage();
   };
 
@@ -109,10 +116,40 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
     onClose();
   };
 
-  const handleSubmit = () => {
-    console.log({ title, details, visibility, selectedFollowers: Array.from(selectedFollowers) });
-    resetModal();
-    onClose();
+  //TODO: handle visibility
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !details.trim()) {
+      setError('Title and details are required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const postData = {
+        title: title.trim(),
+        content: details.trim(),
+        visibility,
+        image: uploadedImage?.file,
+        allowedUserIds: visibility === 'PRIVATE' ? Array.from(selectedFollowers) : undefined,
+      };
+
+      await createPost(postData);
+      
+      // Success - reset and close
+      resetModal();
+      onClose();
+      
+      // Optional: Show success notification or refresh feed
+      console.log('Post created successfully!');
+    } catch (err: any) {
+      console.error('Failed to create post:', err);
+      setError(err.message || 'Failed to create post. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Step 1: Create Post Form
@@ -217,18 +254,31 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
           )}
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-300 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Submit/Next Button - fixed height container to prevent layout shift */}
-        <div className="flex justify-end h-12 items-center">
+        <div className="flex justify-end h-12 items-center mt-4">
           {visibility === 'FOLLOWERS' ? (
             <IconButton
               variant="arrow-right"
               text="NEXT"
               onClick={handleNext}
               aria-label="Next step"
+              disabled={isSubmitting}
             />
           ) : (
-            <Button variant="primary" size="lg" onClick={handleSubmit}>
-              SUBMIT
+            <Button 
+              variant="primary" 
+              size="lg" 
+              onClick={handleSubmit}
+              disabled={isSubmitting || !title.trim() || !details.trim()}
+            >
+              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
             </Button>
           )}
         </div>
@@ -319,12 +369,14 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
             text="BACK"
             onClick={handleBack}
             aria-label="Go back"
+            disabled={isSubmitting}
           />
           <IconButton
             variant="arrow-right"
-            text="NEXT"
+            text={isSubmitting ? 'SUBMITTING...' : 'NEXT'}
             onClick={handleSubmit}
             aria-label="Submit post"
+            disabled={isSubmitting || selectedFollowers.size === 0}
           />
         </div>
       </div>
@@ -343,7 +395,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
       onClick={handleClose}
     >
       <div className="absolute inset-0 bg-black/50" />
-      <div onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-145 px-4" onClick={(e) => e.stopPropagation()}>
         {modalContent}
       </div>
     </div>

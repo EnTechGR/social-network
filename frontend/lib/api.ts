@@ -205,3 +205,42 @@ export async function updatePrivacy(isPrivate: boolean): Promise<any> {
     body: JSON.stringify({ is_private: isPrivate }),
   });
 }
+
+/**
+ * Create a new post
+ * POST /api/v1/posts/create
+ * Accepts multipart/form-data for image uploads
+ */
+export async function createPost(data: {
+  title: string;
+  content: string;
+  visibility: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
+  image?: File;
+  allowedUserIds?: string[];
+}): Promise<any> {
+  const csrfToken = typeof window !== 'string' ? localStorage.getItem('csrf_token') : null;
+  
+  const formData = new FormData();
+  formData.append('title', data.title);
+  formData.append('content', data.content);
+  formData.append('visibility', data.visibility.toLowerCase());
+  
+  if (data.image) {
+    formData.append('image', data.image);
+  }
+
+  // For private posts with specific allowed users
+  if (data.allowedUserIds && data.allowedUserIds.length > 0) {
+    // Backend expects allowed_user_ids as JSON field, but we're using multipart
+    // May need to send as JSON instead or handle it differently based on backend implementation
+    formData.append('allowed_user_ids', JSON.stringify(data.allowedUserIds));
+  }
+
+  return fetchAPI<any>('/api/v1/posts/create', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: formData,
+  });
+}

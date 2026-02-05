@@ -7,7 +7,7 @@
 
 import Avatar from './Avatar';
 import ToggleButton from './ToggleButton';
-
+import { Upload, Pencil } from 'lucide-react';
 interface ProfileWrapProps {
   /** User data to display */
   user: {
@@ -29,6 +29,8 @@ interface ProfileWrapProps {
   onFollowersClick?: () => void;
   /** Callback when following count is clicked */
   onFollowingClick?: () => void;
+  /** Callback when avatar upload is triggered */
+  onAvatarUpload?: (file: File) => void;
   /** Additional CSS classes */
   className?: string;
 }
@@ -92,6 +94,7 @@ export default function ProfileWrap({
   onTogglePublic,
   onFollowersClick,
   onFollowingClick,
+  onAvatarUpload,
   className = '',
 }: ProfileWrapProps) {
   return (
@@ -116,14 +119,45 @@ export default function ProfileWrap({
     >
       {/* Column 1: Avatar + Name/Bio */}
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-11 flex-1 self-stretch">
-        {/* Avatar */}
-        <Avatar
-          type={user.avatarUrl ? 'image' : 'user'}
-          src={user.avatarUrl}
-          alt={`${user.name}'s avatar`}
-          size="xl"
-          isSelf={isSelf}
-        />
+        {/* Avatar with upload icon overlay (only for own profile) */}
+        <div className="relative">
+          <Avatar
+            type={user.avatarUrl ? 'image' : 'user'}
+            src={user.avatarUrl}
+            alt={`${user.name}'s avatar`}
+            size="xl"
+            isSelf={isSelf}
+          />
+          {isSelf && onAvatarUpload && (
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="avatar-upload"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    onAvatarUpload(file);
+                    // Reset input so same file can be selected again
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="absolute top-1 right-1 w-8 h-8 rounded-full border border-parea-black bg-parea-black flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80"
+                title={user.avatarUrl && user.avatarUrl !== '/user-avatar-default.png' ? 'Change avatar' : 'Upload avatar'}
+              >
+                {user.avatarUrl && user.avatarUrl !== '/user-avatar-default.png' ? (
+                  <Pencil size={16} className="text-parea-yellow" />
+                ) : (
+                  <Upload size={16} className="text-parea-yellow" />
+                )}
+              </label>
+            </>
+          )}
+        </div>
 
         {/* Name and Bio */}
         <div className="flex flex-col justify-center items-start gap-3 flex-1 self-stretch">

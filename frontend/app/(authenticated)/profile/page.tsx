@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
-import { getProfile, updatePrivacy } from '@/lib/api';
+import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
 // Use mock data as fallback when API fails (for testing)
@@ -31,13 +31,16 @@ const mockUser = {
   followingCount: 250,
 };
 
+type ProfileUser = typeof mockUser;
+
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<ProfileUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [activeTab, setActiveTab] = useState('Posts');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -48,15 +51,7 @@ export default function ProfilePage() {
         
         // Get avatar URL from the avatar object
         const avatarPath = profileData.avatar?.file_path || profileData.avatar?.thumbnail_path;
-        
-        // Construct proper avatar URL
-        let avatarUrl = '/user-avatar-default.png'; // default fallback
-        if (avatarPath) {
-          // Backend serves files at /static/ (which maps to ./uploads directory)
-          // If path is like "uploads/file.png", we need "/static/file.png"
-          const filename = avatarPath.replace(/^uploads\//, '');
-          avatarUrl = `http://localhost:8080/static/${filename}`;
-        }
+        const avatarUrl = getAvatarUrl(avatarPath);
         
         // Map API response to user object
         setUser({
@@ -121,20 +116,41 @@ export default function ProfilePage() {
     console.log('Show following list');
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      await uploadAvatar(file);
+      // Refresh profile data to get updated avatar
+      const profileData = await getProfile();
+      const avatarPath = profileData.avatar?.file_path || profileData.avatar?.thumbnail_path;
+      const avatarUrl = getAvatarUrl(avatarPath);
+      
+      setUser((prev) => (prev ? { ...prev, avatarUrl } : null));
+    } catch (err: any) {
+      console.error('Failed to upload avatar:', err);
+      setError(err?.message || 'Failed to upload avatar');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-parea-white px-16 py-12">
       <div className="max-w-7xl mx-auto">
         {/* Profile Card */}
-        <ProfileWrap
-          user={{
-            ...user,
-            isPublic, // Use local state for toggle
-          }}
-          isSelf={true}
-          onTogglePublic={handleTogglePublic}
-          onFollowersClick={handleFollowersClick}
-          onFollowingClick={handleFollowingClick}
-        />
+        {user && (
+          <ProfileWrap
+            user={{
+              ...user,
+              isPublic, // Use local state for toggle
+            }}
+            isSelf={true}
+            onTogglePublic={handleTogglePublic}
+            onFollowersClick={handleFollowersClick}
+            onFollowingClick={handleFollowingClick}
+            onAvatarUpload={handleAvatarUpload}
+          />
+        )}
 
         {/* Placeholder for tabs and content below */}
         <div className="mt-8">

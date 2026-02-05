@@ -9,15 +9,27 @@ import { useRouter } from 'next/navigation';
 import SidebarToggle from './SidebarToggle';
 import Tabs from './Tabs';
 import Button from './Button';
-import { logout } from '@/lib/api';
+import { logout, getProfile, getAvatarUrl } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
 type DrawerType = 'chat' | 'notifications' | null;
+
+const DEFAULT_AVATAR = '/user-avatar-default.png';
 
 export default function Sidebar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>(null);
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
+
+  useEffect(() => {
+    getProfile()
+      .then((p) => {
+        const path = p?.avatar?.file_path || p?.avatar?.thumbnail_path;
+        setAvatarUrl(getAvatarUrl(path));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -136,7 +148,7 @@ export default function Sidebar() {
               </button>
             </div>
 
-            <div
+            <Link href="/profile"
               className="
                 w-10
                 h-10
@@ -148,12 +160,12 @@ export default function Sidebar() {
               "
             >
               <Image
-                src="/test-avatar.png"
+                src={avatarUrl}
                 alt="User avatar"
                 fill
                 className="object-cover"
               />
-            </div>
+            </Link>
 
             <button
               onClick={handleLogout}
@@ -660,7 +672,7 @@ export default function Sidebar() {
             "
             >
               <Image
-                src="/test-avatar.png"
+                src={avatarUrl}
                 alt="User avatar"
                 fill
                 className="object-cover"

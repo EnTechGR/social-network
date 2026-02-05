@@ -190,6 +190,89 @@ export async function getProfile(): Promise<any> {
 }
 
 /**
+ * Build avatar URL from backend path (file_path or thumbnail_path).
+ * Uses API base URL so static assets resolve correctly.
+ */
+export function getAvatarUrl(avatarPath: string | undefined): string {
+  if (!avatarPath) return '/user-avatar-default.png';
+  const filename = avatarPath.replace(/^uploads\//, '');
+  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  return `${base}/static/${filename}`;
+}
+
+/**
+ * Upload user avatar
+ * POST /api/v1/user/avatar
+ * Accepts multipart/form-data with avatar file (max 5MB)
+ */
+export async function uploadAvatar(file: File): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  return fetchAPI<any>('/api/v1/user/avatar', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: formData,
+  });
+}
+
+/**
+ * Get another user's profile by ID
+ * GET /api/v1/users/{id}
+ * Returns full profile when allowed; 403 when profile is private and viewer is not a follower.
+ */
+export async function getUserProfile(userId: string): Promise<{
+  privateProfile: true;
+  message: string;
+  nickname?: string;
+  first_name?: string;
+  last_name?: string;
+} | {
+  privateProfile: false;
+  user: any;
+  posts: any[];
+  followers: any[];
+  following: any[];
+  counts: { posts: number; followers: number; following: number };
+  is_own_profile: boolean;
+}> {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/users/${userId}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 403) {
+    return {
+      privateProfile: true,
+      message: (data as any).message || 'This profile is private. Follow to see their content.',
+      nickname: (data as any).nickname,
+      first_name: (data as any).first_name,
+      last_name: (data as any).last_name,
+    };
+  }
+
+  if (!response.ok) {
+    throw new Error((data as any).message || (data as any).error || response.statusText || 'Failed to load profile');
+  }
+
+  return {
+    privateProfile: false,
+    user: data.user,
+    posts: data.posts ?? [],
+    followers: data.followers ?? [],
+    following: data.following ?? [],
+    counts: data.counts ?? { posts: 0, followers: 0, following: 0 },
+    is_own_profile: data.is_own_profile ?? false,
+  };
+}
+
+/**
  * Update user privacy setting
  * PUT /api/v1/user/privacy
  * Toggles profile between public and private

@@ -115,6 +115,17 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		Content: &content,
 	}
 
+	canComment, err := h.CommentRepo.CheckCommentAccessForGroupPost(postID, user.ID)
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to verify access", http.StatusInternalServerError)
+		return
+	}
+
+	if !canComment {
+		utils.ErrorResponse(w, "You do not have permission to comment on this post", http.StatusForbidden)
+		return
+	}
+
 	created, err := h.CommentRepo.Create(comment)
 	if err != nil {
 		utils.ErrorResponse(w, "Failed to create comment", http.StatusInternalServerError)

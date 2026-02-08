@@ -4,47 +4,40 @@ import { useState } from 'react';
 import Button from './Button';
 import IconButton from './IconButtons';
 import Image from 'next/image';
-import { createGroupEvent } from '@/lib/api';
+import { createGroup } from '@/lib/api';
 
-interface CreateEventModalProps {
+interface CreateGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  groupId: string;
-  onSuccess?: () => void;
+  onSuccess?: (groupId: string) => void;
 }
 
-export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }: CreateEventModalProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [eventTime, setEventTime] = useState('');
+export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateGroupModalProps) {
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setTitle('');
-    setDescription('');
-    setEventTime('');
+    setName('');
+    setBio('');
     setError(null);
     onClose();
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) return;
+    if (!name.trim()) return;
     setError(null);
     setIsSubmitting(true);
     try {
-      const timeValue = eventTime || new Date().toISOString();
-      await createGroupEvent(groupId, {
-        title: title.trim(),
-        description: description.trim(),
-        event_time: new Date(timeValue).toISOString(),
-      });
+      const res = await createGroup({ title: name.trim(), description: bio.trim() });
+      const groupId = res?.group?.id;
       handleClose();
-      onSuccess?.();
+      if (groupId) onSuccess?.(groupId);
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to create event.');
+      setError(err?.message ?? 'Failed to create group.');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,33 +65,24 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
           />
         </div>
         <div className="p-8 min-h-129 flex flex-col">
-          <h4 className="mb-4">Create event</h4>
+          <h4 className="mb-4">Create group</h4>
           <div className="mb-6">
-            <label className="label block mb-2">TITLE</label>
+            <label className="label block mb-2">GROUP NAME</label>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full p-3 bg-parea-white border border-parea-black focus:outline-none"
             />
           </div>
           <div className="mb-6">
-            <label className="label block mb-2">DESCRIPTION</label>
+            <label className="label block mb-2">GROUP BIO</label>
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Event details"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="What is this group about?"
               className="w-full min-h-24 p-4 bg-parea-white border border-parea-black focus:outline-none resize-none"
               style={{ fontFamily: 'var(--font-body), system-ui, sans-serif' }}
-            />
-          </div>
-          <div className="mb-6">
-            <label className="label block mb-2">DATE & TIME</label>
-            <input
-              type="datetime-local"
-              value={eventTime}
-              onChange={(e) => setEventTime(e.target.value)}
-              className="w-full p-3 bg-parea-white border border-parea-black focus:outline-none"
             />
           </div>
           {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
@@ -107,7 +91,7 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
               variant="primary"
               size="lg"
               onClick={handleSubmit}
-              disabled={isSubmitting || !title.trim()}
+              disabled={isSubmitting || !name.trim()}
             >
               {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
             </Button>

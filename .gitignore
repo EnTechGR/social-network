@@ -8,6 +8,7 @@ backend/API/.env
 frontend/.env.example
 
 # Backend (Go)
+backend
 backend/API/*.test
 backend/API/*.prof
 backend/API/tmp/

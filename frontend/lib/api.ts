@@ -367,3 +367,61 @@ export async function createPost(data: {
     body: formData,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Group APIs (no backend changes)
+// ---------------------------------------------------------------------------
+
+export async function createGroup(data: { title: string; description?: string }): Promise<{ group: { id: string; title: string; description?: string; owner_nickname: string; member_count: number; created_at: string } }> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>('/api/v1/groups/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
+    body: JSON.stringify({ title: data.title, description: data.description || '' }),
+  });
+}
+
+export async function getGroupById(groupId: string): Promise<any> {
+  return fetchAPI<any>(`/api/v1/groups/${groupId}`, { method: 'GET' });
+}
+
+export async function getMyGroups(): Promise<any[]> {
+  const res = await fetchAPI<any>('/api/v1/groups/my-groups', { method: 'GET' });
+  return Array.isArray(res) ? res : (res?.groups ?? []);
+}
+
+export async function getGroupMembers(groupId: string): Promise<any[]> {
+  const res = await fetchAPI<any>(`/api/v1/groups/members/${groupId}`, { method: 'GET' });
+  return Array.isArray(res) ? res : (res?.members ?? []);
+}
+
+export async function getGroupPosts(groupId: string): Promise<any[]> {
+  return fetchAPI<any[]>(`/api/v1/groups/posts/${groupId}`, { method: 'GET' });
+}
+
+export async function createGroupPost(groupId: string, data: { title: string; content: string; image?: File }): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  const formData = new FormData();
+  formData.append('title', data.title);
+  formData.append('content', data.content);
+  if (data.image) formData.append('image', data.image);
+  return fetchAPI<any>(`/api/v1/groups/posts/create/${groupId}`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+    body: formData,
+  });
+}
+
+export async function getGroupEvents(groupId: string): Promise<any[]> {
+  const res = await fetchAPI<any>(`/api/v1/groups/events/${groupId}`, { method: 'GET' });
+  return Array.isArray(res) ? res : (res?.events ?? []);
+}
+
+export async function createGroupEvent(groupId: string, data: { title: string; description: string; event_time: string }): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/events/create/${groupId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
+    body: JSON.stringify(data),
+  });
+}

@@ -10,10 +10,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
-import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl, getPostsByUserId } from '@/lib/api';
+import Button from '@/components/ui/Button';
+import CreateGroupModal from '@/components/ui/CreateGroupModal';
+import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl, getPostsByUserId, getMyGroups } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
 // When false, API failures show error or redirect to login instead of mock data
@@ -46,6 +49,10 @@ export default function ProfilePage() {
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
+  const [myGroups, setMyGroups] = useState<any[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -97,6 +104,27 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [router]);
+
+  useEffect(() => {
+    if (activeTab !== 'Groups') return;
+    let cancelled = false;
+    setGroupsLoading(true);
+    setGroupsError(null);
+    getMyGroups()
+      .then((list) => {
+        if (!cancelled) setMyGroups(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setGroupsError(err?.message ?? 'Failed to load groups');
+          setMyGroups([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setGroupsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab !== 'Posts' || !currentUserId) return;
@@ -233,10 +261,45 @@ export default function ProfilePage() {
             )}
             {activeTab === 'Events' && <p className="text-regular text-parea-black">Events content...</p>}
             {activeTab === 'Reactions' && <p className="text-regular text-parea-black">Reactions content...</p>}
-            {activeTab === 'Groups' && <p className="text-regular text-parea-black">Groups content...</p>}
+            {activeTab === 'Groups' && (
+              <>
+                <div className="mb-4">
+                  <Button variant="primary" size="lg" onClick={() => setCreateGroupOpen(true)}>
+                    Create Group
+                  </Button>
+                </div>
+                {groupsLoading && <p className="text-regular text-parea-black">Loading groups...</p>}
+                {!groupsLoading && groupsError && <p className="text-regular text-parea-black">{groupsError}</p>}
+                {!groupsLoading && !groupsError && myGroups.length === 0 && (
+                  <p className="text-regular text-parea-black">No groups yet.</p>
+                )}
+                {!groupsLoading && !groupsError && myGroups.length > 0 && (
+                  <ul className="flex flex-col gap-2">
+                    {myGroups.map((g) => (
+                      <li key={g.id}>
+                        <Link href={`/group/${g.id}`} className="text-regular text-parea-black underline hover:no-underline">
+                          {g.title ?? g.name ?? 'Group'}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {createGroupOpen && (
+        <CreateGroupModal
+          isOpen={createGroupOpen}
+          onClose={() => setCreateGroupOpen(false)}
+          onSuccess={(groupId) => {
+            setCreateGroupOpen(false);
+            router.push(`/group/${groupId}`);
+          }}
+        />
+      )}
     </main>
   );
 }

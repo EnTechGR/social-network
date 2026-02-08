@@ -7,7 +7,7 @@ import Avatar from './Avatar';
 import DropdownButton from './DropdownButton';
 import { ImagePlus } from 'lucide-react';
 import Image from 'next/image';
-import { createPost } from '@/lib/api';
+import { createPost, createGroupPost } from '@/lib/api';
 
 const VISIBILITY_OPTIONS = ['PUBLIC', 'FOLLOWERS', 'PRIVATE'] as const;
 
@@ -23,6 +23,10 @@ interface CreatePostModalProps {
   preview?: boolean;
   /** List of followers to select from when visibility is FOLLOWERS */
   followers?: Follower[];
+  /** When set, post is created in this group (no visibility dropdown) */
+  groupId?: string;
+  /** Called after successful group post create */
+  onSuccess?: () => void;
 }
 
 // Mock followers for preview/demo
@@ -35,7 +39,8 @@ const mockFollowers: Follower[] = [
   { id: '6', name: 'Ammy Stones', avatarUrl: '/test-avatar.png' },
 ];
 
-export default function CreatePostModal({ isOpen, onClose, preview = false, followers = mockFollowers }: CreatePostModalProps) {
+export default function CreatePostModal({ isOpen, onClose, preview = false, followers = mockFollowers, groupId, onSuccess }: CreatePostModalProps) {
+  const isGroupPost = Boolean(groupId);
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'>('PUBLIC');
@@ -128,22 +133,27 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
     setError(null);
 
     try {
-      const postData = {
-        title: title.trim(),
-        content: details.trim(),
-        visibility,
-        image: uploadedImage?.file,
-        allowedUserIds: visibility === 'PRIVATE' ? Array.from(selectedFollowers) : undefined,
-      };
-
-      await createPost(postData);
-      
-      // Success - reset and close
-      resetModal();
-      onClose();
-      
-      // Optional: Show success notification or refresh feed
-      console.log('Post created successfully!');
+      if (isGroupPost && groupId) {
+        await createGroupPost(groupId, {
+          title: title.trim(),
+          content: details.trim(),
+          image: uploadedImage?.file,
+        });
+        resetModal();
+        onClose();
+        onSuccess?.();
+      } else {
+        const postData = {
+          title: title.trim(),
+          content: details.trim(),
+          visibility,
+          image: uploadedImage?.file,
+          allowedUserIds: visibility === 'PRIVATE' ? Array.from(selectedFollowers) : undefined,
+        };
+        await createPost(postData);
+        resetModal();
+        onClose();
+      }
     } catch (err: any) {
       console.error('Failed to create post:', err);
       setError(err.message || 'Failed to create post. Please try again.');
@@ -175,15 +185,16 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
       <div className="p-8 min-h-129 flex flex-col">
         {/* Header Row */}
         <div className="flex items-center justify-between mb-4">
-          <h4>Create post</h4>
+          <h4>{isGroupPost ? 'Create group post' : 'Create post'}</h4>
 
-          {/* Visibility Dropdown */}
-          <DropdownButton
-            options={[...VISIBILITY_OPTIONS]}
-            value={visibility}
-            onValueChange={(v) => setVisibility(v as 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE')}
-            aria-label="Post visibility"
-          />
+          {!isGroupPost && (
+            <DropdownButton
+              options={[...VISIBILITY_OPTIONS]}
+              value={visibility}
+              onValueChange={(v) => setVisibility(v as 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE')}
+              aria-label="Post visibility"
+            />
+          )}
         </div>
 
         {/* Title Field */}
@@ -383,7 +394,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
     </div>
   );
 
-  const modalContent = step === 1 ? step1Content : step2Content;
+  const modalContent = isGroupPost ? step1Content : (step === 1 ? step1Content : step2Content);
 
   if (preview) {
     return modalContent;

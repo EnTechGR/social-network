@@ -472,7 +472,7 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Success      200  {object}  models.User "User profile data"
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
-// @Router       /api/v1/profile [get]
+// @Router       /api/v1/user/profile [get]
 // RotateCSRFTokenIfNeeded checks if CSRF token should be rotated and does so
 // Returns the (possibly new) CSRF token and whether it was rotated
 func (h *AuthHandler) RotateCSRFTokenIfNeeded(session *models.Session, trigger utils.RotationTrigger) (string, bool) {

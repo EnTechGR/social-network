@@ -201,6 +201,46 @@ export function getAvatarUrl(avatarPath: string | undefined): string {
 }
 
 /**
+ * Get current user's posts (includes comments; can 500 if comment load fails).
+ * GET /api/v1/user/posts
+ */
+export async function getMyPosts(): Promise<any[]> {
+  return fetchAPI<any[]>('/api/v1/user/posts', { method: 'GET' });
+}
+
+/**
+ * Get posts by user ID (no comments loaded; use for profile to avoid "Failed to load comments" 500).
+ * GET /api/v1/users/posts/{userId}
+ */
+export async function getPostsByUserId(userId: string): Promise<any[]> {
+  return fetchAPI<any[]>(`/api/v1/users/posts/${userId}`, { method: 'GET' });
+}
+
+/**
+ * Get a single post by post ID (for post detail page).
+ * GET /api/v1/posts/{postId}
+ */
+export async function getPostById(postId: string): Promise<any> {
+  return fetchAPI<any>(`/api/v1/posts/${postId}`, { method: 'GET' });
+}
+
+/**
+ * Get comments for a post by post ID.
+ * GET /api/v1/posts/{postId}/comments
+ */
+export async function getCommentsByPostId(postId: string): Promise<any[]> {
+  return fetchAPI<any[]>(`/api/v1/posts/${postId}/comments`, { method: 'GET' });
+}
+
+/**
+ * Get feed: all posts visible to the current user (public, followers where applicable, private only if allowed).
+ * GET /api/v1/feed
+ */
+export async function getFeed(): Promise<any[]> {
+  return fetchAPI<any[]>('/api/v1/feed', { method: 'GET' });
+}
+
+/**
  * Upload user avatar
  * POST /api/v1/user/avatar
  * Accepts multipart/form-data with avatar file (max 5MB)

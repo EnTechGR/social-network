@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { CardImage } from './CardImage';
 import { CardAvatar } from './CardAvatar';
 
@@ -9,6 +10,14 @@ interface CardProps {
   avatarAlt: string;
   userName: string;
   userDate?: string;
+  /** When provided, card title (e.g. post title) */
+  title?: string;
+  /** When provided, card body (e.g. post content) */
+  content?: string;
+  /** When provided, entire card links to this href (e.g. /post/[id]) */
+  href?: string;
+  /** Set for first card in feed to fix LCP (loading="eager") */
+  imagePriority?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -18,11 +27,16 @@ export const Card: React.FC<CardProps> = ({
   avatarAlt,
   userName,
   userDate,
+  title,
+  content,
+  href,
+  imagePriority,
 }) => {
-  return (
+  const inner = (
     <div className="flex
-      w-[917px]
-      h-[306px]
+      w-full
+      max-w-[917px]
+      min-h-[206px]
       pb-8
       items-center
       gap-4
@@ -33,6 +47,7 @@ export const Card: React.FC<CardProps> = ({
         type={imageType}
         src={imageSrc}
         alt="Card image"
+        priority={imagePriority}
       />
       <div className="flex
         px-8
@@ -47,10 +62,10 @@ export const Card: React.FC<CardProps> = ({
           gap-4
           self-stretch">
           <h3 className="text-lg font-semibold text-black">
-            Discover Amazing Content
+            {title ?? 'Discover Amazing Content'}
           </h3>
           <p className="text-sm text-gray-700 line-clamp-3">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            {content ?? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'}
           </p>
         </div>
         <CardAvatar
@@ -62,6 +77,16 @@ export const Card: React.FC<CardProps> = ({
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block no-underline text-inherit hover:opacity-95 transition-opacity">
+        {inner}
+      </Link>
+    );
+  }
+
+  return inner;
 };
 
 export default Card;

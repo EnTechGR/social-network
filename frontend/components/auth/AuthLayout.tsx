@@ -38,8 +38,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         </div>
       </div>
 
-      {/* Right Panel - Form Area */}
-      <div className="flex-1 bg-parea-white relative overflow-y-auto">
+      {/* Right Panel - Form Area (stacking context so inputs are clickable/focusable) */}
+      <div className="flex-1 bg-parea-white relative overflow-y-auto isolate">
         <div className="relative z-10 h-full flex items-center justify-center">
           {children}
         </div>

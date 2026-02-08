@@ -12,11 +12,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
-import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl } from '@/lib/api';
+import Card from '@/components/ui/Card';
+import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl, getPostsByUserId } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
-// Use mock data as fallback when API fails (for testing)
-const USE_MOCK_FALLBACK = true;
+// When false, API failures show error or redirect to login instead of mock data
+const USE_MOCK_FALLBACK = false;
 
 // Mock user data for testing - replace with API call later
 const mockUser = {
@@ -36,11 +37,15 @@ type ProfileUser = typeof mockUser;
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<ProfileUser | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [activeTab, setActiveTab] = useState('Posts');
   const [isUploading, setIsUploading] = useState(false);
+  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsError, setPostsError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -48,11 +53,12 @@ export default function ProfilePage() {
         setIsLoading(true);
         
         const profileData = await getProfile();
-        
+        setCurrentUserId(profileData.id ?? null);
+
         // Get avatar URL from the avatar object
         const avatarPath = profileData.avatar?.file_path || profileData.avatar?.thumbnail_path;
         const avatarUrl = getAvatarUrl(avatarPath);
-        
+
         // Map API response to user object
         setUser({
           avatarUrl,
@@ -91,6 +97,37 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [router]);
+
+  useEffect(() => {
+    if (activeTab !== 'Posts' || !currentUserId) return;
+    let cancelled = false;
+    setPostsLoading(true);
+    setPostsError(null);
+    getPostsByUserId(currentUserId)
+      .then((data) => {
+        if (!cancelled) setMyPosts(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setPostsError(err?.message ?? 'Failed to load posts');
+          setMyPosts([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPostsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, currentUserId]);
+
+  function formatPostDate(isoDate: string): string {
+    if (!isoDate) return '';
+    try {
+      const d = new Date(isoDate);
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return isoDate;
+    }
+  }
 
   const handleTogglePublic = async (newValue: boolean) => {
     const previousValue = isPublic;
@@ -160,12 +197,43 @@ export default function ProfilePage() {
             onTabChange={(tab) => setActiveTab(tab)}
           />
 
-          {/* Tab content placeholder */}
+          {/* Tab content */}
           <div className="mt-6">
-            {activeTab === 'Posts' && <p>Posts content...</p>}
-            {activeTab === 'Events' && <p>Events content...</p>}
-            {activeTab === 'Reactions' && <p>Reactions content...</p>}
-            {activeTab === 'Groups' && <p>Groups content...</p>}
+            {activeTab === 'Posts' && (
+              <>
+                {postsLoading && (
+                  <p className="text-regular text-parea-black">Loading posts...</p>
+                )}
+                {!postsLoading && postsError && (
+                  <p className="text-regular text-parea-black">{postsError}</p>
+                )}
+                {!postsLoading && !postsError && myPosts.length === 0 && (
+                  <p className="text-regular text-parea-black">No posts yet.</p>
+                )}
+                {!postsLoading && !postsError && myPosts.length > 0 && (
+                  <div className="flex flex-col items-start gap-0">
+                    {myPosts.map((post, index) => (
+                      <Card
+                        key={post.id}
+                        imageType="post"
+                        imageSrc={post.image_url || post.thumbnail_url}
+                        avatarSrc="/user-avatar-default.png"
+                        avatarAlt={post.nickname ?? 'Author'}
+                        userName={(post.nickname ?? 'User').toUpperCase()}
+                        userDate={formatPostDate(post.created_at)}
+                        title={post.title}
+                        content={post.content}
+                        href={`/post/${post.id}`}
+                        imagePriority={index === 0}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {activeTab === 'Events' && <p className="text-regular text-parea-black">Events content...</p>}
+            {activeTab === 'Reactions' && <p className="text-regular text-parea-black">Reactions content...</p>}
+            {activeTab === 'Groups' && <p className="text-regular text-parea-black">Groups content...</p>}
           </div>
         </div>
       </div>

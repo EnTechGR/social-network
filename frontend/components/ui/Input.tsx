@@ -47,7 +47,9 @@ export default function Input({
         onFocus={onFocus}
         onBlur={onBlur}
         disabled={disabled}
+        autoComplete={type === 'email' ? 'email' : type === 'password' ? 'current-password' : undefined}
         className={`
+          pointer-events-auto
           flex
           h-input
           px-3 py-2

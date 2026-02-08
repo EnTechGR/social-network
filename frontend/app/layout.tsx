@@ -36,10 +36,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexMono.variable} antialiased relative`}>
-        {/* Global noise overlay - applies to all pages */}
+        {/* Global noise overlay - applies to all pages (pointer-events-none so it never blocks clicks/focus) */}
         <div
           className="fixed inset-0 pointer-events-none z-9999"
           style={noiseStyle}
+          aria-hidden
         />
         {children}
       </body>

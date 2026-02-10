@@ -5,16 +5,6 @@
 .env.production
 backend/API/.env
 **/.env
-frontend/.env.example
-
-# Backend (Go)
-backend
-backend/API/*.test
-backend/API/*.prof
-backend/API/tmp/
-backend/API/uploads/*
-!backend/API/uploads/.gitkeep
-backend/API/database/*.db
 
 # Frontend (Next.js/Node)
 node_modules/

@@ -4,9 +4,9 @@ export default function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; on
       <button
         onClick={onClick}
         className="
-          w-9 h-9 
-          rounded-full 
-          bg-transparent 
+          w-9 h-9 shrink-0
+          rounded-full
+          bg-transparent
           border border-parea-yellow
           flex items-center justify-center
           hover:bg-parea-yellow/10
@@ -16,8 +16,8 @@ export default function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; on
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
         <svg
-          width="15"
-          height="15"
+          width="16"
+          height="16"
           viewBox="0 0 15 15"
           fill="none"
           className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}

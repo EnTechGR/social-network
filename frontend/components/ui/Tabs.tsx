@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface TabsProps {
   tabs: string[];
@@ -23,6 +23,24 @@ export default function Tabs({
   className = '',
 }: TabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]);
+  const [sliderStyle, setSliderStyle] = useState({});
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const index = tabs.indexOf(activeTab);
+    const tab = tabRefs.current[index];
+    const container = containerRef.current;
+
+    if (tab && container) {
+      const tabRect = tab.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      setSliderStyle({
+        '--slider-left': `${tabRect.left - containerRect.left}px`,
+        '--slider-width': `${tabRect.width}px`,
+      } as React.CSSProperties);
+    }
+  }, [activeTab, tabs]);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -62,37 +80,29 @@ export default function Tabs({
     tracking-tight
     uppercase
     text-parea-black
-    transition-all
-    duration-200
     cursor-pointer
   `;
 
-  // Active tab styles
-  const activeTabStyles = `
-    border
-    border-parea-black
-    bg-parea-yellow
-  `;
-
-  // Default tab styles
-  const defaultTabStyles = `
-    border
-    border-transparent
-    bg-transparent
-    hover:bg-parea-grey/30
-  `;
-
   return (
-    <div className={`${frameStyles} ${className}`}>
-      {tabs.map((tab) => (
+    <div ref={containerRef} className={`${frameStyles} ${className} relative`} style={sliderStyle}>
+      {/* Sliding background */}
+      <div
+        className="absolute rounded-full border border-parea-black bg-parea-yellow transition-all duration-250 ease-out"
+        style={{
+          left: 'var(--slider-left, 0)',
+          width: 'var(--slider-width, 0)',
+          top: '4px',
+          bottom: '4px',
+        }}
+      />
+
+      {tabs.map((tab, i) => (
         <button
           key={tab}
+          ref={(el) => { tabRefs.current[i] = el; }}
           type="button"
           onClick={() => handleTabClick(tab)}
-          className={`
-            ${baseTabStyles}
-            ${activeTab === tab ? activeTabStyles : defaultTabStyles}
-          `}
+          className={`${baseTabStyles} relative z-10 border border-transparent bg-transparent`}
         >
           {tab}
         </button>

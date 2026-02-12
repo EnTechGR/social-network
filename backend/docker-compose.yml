@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"  # optional; for debugging
+    networks:
+      - backend
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"  # Expose UI on localhost:8000
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8081
+    networks:
+      - backend
+
+networks:
+  backend:

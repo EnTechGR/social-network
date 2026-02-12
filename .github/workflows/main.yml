@@ -1,0 +1,81 @@
+name: Generate Project Documentation
+
+on:
+  push:
+    branches:
+      - backend
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- SECTION 1: DATABASE DOCS ---
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Graphviz
+        run: sudo apt-get install -y graphviz
+
+      - name: Run SchemaSpy
+        working-directory: backend/API/database/schema_doc
+        run: java -jar schemaspy.jar -configFile schemaspy.properties
+
+      # --- SECTION 2: API DOCS (Swagger) ---
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24' # Matches your project's requirement
+          cache-dependency-path: backend/API/go.sum
+
+      - name: Install Swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate Swagger Docs
+        working-directory: API
+        run: |
+          go mod download
+          # Running swag from the API root and pointing to main.go fixes the chdir error
+          $(go env GOPATH)/bin/swag init -g cmd/main.go --parseDependency --parseInternal
+
+      # --- SECTION 3: MERGE FOR DEPLOYMENT ---
+      - name: Prepare Deployment Folder
+        run: |
+          mkdir -p staging-site
+          mkdir -p staging-site/database
+
+          # 1. Copy Swagger files to the root
+          cp backend/API/docs/swagger.json staging-site/
+          cp backend/API/docs/swagger.yaml staging-site/
+          
+          # 2. Use your swagger.html as the main index page
+          cp backend/API/docs/swagger.html staging-site/index.html
+
+          # 3. Copy Database Docs to the /database subfolder
+          cp -r backend/API/database/schema_doc/output/* staging-site/database/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./staging-site
+
+  deploy-docs:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>../social-network.db.main</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="bower/html5shiv/html5shiv.min.js"></script>
+        <script src="bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>All Relationships</h1>
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-code-fork"></i>
+                            <h3 class="box-title">Diagrams</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="nav-tabs-custom">
+                                <!-- Tabs within a box -->
+                                <h5>By default only columns that are primary keys, foreign keys or indexes are shown.</h5>
+                                <ul class="nav nav-tabs pull-left ui-sortable-handle">
+                                    <li class="active"><a href="#compactDegreeImg-chart" data-toggle="tab" aria-expanded="true">Compact</a></li>
+                                    <li class=""><a href="#largeDegreeImg-chart" data-toggle="tab" aria-expanded="true">Large</a></li>
+                                    <li class=""><a href="#compactimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Compact Implied</a></li>
+                                    <li class=""><a href="#largeimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Large Implied</a></li>
+                                </ul>
+                                <div class="tab-content no-padding">
+                                    <div class="chart tab-pane active" id="compactDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="compactRelationshipsDiagram" name="compactRelationshipsDiagram">
+<area shape="rect" id="node1" href="tables/group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="524,747,789,923">
+<area shape="rect" id="node3" href="tables/groups.html" target="_top" title="groups" alt="" coords="273,1199,423,1375">
+<area shape="rect" id="node21" href="tables/user.html" target="_top" title="user" alt="" coords="5,1352,172,1528">
+<area shape="rect" id="node2" href="tables/group_messages.html" target="_top" title="group_messages" alt="" coords="540,517,773,693">
+<area shape="rect" id="node4" href="tables/comments.html" target="_top" title="comments" alt="" coords="894,1005,1070,1181">
+<area shape="rect" id="node24" href="tables/posts.html" target="_top" title="posts" alt="" coords="581,940,732,1145">
+<area shape="rect" id="node5" href="tables/group_invites.html" target="_top" title="group_invites" alt="" coords="554,1729,759,1935">
+<area shape="rect" id="node6" href="tables/follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="216,1608,480,1784">
+<area shape="rect" id="node7" href="tables/user_auth.html" target="_top" title="user_auth" alt="" coords="255,1801,441,1919">
+<area shape="rect" id="node8" href="tables/group_event_options.html" target="_top" title="group_event_options" alt="" coords="847,1493,1117,1640">
+<area shape="rect" id="node19" href="tables/group_events.html" target="_top" title="group_events" alt="" coords="554,1464,759,1640">
+<area shape="rect" id="node9" href="tables/messages.html" target="_top" title="messages" alt="" coords="262,5,434,211">
+<area shape="rect" id="node10" href="tables/group_members.html" target="_top" title="group_members" alt="" coords="543,1235,771,1411">
+<area shape="rect" id="node11" href="tables/notifications.html" target="_top" title="notifications" alt="" coords="1203,812,1399,1135">
+<area shape="rect" id="node12" href="tables/comment_images.html" target="_top" title="comment_images" alt="" coords="1181,471,1421,647">
+<area shape="rect" id="node20" href="tables/images_core.html" target="_top" title="images_core" alt="" coords="555,259,759,464">
+<area shape="rect" id="node13" href="tables/reactions.html" target="_top" title="reactions" alt="" coords="1215,1152,1387,1328">
+<area shape="rect" id="node14" href="tables/oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="236,1972,460,2177">
+<area shape="rect" id="node15" href="tables/message_images.html" target="_top" title="message_images" alt="" coords="864,24,1100,200">
+<area shape="rect" id="node16" href="tables/post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="853,1277,1111,1400">
+<area shape="rect" id="node17" href="tables/post_images.html" target="_top" title="post_images" alt="" coords="884,747,1080,952">
+<area shape="rect" id="node18" href="tables/group_message_images.html" target="_top" title="group_message_images" alt="" coords="833,517,1131,693">
+<area shape="rect" id="node22" href="tables/group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1175,1435,1428,1611">
+<area shape="rect" id="node23" href="tables/sessions.html" target="_top" title="sessions" alt="" coords="234,2195,462,2371">
+<area shape="rect" id="node25" href="tables/user_avatars.html" target="_top" title="user_avatars" alt="" coords="883,221,1081,368">
+</map>
+                                        <a name='diagram'><img id="compactDegreeImg" src="diagrams/summary/relationships.real.compact.png" usemap="#compactRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="largeDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="largeRelationshipsDiagram" name="largeRelationshipsDiagram">
+<area shape="rect" id="node1" href="tables/group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="524,1056,789,1267">
+<area shape="rect" id="node3" href="tables/groups.html" target="_top" title="groups" alt="" coords="273,1607,423,1847">
+<area shape="rect" id="node21" href="tables/user.html" target="_top" title="user" alt="" coords="5,1824,172,2181">
+<area shape="rect" id="node2" href="tables/group_messages.html" target="_top" title="group_messages" alt="" coords="540,763,773,1003">
+<area shape="rect" id="node4" href="tables/comments.html" target="_top" title="comments" alt="" coords="894,1343,1070,1612">
+<area shape="rect" id="node24" href="tables/posts.html" target="_top" title="posts" alt="" coords="581,1284,732,1583">
+<area shape="rect" id="node5" href="tables/group_invites.html" target="_top" title="group_invites" alt="" coords="554,2295,759,2535">
+<area shape="rect" id="node6" href="tables/follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="216,2080,480,2291">
+<area shape="rect" id="node7" href="tables/user_auth.html" target="_top" title="user_auth" alt="" coords="255,2308,441,2431">
+<area shape="rect" id="node8" href="tables/group_event_options.html" target="_top" title="group_event_options" alt="" coords="847,2012,1117,2164">
+<area shape="rect" id="node19" href="tables/group_events.html" target="_top" title="group_events" alt="" coords="554,1936,759,2205">
+<area shape="rect" id="node9" href="tables/messages.html" target="_top" title="messages" alt="" coords="262,5,434,245">
+<area shape="rect" id="node10" href="tables/group_members.html" target="_top" title="group_members" alt="" coords="543,1672,771,1883">
+<area shape="rect" id="node11" href="tables/notifications.html" target="_top" title="notifications" alt="" coords="1203,1149,1399,1536">
+<area shape="rect" id="node12" href="tables/comment_images.html" target="_top" title="comment_images" alt="" coords="1181,708,1421,889">
+<area shape="rect" id="node20" href="tables/images_core.html" target="_top" title="images_core" alt="" coords="555,293,759,709">
+<area shape="rect" id="node13" href="tables/reactions.html" target="_top" title="reactions" alt="" coords="1215,1553,1387,1764">
+<area shape="rect" id="node14" href="tables/oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="236,2484,460,2900">
+<area shape="rect" id="node15" href="tables/message_images.html" target="_top" title="message_images" alt="" coords="864,12,1100,223">
+<area shape="rect" id="node16" href="tables/post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="853,1739,1111,1861">
+<area shape="rect" id="node17" href="tables/post_images.html" target="_top" title="post_images" alt="" coords="884,1064,1080,1275">
+<area shape="rect" id="node18" href="tables/group_message_images.html" target="_top" title="group_message_images" alt="" coords="833,763,1131,973">
+<area shape="rect" id="node22" href="tables/group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1175,1953,1428,2135">
+<area shape="rect" id="node23" href="tables/sessions.html" target="_top" title="sessions" alt="" coords="234,2917,462,3216">
+<area shape="rect" id="node25" href="tables/user_avatars.html" target="_top" title="user_avatars" alt="" coords="883,248,1081,400">
+</map>
+                                        <a name='diagram'><img id="largeDegreeImg" src="diagrams/summary/relationships.real.large.png" usemap="#largeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="compactimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="compactImpliedRelationshipsDiagram" name="compactImpliedRelationshipsDiagram">
+<area shape="rect" id="node1" href="tables/group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="524,98,789,274">
+<area shape="rect" id="node3" href="tables/groups.html" target="_top" title="groups" alt="" coords="273,343,423,519">
+<area shape="rect" id="node21" href="tables/user.html" target="_top" title="user" alt="" coords="5,896,172,1072">
+<area shape="rect" id="node2" href="tables/group_messages.html" target="_top" title="group_messages" alt="" coords="540,1339,773,1515">
+<area shape="rect" id="node4" href="tables/comments.html" target="_top" title="comments" alt="" coords="894,1156,1070,1332">
+<area shape="rect" id="node24" href="tables/posts.html" target="_top" title="posts" alt="" coords="581,1080,732,1286">
+<area shape="rect" id="node5" href="tables/group_invites.html" target="_top" title="group_invites" alt="" coords="554,291,759,496">
+<area shape="rect" id="node6" href="tables/follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="216,536,480,712">
+<area shape="rect" id="node7" href="tables/user_auth.html" target="_top" title="user_auth" alt="" coords="255,730,441,847">
+<area shape="rect" id="node8" href="tables/group_event_options.html" target="_top" title="group_event_options" alt="" coords="847,780,1117,927">
+<area shape="rect" id="node19" href="tables/group_events.html" target="_top" title="group_events" alt="" coords="554,743,759,919">
+<area shape="rect" id="node9" href="tables/messages.html" target="_top" title="messages" alt="" coords="262,1375,434,1580">
+<area shape="rect" id="node10" href="tables/group_members.html" target="_top" title="group_members" alt="" coords="543,550,771,726">
+<area shape="rect" id="node11" href="tables/notifications.html" target="_top" title="notifications" alt="" coords="1205,320,1401,643">
+<area shape="rect" id="node12" href="tables/comment_images.html" target="_top" title="comment_images" alt="" coords="1183,1816,1423,1992">
+<area shape="rect" id="node20" href="tables/images_core.html" target="_top" title="images_core" alt="" coords="555,2000,759,2206">
+<area shape="rect" id="node13" href="tables/reactions.html" target="_top" title="reactions" alt="" coords="1217,1022,1389,1198">
+<area shape="rect" id="node14" href="tables/oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="236,1044,460,1250">
+<area shape="rect" id="node15" href="tables/message_images.html" target="_top" title="message_images" alt="" coords="864,1942,1100,2118">
+<area shape="rect" id="node16" href="tables/post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="853,980,1111,1103">
+<area shape="rect" id="node17" href="tables/post_images.html" target="_top" title="post_images" alt="" coords="884,1386,1080,1591">
+<area shape="rect" id="node18" href="tables/group_message_images.html" target="_top" title="group_message_images" alt="" coords="833,1748,1131,1924">
+<area shape="rect" id="node22" href="tables/group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1176,675,1429,851">
+<area shape="rect" id="node23" href="tables/sessions.html" target="_top" title="sessions" alt="" coords="234,1598,462,1774">
+<area shape="rect" id="node25" href="tables/user_avatars.html" target="_top" title="user_avatars" alt="" coords="883,2318,1081,2464">
+<area shape="rect" id="node26" href="tables/v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1175,1280,1431,1432">
+<area shape="rect" id="node27" href="tables/v_user_avatars.html" target="_top" title="v_user_avatars" alt="" coords="875,2171,1089,2264">
+<area shape="rect" id="node28" href="tables/v_post_images.html" target="_top" title="v_post_images" alt="" coords="876,1608,1088,1731">
+</map>
+                                        <a name='diagram'><img id="compactimpliedDegreeImg" src="diagrams/summary/relationships.implied.compact.png" usemap="#compactImpliedRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="largeimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="largeImpliedRelationshipsDiagram" name="largeImpliedRelationshipsDiagram">
+<area shape="rect" id="node1" href="tables/group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="524,97,789,307">
+<area shape="rect" id="node3" href="tables/groups.html" target="_top" title="groups" alt="" coords="273,435,423,675">
+<area shape="rect" id="node21" href="tables/user.html" target="_top" title="user" alt="" coords="5,1093,172,1450">
+<area shape="rect" id="node2" href="tables/group_messages.html" target="_top" title="group_messages" alt="" coords="540,1746,773,1986">
+<area shape="rect" id="node4" href="tables/comments.html" target="_top" title="comments" alt="" coords="894,1358,1070,1627">
+<area shape="rect" id="node24" href="tables/posts.html" target="_top" title="posts" alt="" coords="581,1387,732,1686">
+<area shape="rect" id="node5" href="tables/group_invites.html" target="_top" title="group_invites" alt="" coords="554,325,759,565">
+<area shape="rect" id="node6" href="tables/follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="216,693,480,903">
+<area shape="rect" id="node7" href="tables/user_auth.html" target="_top" title="user_auth" alt="" coords="255,921,441,1043">
+<area shape="rect" id="node8" href="tables/group_event_options.html" target="_top" title="group_event_options" alt="" coords="847,977,1117,1129">
+<area shape="rect" id="node19" href="tables/group_events.html" target="_top" title="group_events" alt="" coords="554,846,759,1115">
+<area shape="rect" id="node9" href="tables/messages.html" target="_top" title="messages" alt="" coords="262,1782,434,2022">
+<area shape="rect" id="node10" href="tables/group_members.html" target="_top" title="group_members" alt="" coords="543,618,771,829">
+<area shape="rect" id="node11" href="tables/notifications.html" target="_top" title="notifications" alt="" coords="1205,421,1401,807">
+<area shape="rect" id="node12" href="tables/comment_images.html" target="_top" title="comment_images" alt="" coords="1183,2450,1423,2631">
+<area shape="rect" id="node20" href="tables/images_core.html" target="_top" title="images_core" alt="" coords="555,2575,759,2991">
+<area shape="rect" id="node13" href="tables/reactions.html" target="_top" title="reactions" alt="" coords="1217,1194,1389,1405">
+<area shape="rect" id="node14" href="tables/oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="236,1241,460,1657">
+<area shape="rect" id="node15" href="tables/message_images.html" target="_top" title="message_images" alt="" coords="864,2517,1100,2727">
+<area shape="rect" id="node16" href="tables/post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="853,1182,1111,1305">
+<area shape="rect" id="node17" href="tables/post_images.html" target="_top" title="post_images" alt="" coords="884,1681,1080,1891">
+<area shape="rect" id="node18" href="tables/group_message_images.html" target="_top" title="group_message_images" alt="" coords="833,2289,1131,2499">
+<area shape="rect" id="node22" href="tables/group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1176,871,1429,1053">
+<area shape="rect" id="node23" href="tables/sessions.html" target="_top" title="sessions" alt="" coords="234,2039,462,2338">
+<area shape="rect" id="node25" href="tables/user_avatars.html" target="_top" title="user_avatars" alt="" coords="883,3138,1081,3290">
+<area shape="rect" id="node26" href="tables/v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1175,1575,1431,1879">
+<area shape="rect" id="node27" href="tables/v_user_avatars.html" target="_top" title="v_user_avatars" alt="" coords="875,2781,1089,3085">
+<area shape="rect" id="node28" href="tables/v_post_images.html" target="_top" title="v_post_images" alt="" coords="876,1909,1088,2271">
+</map>
+                                        <a name='diagram'><img id="largeimpliedDegreeImg" src="diagrams/summary/relationships.implied.large.png" usemap="#largeImpliedRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /.box-body -->
+                    </div>
+                </section>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 6.2.4</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="bower/pdfmake/pdfmake.min.js"></script>
+        <script src="bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="bower/codemirror/codemirror.js"></script>
+        <script src="bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="relationships.js"></script>
+        <script src="schemaSpy.js"></script>
+    </body>
+</html>

@@ -1,3 +1,4 @@
+# Ignore all environment files
+.env
+.env.*
 cookies.txt
-**/env
-API/.env

@@ -1,0 +1,34 @@
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+backend/API/.env
+**/.env
+
+# Frontend (Next.js/Node)
+node_modules/
+.next/
+out/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Misc
+cookies.txt
+*.bak
+.cache/

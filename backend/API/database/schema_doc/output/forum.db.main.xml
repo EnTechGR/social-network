@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?><database name="../forum.db" schema="main" type="SQLite - 3.45.1">
+   <tables>
+      <table name="categories" numRows="7" remarks="" type="TABLE">
+         <column autoUpdated="true" defaultValue="null" digits="0" id="0" name="category_id" nullable="true" remarks="" size="2000000000" type="INTEGER" typeCode="4">
+            <child column="category_id" foreignKey="" implied="false" onDeleteCascade="true" table="post_categories"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="name" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <primaryKey column="category_id" sequenceNumberInPK="1"/>
+         <index name="categories_s_pk" unique="true">
+            <column ascending="true" name="category_id"/>
+         </index>
+         <index name="sqlite_autoindex_categories_1" unique="true">
+            <column ascending="true" name="name"/>
+         </index>
+      </table>
+      <table name="chat_images" numRows="27" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="image_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="message_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="message_id" foreignKey="" implied="false" onDeleteCascade="true" table="messages"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="filename" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="original_filename" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="file_path" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="thumbnail_path" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="file_size" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="mime_type" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="width" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="height" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="11" name="uploaded_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="image_id" sequenceNumberInPK="1"/>
+         <index name="chat_images_s_pk" unique="true">
+            <column ascending="true" name="image_id"/>
+         </index>
+         <index name="idx_chat_images_message_id" unique="false">
+            <column ascending="true" name="message_id"/>
+         </index>
+         <index name="idx_chat_images_uploaded_at" unique="false">
+            <column ascending="true" name="uploaded_at"/>
+         </index>
+         <index name="idx_chat_images_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_chat_images_1" unique="true">
+            <column ascending="true" name="image_id"/>
+         </index>
+      </table>
+      <table name="comments" numRows="6" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="comment_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <child column="comment_id" foreignKey="" implied="false" onDeleteCascade="true" table="notifications"/>
+            <child column="comment_id" foreignKey="" implied="false" onDeleteCascade="true" table="reactions"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="post_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="content" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="4" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="5" name="updated_at" nullable="true" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="comment_id" sequenceNumberInPK="1"/>
+         <index name="comments_s_pk" unique="true">
+            <column ascending="true" name="comment_id"/>
+         </index>
+         <index name="idx_comments_post_id" unique="false">
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="idx_comments_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_comments_1" unique="true">
+            <column ascending="true" name="comment_id"/>
+         </index>
+      </table>
+      <table name="database_version" numRows="13" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="version" nullable="true" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="1" name="applied_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="version" sequenceNumberInPK="1"/>
+         <index name="database_version_s_pk" unique="true">
+            <column ascending="true" name="version"/>
+         </index>
+      </table>
+      <table name="images" numRows="3" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="image_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="post_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="file_path" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="thumbnail_path" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="5" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="image_id" sequenceNumberInPK="1"/>
+         <index name="images_s_pk" unique="true">
+            <column ascending="true" name="image_id"/>
+         </index>
+         <index name="idx_images_post_id" unique="false">
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="sqlite_autoindex_images_1" unique="true">
+            <column ascending="true" name="image_id"/>
+         </index>
+      </table>
+      <table name="messages" numRows="92" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="message_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <child column="message_id" foreignKey="" implied="false" onDeleteCascade="true" table="chat_images"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sender_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="receiver_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="content" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="4" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="5" name="is_read" nullable="false" remarks="" size="2000000000" type="BOOLEAN" typeCode="4"/>
+         <primaryKey column="message_id" sequenceNumberInPK="1"/>
+         <index name="messages_s_pk" unique="true">
+            <column ascending="true" name="message_id"/>
+         </index>
+         <index name="idx_messages_conversation" unique="false">
+            <column ascending="true" name="sender_id"/>
+            <column ascending="true" name="receiver_id"/>
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="idx_messages_created_at" unique="false">
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="idx_messages_receiver_id" unique="false">
+            <column ascending="true" name="receiver_id"/>
+         </index>
+         <index name="idx_messages_sender_id" unique="false">
+            <column ascending="true" name="sender_id"/>
+         </index>
+         <index name="idx_messages_unread" unique="false">
+            <column ascending="true" name="receiver_id"/>
+            <column ascending="true" name="is_read"/>
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="sqlite_autoindex_messages_1" unique="true">
+            <column ascending="true" name="message_id"/>
+         </index>
+      </table>
+      <table name="notifications" numRows="67" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="notification_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="from_user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="type" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="post_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="comment_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="comment_id" foreignKey="" implied="false" onDeleteCascade="true" table="comments"/>
+         </column>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="6" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="7" name="is_read" nullable="false" remarks="" size="2000000000" type="BOOLEAN" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="1" digits="0" id="8" name="is_visible" nullable="false" remarks="" size="2000000000" type="BOOLEAN" typeCode="4"/>
+         <primaryKey column="notification_id" sequenceNumberInPK="1"/>
+         <index name="notifications_s_pk" unique="true">
+            <column ascending="true" name="notification_id"/>
+         </index>
+         <index name="idx_notifications_from_user_id" unique="false">
+            <column ascending="true" name="from_user_id"/>
+         </index>
+         <index name="idx_notifications_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_notifications_1" unique="true">
+            <column ascending="true" name="notification_id"/>
+         </index>
+      </table>
+      <table name="oauth_accounts" numRows="2" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="oauth_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="provider" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="provider_user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="provider_username" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="provider_email" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="provider_avatar_url" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="access_token" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="refresh_token" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="9" name="token_expires_at" nullable="true" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="10" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="11" name="updated_at" nullable="true" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="oauth_id" sequenceNumberInPK="1"/>
+         <index name="oauth_accounts_s_pk" unique="true">
+            <column ascending="true" name="oauth_id"/>
+         </index>
+         <index name="idx_oauth_provider_user" unique="false">
+            <column ascending="true" name="provider"/>
+            <column ascending="true" name="provider_user_id"/>
+         </index>
+         <index name="idx_oauth_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_oauth_accounts_1" unique="true">
+            <column ascending="true" name="oauth_id"/>
+         </index>
+         <index name="sqlite_autoindex_oauth_accounts_2" unique="true">
+            <column ascending="true" name="provider"/>
+            <column ascending="true" name="provider_user_id"/>
+         </index>
+      </table>
+      <table name="oauth_states" numRows="0" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="state" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="provider" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="ip_address" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="3" name="created_at" nullable="true" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="4" name="expires_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="state" sequenceNumberInPK="1"/>
+         <index name="oauth_states_s_pk" unique="true">
+            <column ascending="true" name="state"/>
+         </index>
+         <index name="idx_oauth_states_expires" unique="false">
+            <column ascending="true" name="expires_at"/>
+         </index>
+         <index name="idx_oauth_states_provider" unique="false">
+            <column ascending="true" name="provider"/>
+         </index>
+         <index name="sqlite_autoindex_oauth_states_1" unique="true">
+            <column ascending="true" name="state"/>
+         </index>
+      </table>
+      <table name="post_categories" numRows="6" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="post_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="category_id" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4">
+            <parent column="category_id" foreignKey="" implied="false" onDeleteCascade="true" table="categories"/>
+         </column>
+         <primaryKey column="post_id" sequenceNumberInPK="1"/>
+         <primaryKey column="category_id" sequenceNumberInPK="2"/>
+         <index name="post_categories_s_pk" unique="true">
+            <column ascending="true" name="post_id"/>
+            <column ascending="true" name="category_id"/>
+         </index>
+         <index name="idx_post_categories_category_id" unique="false">
+            <column ascending="true" name="category_id"/>
+         </index>
+         <index name="idx_post_categories_post_id" unique="false">
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="sqlite_autoindex_post_categories_1" unique="true">
+            <column ascending="true" name="post_id"/>
+            <column ascending="true" name="category_id"/>
+         </index>
+      </table>
+      <table name="posts" numRows="5" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="post_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <child column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="comments"/>
+            <child column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="images"/>
+            <child column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="notifications"/>
+            <child column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="post_categories"/>
+            <child column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="reactions"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="title" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="content" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="4" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="5" name="updated_at" nullable="true" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="post_id" sequenceNumberInPK="1"/>
+         <index name="posts_s_pk" unique="true">
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="idx_posts_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_posts_1" unique="true">
+            <column ascending="true" name="post_id"/>
+         </index>
+      </table>
+      <table name="reactions" numRows="11" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reaction_type" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="comment_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="comment_id" foreignKey="" implied="false" onDeleteCascade="true" table="comments"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="post_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="post_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="4" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <primaryKey column="comment_id" sequenceNumberInPK="2"/>
+         <primaryKey column="post_id" sequenceNumberInPK="3"/>
+         <index name="reactions_s_pk" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="comment_id"/>
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="idx_reactions_comment_id" unique="false">
+            <column ascending="true" name="comment_id"/>
+         </index>
+         <index name="idx_reactions_post_id" unique="false">
+            <column ascending="true" name="post_id"/>
+         </index>
+         <index name="idx_reactions_user_id" unique="false">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_reactions_1" unique="true">
+            <column ascending="true" name="user_id"/>
+            <column ascending="true" name="comment_id"/>
+            <column ascending="true" name="post_id"/>
+         </index>
+      </table>
+      <table name="sessions" numRows="7" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="session_id" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="csrf_token" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="ip_address" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="4" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="10" id="5" name="expires_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="sessions_s_pk" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_sessions_1" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_sessions_2" unique="true">
+            <column ascending="true" name="session_id"/>
+         </index>
+      </table>
+      <table name="user" numRows="8" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="chat_images"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="comments"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="images"/>
+            <child column="receiver_id" foreignKey="" implied="false" onDeleteCascade="true" table="messages"/>
+            <child column="sender_id" foreignKey="" implied="false" onDeleteCascade="true" table="messages"/>
+            <child column="from_user_id" foreignKey="" implied="false" onDeleteCascade="true" table="notifications"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="notifications"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="oauth_accounts"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="posts"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="reactions"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="sessions"/>
+            <child column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user_auth"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="username" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="email" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="first_name" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="last_name" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="age" nullable="false" remarks="" size="2000000000" type="INTEGER" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="gender" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="10" id="7" name="created_at" nullable="false" remarks="" size="2000000000" type="TIMESTAMP" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="user_s_pk" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_user_1" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_user_2" unique="true">
+            <column ascending="true" name="username"/>
+         </index>
+         <index name="sqlite_autoindex_user_3" unique="true">
+            <column ascending="true" name="email"/>
+         </index>
+      </table>
+      <table name="user_auth" numRows="7" remarks="" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="user_id" nullable="true" remarks="" size="2000000000" type="TEXT" typeCode="12">
+            <parent column="user_id" foreignKey="" implied="false" onDeleteCascade="true" table="user"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="password_hash" nullable="false" remarks="" size="2000000000" type="TEXT" typeCode="12"/>
+         <primaryKey column="user_id" sequenceNumberInPK="1"/>
+         <index name="user_auth_s_pk" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+         <index name="sqlite_autoindex_user_auth_1" unique="true">
+            <column ascending="true" name="user_id"/>
+         </index>
+      </table>
+   </tables>
+</database>

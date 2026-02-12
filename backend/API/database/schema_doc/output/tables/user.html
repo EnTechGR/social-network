@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>user - ../social-network.db.main</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="../bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="../bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="../bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="../bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="../bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="../bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='../fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='../fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="../bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="../schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="../bower/html5shiv/html5shiv.min.js"></script>
+        <script src="../bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="../index.html" class="navbar-brand"><b>../social-network.db</b></a><span class="navbar-brand" style="padding-left: 0">.main</span>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="../index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="../columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="../constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="../relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="../orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="../anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="../routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>user</h1><p><span id="recordNumber">2</span> rows</p><br />
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                            <h3 id="Columns" class="box-title">Columns</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <table
+                                    id="standard_table"
+                                    class="table table-bordered table-striped dataTable"
+                                    role="grid"
+                                    data-paging="true"
+                                    data-page-length="10"
+                                    data-length-change="false">
+                                <thead align='left'>
+                                <tr>
+                                    <th>Column</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th title='Are nulls allowed?'>Nulls</th>
+                                    <th title='Is column automatically updated?'>Auto</th>
+                                    <th title='Default value'>Default</th>
+                                    <th title='Columns in tables that reference this column'>Children</th>
+                                    <th title='Columns in tables that are referenced by this column'>Parents</th>
+                                    <th title='Comments' class="toggle"><span>Comments</span></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="user_id">user_id</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comments.[post_id, user_id] references user.[post_id, user_id] via "><a href='comments.html'>comments</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="follow_relationships.[followee_id, follower_id] references user.[user_id, user_id] via "><a href='follow_relationships.html'>follow_relationships</a><span class='relatedKey'>.followee_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="follow_relationships.[followee_id, follower_id] references user.[user_id, user_id] via "><a href='follow_relationships.html'>follow_relationships</a><span class='relatedKey'>.follower_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_event_votes.[option_id, event_id, user_id] references user.[option_id, event_id, user_id] via "><a href='group_event_votes.html'>group_event_votes</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_events.[group_id, creator_id] references user.[group_id, user_id] via "><a href='group_events.html'>group_events</a><span class='relatedKey'>.creator_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_invites.[group_id, to_user_id, from_user_id] references user.[group_id, user_id, user_id] via "><a href='group_invites.html'>group_invites</a><span class='relatedKey'>.from_user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_invites.[group_id, to_user_id, from_user_id] references user.[group_id, user_id, user_id] via "><a href='group_invites.html'>group_invites</a><span class='relatedKey'>.to_user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_join_requests.[group_id, user_id] references user.[group_id, user_id] via "><a href='group_join_requests.html'>group_join_requests</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_members.[group_id, user_id] references user.[group_id, user_id] via "><a href='group_members.html'>group_members</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="group_messages.[group_id, sender_id] references user.[group_id, user_id] via "><a href='group_messages.html'>group_messages</a><span class='relatedKey'>.sender_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="groups.owner_id references user.user_id via "><a href='groups.html'>groups</a><span class='relatedKey'>.owner_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="images_core.uploader_user_id references user.user_id via "><a href='images_core.html'>images_core</a><span class='relatedKey'>.uploader_user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="messages.[receiver_id, sender_id] references user.[user_id, user_id] via "><a href='messages.html'>messages</a><span class='relatedKey'>.receiver_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="messages.[receiver_id, sender_id] references user.[user_id, user_id] via "><a href='messages.html'>messages</a><span class='relatedKey'>.sender_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='notifications.html'>notifications</a><span class='relatedKey'>.from_user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="notifications.[comment_id, event_id, group_id, post_id, from_user_id, user_id] references user.[comment_id, event_id, group_id, post_id, user_id, user_id] via "><a href='notifications.html'>notifications</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="oauth_accounts.user_id references user.user_id via "><a href='oauth_accounts.html'>oauth_accounts</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="post_allowed_users.[post_id, user_id] references user.[post_id, user_id] via "><a href='post_allowed_users.html'>post_allowed_users</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="posts.[group_id, user_id] references user.[group_id, user_id] via "><a href='posts.html'>posts</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="reactions.[comment_id, post_id, user_id] references user.[comment_id, post_id, user_id] via "><a href='reactions.html'>reactions</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="sessions.user_id references user.user_id via "><a href='sessions.html'>sessions</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="user_auth.user_id references user.user_id via "><a href='user_auth.html'>user_auth</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="user_avatars.[image_id, user_id] references user.[image_id, user_id] via "><a href='user_avatars.html'>user_avatars</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail"></td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="email">email</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="nickname">nickname</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="first_name">first_name</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="last_name">last_name</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="date_of_birth">date_of_birth</span></td>
+                                    <td>DATE</td>
+                                    <td>2000000000,10</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="about_me">about_me</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="gender">gender</span></td>
+                                    <td>TEXT</td>
+                                    <td>2000000000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="is_private">is_private</span></td>
+                                    <td>BOOLEAN</td>
+                                    <td>2000000000</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>0</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="created_at">created_at</span></td>
+                                    <td>TIMESTAMP</td>
+                                    <td>2000000000,10</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>CURRENT_TIMESTAMP</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-sitemap"></i>
+                            <h3 id="Indexes" class="box-title">Indexes</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <table
+                                    id="indexes_table"
+                                    class="table table-bordered table-striped dataTable"
+                                    role="grid"
+                                    data-paging="true"
+                                    data-page-length="10"
+                                    data-length-change="false">
+                                <thead>
+                                <tr>
+                                    <th>Constraint Name</th>
+                                    <th>Type</th>
+                                    <th>Sort</th>
+                                    <th>Column(s)</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> user_s_pk</td>
+                                    <td>Primary key</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>user_id</td>
+                                </tr>
+                                <tr>
+                                    <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_user_1</td>
+                                    <td>Must be unique</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>user_id</td>
+                                </tr>
+                                <tr>
+                                    <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_user_2</td>
+                                    <td>Must be unique</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>email</td>
+                                </tr>
+                                <tr>
+                                    <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> sqlite_autoindex_user_3</td>
+                                    <td>Must be unique</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>nickname</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- /.box-body -->
+                    </div>
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-code-fork"></i>
+                            <h3 id="Relationships" class="box-title">Relationships</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <div class="nav-tabs-custom"><!-- Tabs within a box -->
+                                <h5>Close relationships within degrees of separation</h5>
+                                <ul class="nav nav-tabs pull-left ui-sortable-handle">
+                                    <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
+                                    <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
+                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
+                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
+                                </ul>
+                                <div class="tab-content no-padding">
+                                    <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="1093,1309,1269,1485">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="800,1339,951,1544">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,1015,391,1377">
+<area shape="rect" id="node7" href="groups.html" target="_top" title="groups" alt="" coords="491,828,642,1004">
+<area shape="rect" id="node4" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="435,5,699,181">
+<area shape="rect" id="node5" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1054,551,1307,727">
+<area shape="rect" id="node6" href="group_events.html" target="_top" title="group_events" alt="" coords="773,952,978,1128">
+<area shape="rect" id="node8" href="group_invites.html" target="_top" title="group_invites" alt="" coords="773,271,978,476">
+<area shape="rect" id="node9" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="743,529,1008,705">
+<area shape="rect" id="node10" href="group_members.html" target="_top" title="group_members" alt="" coords="761,723,989,899">
+<area shape="rect" id="node11" href="group_messages.html" target="_top" title="group_messages" alt="" coords="759,1145,992,1321">
+<area shape="rect" id="node12" href="images_core.html" target="_top" title="images_core" alt="" coords="465,1201,669,1407">
+<area shape="rect" id="node13" href="messages.html" target="_top" title="messages" alt="" coords="481,1424,653,1629">
+<area shape="rect" id="node14" href="notifications.html" target="_top" title="notifications" alt="" coords="1353,711,1549,1033">
+<area shape="rect" id="node15" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="455,1647,679,1852">
+<area shape="rect" id="node16" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="1052,1652,1309,1775">
+<area shape="rect" id="node17" href="reactions.html" target="_top" title="reactions" alt="" coords="1365,1404,1537,1580">
+<area shape="rect" id="node18" href="sessions.html" target="_top" title="sessions" alt="" coords="453,1941,681,2117">
+<area shape="rect" id="node19" href="user_auth.html" target="_top" title="user_auth" alt="" coords="473,2135,660,2252">
+<area shape="rect" id="node20" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="776,1597,975,1744">
+</map>
+                                        <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/user.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="twoDegreesRelationshipsDiagram" name="twoDegreesRelationshipsDiagram">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1400,909,1640,997">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="1113,673,1289,761">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="777,1008,973,1096">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="801,479,949,567">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,649,391,1012">
+<area shape="rect" id="node10" href="groups.html" target="_top" title="groups" alt="" coords="493,479,641,567">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="435,836,699,1012">
+<area shape="rect" id="node7" href="group_event_options.html" target="_top" title="group_event_options" alt="" coords="1065,125,1336,213">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="773,144,978,232">
+<area shape="rect" id="node9" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1393,55,1647,143">
+<area shape="rect" id="node11" href="group_invites.html" target="_top" title="group_invites" alt="" coords="773,301,978,389">
+<area shape="rect" id="node12" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="743,584,1008,672">
+<area shape="rect" id="node13" href="group_members.html" target="_top" title="group_members" alt="" coords="761,689,989,777">
+<area shape="rect" id="node14" href="group_message_images.html" target="_top" title="group_message_images" alt="" coords="1052,972,1349,1060">
+<area shape="rect" id="node15" href="group_messages.html" target="_top" title="group_messages" alt="" coords="759,831,992,919">
+<area shape="rect" id="node16" href="message_images.html" target="_top" title="message_images" alt="" coords="1083,1149,1319,1237">
+<area shape="rect" id="node17" href="messages.html" target="_top" title="messages" alt="" coords="481,1252,653,1457">
+<area shape="rect" id="node18" href="notifications.html" target="_top" title="notifications" alt="" coords="1422,324,1618,412">
+<area shape="rect" id="node19" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="455,1029,679,1235">
+<area shape="rect" id="node20" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="1072,479,1329,567">
+<area shape="rect" id="node21" href="post_images.html" target="_top" title="post_images" alt="" coords="1103,813,1299,901">
+<area shape="rect" id="node22" href="reactions.html" target="_top" title="reactions" alt="" coords="1436,673,1604,761">
+<area shape="rect" id="node23" href="sessions.html" target="_top" title="sessions" alt="" coords="453,1511,681,1687">
+<area shape="rect" id="node24" href="user_auth.html" target="_top" title="user_auth" alt="" coords="473,1704,660,1821">
+<area shape="rect" id="node25" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="1101,1348,1300,1436">
+</map>
+                                        <a name='diagram'><img id="twodegreesDegreeImg" src="../diagrams/tables/user.2degrees.png" usemap="#twoDegreesRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="oneDegreeRelationshipsDiagramImplied" name="oneDegreeRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comments.html" target="_top" title="comments" alt="" coords="1093,1309,1269,1485">
+<area shape="rect" id="node2" href="posts.html" target="_top" title="posts" alt="" coords="800,1339,951,1544">
+<area shape="rect" id="node3" href="user.html" target="_top" title="user" alt="" coords="5,1015,391,1377">
+<area shape="rect" id="node7" href="groups.html" target="_top" title="groups" alt="" coords="491,828,642,1004">
+<area shape="rect" id="node4" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="435,5,699,181">
+<area shape="rect" id="node5" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1054,551,1307,727">
+<area shape="rect" id="node6" href="group_events.html" target="_top" title="group_events" alt="" coords="773,952,978,1128">
+<area shape="rect" id="node8" href="group_invites.html" target="_top" title="group_invites" alt="" coords="773,271,978,476">
+<area shape="rect" id="node9" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="743,529,1008,705">
+<area shape="rect" id="node10" href="group_members.html" target="_top" title="group_members" alt="" coords="761,723,989,899">
+<area shape="rect" id="node11" href="group_messages.html" target="_top" title="group_messages" alt="" coords="759,1145,992,1321">
+<area shape="rect" id="node12" href="images_core.html" target="_top" title="images_core" alt="" coords="465,1201,669,1407">
+<area shape="rect" id="node13" href="messages.html" target="_top" title="messages" alt="" coords="481,1424,653,1629">
+<area shape="rect" id="node14" href="notifications.html" target="_top" title="notifications" alt="" coords="1353,711,1549,1033">
+<area shape="rect" id="node15" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="455,1647,679,1852">
+<area shape="rect" id="node16" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="1052,1652,1309,1775">
+<area shape="rect" id="node17" href="reactions.html" target="_top" title="reactions" alt="" coords="1365,1404,1537,1580">
+<area shape="rect" id="node18" href="sessions.html" target="_top" title="sessions" alt="" coords="453,1941,681,2117">
+<area shape="rect" id="node19" href="user_auth.html" target="_top" title="user_auth" alt="" coords="473,2135,660,2252">
+<area shape="rect" id="node20" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="776,1597,975,1744">
+</map>
+                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/user.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        <map id="twoDegreesRelationshipsDiagramImplied" name="twoDegreesRelationshipsDiagramImplied">
+<area shape="rect" id="node1" href="comment_images.html" target="_top" title="comment_images" alt="" coords="1401,1074,1641,1162">
+<area shape="rect" id="node2" href="comments.html" target="_top" title="comments" alt="" coords="1113,742,1289,830">
+<area shape="rect" id="node3" href="images_core.html" target="_top" title="images_core" alt="" coords="777,1178,973,1266">
+<area shape="rect" id="node4" href="posts.html" target="_top" title="posts" alt="" coords="801,742,949,830">
+<area shape="rect" id="node5" href="user.html" target="_top" title="user" alt="" coords="5,699,391,1062">
+<area shape="rect" id="node10" href="groups.html" target="_top" title="groups" alt="" coords="493,538,641,626">
+<area shape="rect" id="node6" href="follow_relationships.html" target="_top" title="follow_relationships" alt="" coords="435,886,699,1062">
+<area shape="rect" id="node7" href="group_event_options.html" target="_top" title="group_event_options" alt="" coords="1065,90,1336,178">
+<area shape="rect" id="node8" href="group_events.html" target="_top" title="group_events" alt="" coords="773,160,978,248">
+<area shape="rect" id="node9" href="group_event_votes.html" target="_top" title="group_event_votes" alt="" coords="1395,92,1648,180">
+<area shape="rect" id="node11" href="group_invites.html" target="_top" title="group_invites" alt="" coords="773,318,978,406">
+<area shape="rect" id="node12" href="group_join_requests.html" target="_top" title="group_join_requests" alt="" coords="743,459,1008,547">
+<area shape="rect" id="node13" href="group_members.html" target="_top" title="group_members" alt="" coords="761,600,989,688">
+<area shape="rect" id="node14" href="group_message_images.html" target="_top" title="group_message_images" alt="" coords="1052,1070,1349,1158">
+<area shape="rect" id="node15" href="group_messages.html" target="_top" title="group_messages" alt="" coords="759,883,992,971">
+<area shape="rect" id="node16" href="message_images.html" target="_top" title="message_images" alt="" coords="1083,1328,1319,1416">
+<area shape="rect" id="node17" href="messages.html" target="_top" title="messages" alt="" coords="481,1302,653,1507">
+<area shape="rect" id="node18" href="notifications.html" target="_top" title="notifications" alt="" coords="1423,384,1619,472">
+<area shape="rect" id="node19" href="oauth_accounts.html" target="_top" title="oauth_accounts" alt="" coords="455,1079,679,1284">
+<area shape="rect" id="node20" href="post_allowed_users.html" target="_top" title="post_allowed_users" alt="" coords="1072,423,1329,511">
+<area shape="rect" id="node21" href="post_images.html" target="_top" title="post_images" alt="" coords="1103,883,1299,971">
+<area shape="rect" id="node22" href="reactions.html" target="_top" title="reactions" alt="" coords="1437,671,1605,759">
+<area shape="rect" id="node23" href="sessions.html" target="_top" title="sessions" alt="" coords="453,1560,681,1736">
+<area shape="rect" id="node24" href="user_auth.html" target="_top" title="user_auth" alt="" coords="473,1754,660,1871">
+<area shape="rect" id="node25" href="user_avatars.html" target="_top" title="user_avatars" alt="" coords="1101,1462,1300,1550">
+<area shape="rect" id="node26" href="v_comment_images.html" target="_top" title="v_comment_images" alt="" coords="1393,810,1649,874">
+<area shape="rect" id="node27" href="v_post_images.html" target="_top" title="v_post_images" alt="" coords="1095,988,1307,1052">
+<area shape="rect" id="node28" href="v_user_avatars.html" target="_top" title="v_user_avatars" alt="" coords="1093,1175,1308,1239">
+</map>
+                                        <a name='diagram'><img id="twoimpliedDegreeImg" src="../diagrams/tables/user.implied2degrees.png" usemap="#twoDegreesRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /.box-body -->
+                    </div>
+                </section>
+                <script>
+                    var config = {
+                        pagination: true
+                    }
+                </script>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 6.2.4</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="../bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="../bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="../bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="../bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="../bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="../bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="../bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="../bower/pdfmake/pdfmake.min.js"></script>
+        <script src="../bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="../bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="../bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="../bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="../bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="../bower/codemirror/codemirror.js"></script>
+        <script src="../bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="../bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="table.js"></script>
+        <script src="../schemaSpy.js"></script>
+    </body>
+</html>

@@ -425,3 +425,43 @@ export async function createGroupEvent(groupId: string, data: { title: string; d
     body: JSON.stringify(data),
   });
 }
+
+/**
+ * Search for users
+ * GET /api/v1/chat/users
+ * Returns all users with their online status
+ */
+export async function searchUsers(query?: string): Promise<{
+  users: Array<{
+    id: string;
+    nickname: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    date_of_birth: string;
+    gender: string;
+    is_online: boolean;
+  }>;
+}> {
+  // Note: The backend endpoint doesn't support query parameter yet,
+  // so we'll fetch all users and filter on the frontend
+  const response = await fetchAPI<any>('/api/v1/chat/users', { method: 'GET' });
+  
+  if (!query || query.trim() === '') {
+    return response;
+  }
+  
+  // Filter users by query (name, nickname, or email)
+  const lowerQuery = query.toLowerCase();
+  const filteredUsers = response.users.filter((user: any) => {
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+    const nickname = (user.nickname || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    
+    return fullName.includes(lowerQuery) || 
+           nickname.includes(lowerQuery) || 
+           email.includes(lowerQuery);
+  });
+  
+  return { users: filteredUsers };
+}

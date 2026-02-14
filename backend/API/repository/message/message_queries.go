@@ -31,9 +31,9 @@ func (r *MessageRepository) GetConversation(userID, otherUserID string, limit, o
 		SELECT 
 			m.message_id,
 			m.sender_id,
-			s.username AS sender_name,
+			s.nickname AS sender_name,
 			m.receiver_id,
-			rec.username AS receiver_name,
+			rec.nickname AS receiver_name,
 			m.content,
 			m.created_at,
 			m.is_read
@@ -190,7 +190,7 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 		)
 		SELECT 
 			uc.other_user_id,
-			u.username,
+			u.nickname,
 			(
 				SELECT content
 				FROM messages m2
@@ -268,7 +268,7 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 //   - error: An error if the query fails.
 func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models.User, error) {
 	rows, err := r.DB.Query(`
-		SELECT u.user_id, u.username, u.email, u.first_name, u.last_name, u.age, u.gender, u.created_at
+		SELECT u.user_id, u.nickname, u.email, u.first_name, u.last_name, u.date_of_birth, u.about_me, u.gender, u.is_private, u.created_at
 		FROM user u
 		WHERE u.user_id != ?
 		AND u.user_id NOT IN (
@@ -280,7 +280,7 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 			FROM messages
 			WHERE sender_id = ? OR receiver_id = ?
 		)
-		ORDER BY u.username ASC
+		ORDER BY u.nickname ASC
 	`, userID, userID, userID, userID)
 
 	if err != nil {
@@ -298,7 +298,9 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 			&u.FirstName,
 			&u.LastName,
 			&u.DateOfBirth,
+			&u.AboutMe,
 			&u.Gender,
+			&u.IsPrivate,
 			&u.CreatedAt,
 		)
 		if err != nil {
@@ -325,10 +327,10 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 //   - error: An error if the query fails.
 func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, error) {
 	rows, err := r.DB.Query(`
-		SELECT user_id, username, email, first_name, last_name, age, gender, created_at
+		SELECT user_id, nickname, email, first_name, last_name, date_of_birth, about_me, gender, is_private, created_at
 		FROM user
 		WHERE user_id != ?
-		ORDER BY username ASC
+		ORDER BY nickname ASC
 	`, currentUserID)
 
 	if err != nil {
@@ -346,7 +348,9 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 			&u.FirstName,
 			&u.LastName,
 			&u.DateOfBirth,
+			&u.AboutMe,
 			&u.Gender,
+			&u.IsPrivate,
 			&u.CreatedAt,
 		)
 		if err != nil {

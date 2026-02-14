@@ -11,13 +11,18 @@ import CreatePostModal from './CreatePostModal';
 // --- SearchInputWithDropdown component ---
 function SearchInputWithDropdown() {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function handleClick(e: MouseEvent) {
+      // Check if click is outside both input and dropdown
       if (
         inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
+        !inputRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setShowDropdown(false);
       }
@@ -36,6 +41,8 @@ function SearchInputWithDropdown() {
         ref={inputRef}
         type="text"
         placeholder="Search..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
         className="
           flex-1
           border-none
@@ -54,7 +61,9 @@ function SearchInputWithDropdown() {
         onFocus={() => setShowDropdown(true)}
       />
       {showDropdown && (
-        <div className="
+        <div 
+          ref={dropdownRef}
+          className="
               fixed
               flex
               w-[1368px]
@@ -67,7 +76,7 @@ function SearchInputWithDropdown() {
               z-50
             "
         >
-          <SearchSuggestions />
+          <SearchSuggestions searchQuery={searchQuery} onSelectUser={() => setShowDropdown(false)} />
         </div>
       )}
     </div>

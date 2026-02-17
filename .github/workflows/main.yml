@@ -3,7 +3,7 @@ name: Generate Project Documentation
 on:
   push:
     branches:
-      - backend
+      - marinos
 
 permissions:
   contents: read

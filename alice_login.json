@@ -1,0 +1,1 @@
+{"csrf_token":"JPcM4NV79c-7H42VDxm1KOvFb6hnAtJmx7wYb2NahY0=","message":"Login successful","user":{"id":"adc591b3-0fcc-43d1-bfcc-9b4bec9b80ae","nickname":"alice","email":"alice@example.com","first_name":"Alice","last_name":"One","date_of_birth":"1990-01-01T00:00:00Z","about_me":"","gender":"female","is_private":false,"created_at":"2026-01-26T09:50:19.706351002+02:00"}}

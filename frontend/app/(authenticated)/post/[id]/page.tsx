@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PostDetailFrame from '@/components/ui/PostDetailFrame';
 import type { CommentItem } from '@/components/ui/CommentHolder';
-import { getPostById, getCommentsByPostId, getAvatarUrl } from '@/lib/api';
+import { getPostById } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -14,19 +14,6 @@ function formatPostDate(isoDate: string): string {
   } catch {
     return isoDate;
   }
-}
-
-function mapCommentToItem(c: any): CommentItem {
-  const avatarPath = c.avatar?.file_path || c.avatar?.thumbnail_path;
-  return {
-    id: c.id ?? c.comment_id ?? '',
-    avatarSrc: avatarPath ? getAvatarUrl(avatarPath) : '/user-avatar-default.png',
-    avatarAlt: c.nickname ?? 'User',
-    userName: (c.nickname ?? 'User').toUpperCase(),
-    userDate: formatPostDate(c.created_at),
-    text: c.content ?? c.text ?? '',
-    likeCount: c.reactions?.length ?? 0,
-  };
 }
 
 export default function PostPage() {
@@ -50,9 +37,11 @@ export default function PostPage() {
       .then((data) => {
         if (cancelled) return;
         setPost(data);
-        return getCommentsByPostId(postId).then((list) => {
-          if (!cancelled) setComments(Array.isArray(list) ? list.map(mapCommentToItem) : []);
-        });
+        // Comments endpoint doesn't exist yet, so skip loading comments
+        // When backend adds /api/v1/posts/{id}/comments endpoint, uncomment:
+        // return getCommentsByPostId(postId).then((list) => {
+        //   if (!cancelled) setComments(Array.isArray(list) ? list.map(mapCommentToItem) : []);
+        // });
       })
       .catch((err: any) => {
         if (cancelled) return;
@@ -87,20 +76,22 @@ export default function PostPage() {
     );
   }
 
-  const avatarPath = post.avatar?.file_path || post.avatar?.thumbnail_path;
-  const imageSrc = post.image_url || post.thumbnail_url || '/test-post.png';
+  // Backend returns FeedPost structure with different field names
+  const avatarUrl = post.author_avatar_thumb_url || post.author_avatar_url || '/user-avatar-default.png';
+  const postImage = post.images?.[0];
+  const imageSrc = postImage?.thumbnail_url || postImage?.url;
 
   return (
     <div className="min-h-screen bg-parea-white px-16 py-12">
       <div className="w-full">
         <PostDetailFrame
           title={post.title ?? ''}
-          avatarSrc={avatarPath ? getAvatarUrl(avatarPath) : '/user-avatar-default.png'}
-          avatarAlt={post.nickname ?? 'Author'}
-          userName={(post.nickname ?? 'User').toUpperCase()}
+          avatarSrc={avatarUrl}
+          avatarAlt={post.author_nickname ?? 'Author'}
+          userName={(post.author_nickname ?? 'User').toUpperCase()}
           userDate={formatPostDate(post.created_at)}
-          likeCount={post.like_count ?? post.reactions?.length ?? 0}
-          commentCount={comments.length}
+          likeCount={post.like_count ?? 0}
+          commentCount={post.comment_count ?? 0}
           imageSrc={imageSrc}
           postText={post.content ?? ''}
           comments={comments}

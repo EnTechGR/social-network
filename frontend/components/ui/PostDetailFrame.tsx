@@ -30,7 +30,7 @@ export function PostDetailFrame({
   userDate,
   likeCount = 250,
   commentCount = 4,
-  imageSrc = '/test-post.png',
+  imageSrc,
   postText,
   comments = [],
   commentValue,
@@ -55,34 +55,48 @@ export function PostDetailFrame({
       </div>
 
       {/* Frame: avatar row + image container */}
-      <div
-        className="flex flex-col items-start self-stretch rounded border overflow-hidden"
-        style={{
-          height: 590,
-          borderColor: 'var(--parea-border)',
-          boxShadow: '8px 8px 0 0 var(--parea-black)',
-        }}
-      >
-        {/* Top row: avatar (left) + like/comment (right); on mobile reactions under avatar */}
-        <div className="flex flex-col gap-4 w-full px-8 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardAvatar
-            src={avatarSrc}
-            alt={avatarAlt}
-            name={userName}
-            subtitle={userDate}
-          />
-          <ReactionHolder likeCount={likeCount} commentCount={commentCount} />
-        </div>
+      {imageSrc ? (
+        <div
+          className="flex flex-col items-start self-stretch rounded border overflow-hidden"
+          style={{
+            height: 590,
+            borderColor: 'var(--parea-border)',
+            boxShadow: '8px 8px 0 0 var(--parea-black)',
+          }}
+        >
+          {/* Top row: avatar (left) + like/comment (right); on mobile reactions under avatar */}
+          <div className="flex flex-col gap-4 w-full px-8 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardAvatar
+              src={avatarSrc}
+              alt={avatarAlt}
+              name={userName}
+              subtitle={userDate}
+            />
+            <ReactionHolder likeCount={likeCount} commentCount={commentCount} />
+          </div>
 
-        {/* Image container: flex-1, padding 0 32px 8px 32px, justify-end items-end */}
-        <div className="flex flex-1 min-h-0 self-stretch px-8 pb-2 justify-end items-end gap-4">
-          <img
-            src={imageSrc}
-            alt="Post"
-            className="max-w-full max-h-full w-full h-full object-cover object-bottom rounded-[4px]"
-          />
+          {/* Image container: flex-1, padding 0 32px 8px 32px, justify-end items-end */}
+          <div className="flex flex-1 min-h-0 self-stretch px-8 pb-2 justify-end items-end gap-4">
+            <img
+              src={imageSrc}
+              alt="Post"
+              className="max-w-full max-h-full w-full h-full object-cover object-bottom rounded-[4px]"
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col items-start self-stretch rounded border overflow-hidden p-8">
+          <div className="flex flex-col gap-4 w-full sm:flex-row sm:items-center sm:justify-between">
+            <CardAvatar
+              src={avatarSrc}
+              alt={avatarAlt}
+              name={userName}
+              subtitle={userDate}
+            />
+            <ReactionHolder likeCount={likeCount} commentCount={commentCount} />
+          </div>
+        </div>
+      )}
 
       {/* Details wrap: post text below image holder */}
       {(postText != null && postText !== '') && (

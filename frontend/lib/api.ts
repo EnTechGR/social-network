@@ -225,14 +225,6 @@ export async function getPostById(postId: string): Promise<any> {
 }
 
 /**
- * Get comments for a post by post ID.
- * GET /api/v1/posts/{postId}/comments
- */
-export async function getCommentsByPostId(postId: string): Promise<any[]> {
-  return fetchAPI<any[]>(`/api/v1/posts/${postId}/comments`, { method: 'GET' });
-}
-
-/**
  * Get feed: all posts visible to the current user (public, followers where applicable, private only if allowed).
  * GET /api/v1/feed
  */

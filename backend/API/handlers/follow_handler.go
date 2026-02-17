@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"social-network/middleware"
@@ -9,20 +10,62 @@ import (
 	"social-network/repository"
 	"social-network/repository/user_repository"
 	"social-network/utils"
+	"social-network/websocket"
 )
 
 // FollowHandler handles follow-related endpoints.
 type FollowHandler struct {
-	FollowRepo *repository.FollowRepository
-	UserRepo   *user_repository.UserRepository
+	FollowRepo       *repository.FollowRepository
+	UserRepo         *user_repository.UserRepository
+	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub
 }
 
 // NewFollowHandler creates a new FollowHandler.
-func NewFollowHandler(followRepo *repository.FollowRepository, userRepo *user_repository.UserRepository) *FollowHandler {
+func NewFollowHandler(
+	followRepo *repository.FollowRepository,
+	userRepo *user_repository.UserRepository,
+	notificationRepo *repository.NotificationRepository,
+	hub *websocket.Hub,
+) *FollowHandler {
 	return &FollowHandler{
-		FollowRepo: followRepo,
-		UserRepo:   userRepo,
+		FollowRepo:       followRepo,
+		UserRepo:         userRepo,
+		NotificationRepo: notificationRepo,
+		Hub:              hub,
 	}
+}
+
+func (h *FollowHandler) createAndPushFollowNotification(targetUserID, fromUserID, fromNickname, notificationType string) {
+	if h.NotificationRepo == nil {
+		return
+	}
+
+	n := models.Notification{
+		UserID:     targetUserID,
+		FromUserID: fromUserID,
+		Type:       notificationType,
+	}
+
+	if err := h.NotificationRepo.Create(&n); err != nil {
+		log.Printf("[FollowHandler] Failed to create %s notification for user %s: %v", notificationType, targetUserID, err)
+		return
+	}
+
+	if h.Hub == nil {
+		return
+	}
+
+	h.Hub.SendNotification(targetUserID, models.NotificationView{
+		ID:        n.ID,
+		Nickname:  fromNickname,
+		Type:      notificationType,
+		PostID:    "",
+		CommentID: nil,
+		CreatedAt: n.CreatedAt,
+		Read:      false,
+		Visible:   true,
+	})
 }
 
 // FollowPublicUser creates an accepted follow relationship when both users are public.
@@ -95,6 +138,15 @@ func (h *FollowHandler) FollowPublicUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if relationship != nil {
+		switch relationship.Status {
+		case "pending":
+			h.createAndPushFollowNotification(followee.ID, user.ID, user.Nickname, "follow_request")
+		case "accepted":
+			h.createAndPushFollowNotification(followee.ID, user.ID, user.Nickname, "follow_accept")
+		}
+	}
+
 	utils.JSONResponse(w, relationship, http.StatusCreated)
 }
 
@@ -137,6 +189,8 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 		}
 		return
 	}
+
+	h.createAndPushFollowNotification(followerID, user.ID, user.Nickname, "follow_accept")
 
 	utils.JSONResponse(w, map[string]string{"status": "accepted"}, http.StatusOK)
 }

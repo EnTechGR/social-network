@@ -41,11 +41,12 @@ jobs:
       - name: Install Swag
         run: go install github.com/swaggo/swag/cmd/swag@latest
 
+      # --- SECTION 2: API DOCS (Swagger) ---
       - name: Generate Swagger Docs
-        working-directory: API
+        # Change 'API' to 'backend/API'
+        working-directory: backend/API 
         run: |
           go mod download
-          # Running swag from the API root and pointing to main.go fixes the chdir error
           $(go env GOPATH)/bin/swag init -g cmd/main.go --parseDependency --parseInternal
 
       # --- SECTION 3: MERGE FOR DEPLOYMENT ---

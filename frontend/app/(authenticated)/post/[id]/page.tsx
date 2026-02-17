@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PostDetailFrame from '@/components/ui/PostDetailFrame';
 import type { CommentItem } from '@/components/ui/CommentHolder';
-import { getPostById } from '@/lib/api';
+import { getPostById, createComment, getCommentsByPostId } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -16,6 +16,18 @@ function formatPostDate(isoDate: string): string {
   }
 }
 
+function mapCommentToItem(c: any): CommentItem {
+  return {
+    id: c.id ?? c.comment_id ?? '',
+    avatarSrc: c.author_avatar_thumb_url || c.author_avatar_url || '/user-avatar-default.png',
+    avatarAlt: c.author_nickname ?? 'User',
+    userName: (c.author_nickname ?? 'User').toUpperCase(),
+    userDate: formatPostDate(c.created_at),
+    text: c.content ?? '',
+    likeCount: c.like_count ?? 0,
+  };
+}
+
 export default function PostPage() {
   const params = useParams();
   const postId = typeof params?.id === 'string' ? params.id : '';
@@ -23,6 +35,8 @@ export default function PostPage() {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!postId) {
@@ -37,11 +51,19 @@ export default function PostPage() {
       .then((data) => {
         if (cancelled) return;
         setPost(data);
-        // Comments endpoint doesn't exist yet, so skip loading comments
-        // When backend adds /api/v1/posts/{id}/comments endpoint, uncomment:
-        // return getCommentsByPostId(postId).then((list) => {
-        //   if (!cancelled) setComments(Array.isArray(list) ? list.map(mapCommentToItem) : []);
-        // });
+        // Load comments for the post
+        return getCommentsByPostId(postId).then((commentsList) => {
+          if (!cancelled) {
+            const mappedComments = Array.isArray(commentsList) ? commentsList.map(mapCommentToItem) : [];
+            setComments(mappedComments);
+          }
+        }).catch((commentsErr) => {
+          if (!cancelled) {
+            console.warn('Failed to load comments:', commentsErr);
+            // Don't fail the whole page if comments fail to load
+            setComments([]);
+          }
+        });
       })
       .catch((err: any) => {
         if (cancelled) return;
@@ -55,6 +77,39 @@ export default function PostPage() {
       });
     return () => { cancelled = true; };
   }, [postId]);
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim() || submitting || !postId) return;
+
+    setSubmitting(true);
+    try {
+      const result = await createComment(postId, commentText.trim());
+      
+      // Add the new comment to the list
+      const newComment: CommentItem = {
+        id: result.comment?.comment_id || result.id || Date.now().toString(),
+        avatarSrc: '/user-avatar-default.png', // Use default avatar for current user
+        avatarAlt: 'You',
+        userName: 'YOU',
+        userDate: formatPostDate(new Date().toISOString()),
+        text: commentText.trim(),
+        likeCount: 0,
+      };
+      
+      setComments([newComment, ...comments]);
+      setCommentText('');
+      
+      // Update comment count in post
+      if (post) {
+        setPost({ ...post, comment_count: (post.comment_count || 0) + 1 });
+      }
+    } catch (err: any) {
+      console.error('Failed to create comment:', err);
+      // Optionally show error to user
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -95,6 +150,9 @@ export default function PostPage() {
           imageSrc={imageSrc}
           postText={post.content ?? ''}
           comments={comments}
+          commentValue={commentText}
+          onCommentChange={setCommentText}
+          onCommentSubmit={handleCommentSubmit}
         />
       </div>
     </div>

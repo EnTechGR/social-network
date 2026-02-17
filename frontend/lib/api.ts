@@ -325,6 +325,33 @@ export async function getFeed(): Promise<any[]> {
 }
 
 /**
+ * Create a new comment on a post
+ * POST /api/v1/comments/create
+ */
+export async function createComment(postId: string, content: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  
+  return fetchAPI<any>('/api/v1/comments/create', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: JSON.stringify({
+      post_id: postId,
+      content: content,
+    }),
+  });
+}
+
+/**
+ * Get comments for a post by post ID.
+ * GET /api/v1/posts/{postId}/comments
+ */
+export async function getCommentsByPostId(postId: string): Promise<any[]> {
+  return fetchAPI<any[]>(`/api/v1/posts/${postId}/comments`, { method: 'GET' });
+}
+
+/**
  * Upload user avatar
  * POST /api/v1/user/avatar
  * Accepts multipart/form-data with avatar file (max 5MB)

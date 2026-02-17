@@ -20,6 +20,7 @@ export interface PostDetailFrameProps {
   comments?: CommentItem[];
   commentValue?: string;
   onCommentChange?: (value: string) => void;
+  onCommentSubmit?: () => void;
 }
 
 export function PostDetailFrame({
@@ -35,6 +36,7 @@ export function PostDetailFrame({
   comments = [],
   commentValue,
   onCommentChange,
+  onCommentSubmit,
 }: PostDetailFrameProps) {
   return (
     <div className="flex flex-col items-start gap-9 self-stretch">
@@ -113,6 +115,7 @@ export function PostDetailFrame({
       <CommentHolder
         commentValue={commentValue}
         onCommentChange={onCommentChange}
+        onCommentSubmit={onCommentSubmit}
         comments={comments}
       />
     </div>

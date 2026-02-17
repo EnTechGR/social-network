@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { CardAvatar } from './CardAvatar';
 import ReactionHolder from './ReactionHolder';
+import Button from './Button';
 
 export interface CommentItem {
   id: string;
@@ -17,6 +18,7 @@ export interface CommentItem {
 export interface CommentHolderProps {
   commentValue?: string;
   onCommentChange?: (value: string) => void;
+  onCommentSubmit?: () => void;
   commentPlaceholder?: string;
   comments: CommentItem[];
   className?: string;
@@ -25,6 +27,7 @@ export interface CommentHolderProps {
 export function CommentHolder({
   commentValue: controlledValue,
   onCommentChange,
+  onCommentSubmit,
   commentPlaceholder = 'Leave a comment...',
   comments,
   className = '',
@@ -37,6 +40,15 @@ export function CommentHolder({
     else setInternalValue(value);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (commentValue.trim() && onCommentSubmit) {
+        onCommentSubmit();
+      }
+    }
+  };
+
   return (
     <div
       className={`flex flex-col items-start self-stretch px-8 ${className}`.trim()}
@@ -45,7 +57,7 @@ export function CommentHolder({
       <div className="flex flex-col items-start self-stretch pb-8">
         {/* Comment box: 80px height, 32px padding, border, rounded */}
         <div
-          className="flex w-full min-h-[80px] flex-col justify-center items-start self-stretch rounded border p-8"
+          className="flex w-full min-h-[80px] gap-4 items-center self-stretch rounded border p-8"
           style={{
             borderColor: 'var(--parea-border)',
             backgroundColor: 'var(--white)',
@@ -56,9 +68,18 @@ export function CommentHolder({
             placeholder={commentPlaceholder}
             value={commentValue}
             onChange={(e) => handleChange(e.target.value)}
-            className="w-full bg-transparent border-0 outline-none text-foreground font-body text-regular font-normal leading-relaxed placeholder:text-foreground/60"
+            onKeyDown={handleKeyDown}
+            className="flex-1 bg-transparent border-0 outline-none text-foreground font-body text-regular font-normal leading-relaxed placeholder:text-foreground/60"
             aria-label="Leave a comment"
           />
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onCommentSubmit}
+            disabled={!commentValue.trim()}
+          >
+            POST
+          </Button>
         </div>
       </div>
 

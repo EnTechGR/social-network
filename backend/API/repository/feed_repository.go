@@ -10,9 +10,26 @@ import (
 )
 
 // staticBase is the URL prefix used to turn a stored file path into a
-// publicly accessible URL.  Matches the pattern already used across the
-// codebase (see my_post_handler.go: apiStaticBase).
+// publicly accessible URL.  The static file server is mounted as:
+//   http.FileServer(http.Dir("./uploads")) → Handle("/static/", StripPrefix("/static/", fs))
+// so a request to /static/foo.jpg serves ./uploads/foo.jpg.
 const staticBase = "http://localhost:8080/static/"
+
+// toStaticURL converts a stored file_path from images_core (e.g. "uploads/abc.jpg")
+// into a fully-qualified public URL (e.g. "http://localhost:8080/static/abc.jpg").
+//
+// The image repository stores paths as filepath.Join("uploads", filename), which
+// includes the "uploads/" directory prefix.  The static handler already roots
+// itself at ./uploads/, so we must strip that prefix before prepending staticBase
+// to avoid the double-path "/static/uploads/abc.jpg" bug.
+//
+// Returns an empty string unchanged so callers do not need a nil-guard.
+func toStaticURL(storedPath string) string {
+	if storedPath == "" {
+		return ""
+	}
+	return staticBase + strings.TrimPrefix(storedPath, "uploads/")
+}
 
 // ============================================================================
 // FeedRepository
@@ -304,8 +321,8 @@ func (r *FeedRepository) batchFetchImages(postIDs []string) (map[string][]models
 		}
 		result[postID] = append(result[postID], models.FeedImage{
 			ImageID:      imageID,
-			URL:          staticBase + filePath,
-			ThumbnailURL: staticBase + thumbPath,
+			URL:          toStaticURL(filePath),
+			ThumbnailURL: toStaticURL(thumbPath),
 			DisplayOrder: displayOrder,
 		})
 	}
@@ -358,6 +375,12 @@ func scanFeedPost(rows *sql.Rows) (models.FeedPost, error) {
 		v := int(viewerReaction.Int64)
 		p.ViewerReaction = &v
 	}
+
+	// The avatar paths are stored as "uploads/filename.jpg" in images_core.
+	// Convert them to fully-qualified static URLs here, consistent with
+	// how post images are handled in batchFetchImages.
+	p.AuthorAvatarURL = toStaticURL(p.AuthorAvatarURL)
+	p.AuthorAvatarThumbURL = toStaticURL(p.AuthorAvatarThumbURL)
 
 	return p, nil
 }

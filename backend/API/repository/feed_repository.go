@@ -218,6 +218,94 @@ func (r *FeedRepository) GetPostByID(postID, viewerID string) (*models.FeedPost,
 }
 
 // ============================================================================
+// GetCommentsByPost — comment list for a post detail view
+// ============================================================================
+
+// GetCommentsByPost returns all non-deleted comments for the given post,
+// ordered oldest-first (chronological reading order for a comment thread).
+//
+// Each comment is fully enriched with author info, avatar URLs, reaction
+// counts, and the viewer's own reaction state — the same pattern used for
+// posts in the feed so the frontend shape is consistent.
+//
+// Visibility of the post itself is NOT re-checked here.  The handler must
+// call GetPostByID first and return 404 before calling this if the viewer
+// is not allowed to see the post.
+func (r *FeedRepository) GetCommentsByPost(postID, viewerID string) ([]models.FeedComment, error) {
+	query := `
+		SELECT
+		    c.comment_id,
+		    c.post_id,
+		    c.user_id,
+		    u.nickname,
+		    u.first_name,
+		    u.last_name,
+		    COALESCE(ic_av.file_path,      '')  AS avatar_url,
+		    COALESCE(ic_av.thumbnail_path, '')  AS avatar_thumb_url,
+		    COALESCE(c.content, '')             AS content,
+		    c.created_at,
+		    c.updated_at,
+		    (
+		        SELECT COUNT(*)
+		        FROM   reactions rk
+		        WHERE  rk.comment_id    = c.comment_id
+		        AND    rk.reaction_type = 1
+		    ) AS like_count,
+		    (
+		        SELECT COUNT(*)
+		        FROM   reactions rd
+		        WHERE  rd.comment_id    = c.comment_id
+		        AND    rd.reaction_type = 2
+		    ) AS dislike_count,
+		    (
+		        SELECT rv.reaction_type
+		        FROM   reactions rv
+		        WHERE  rv.comment_id = c.comment_id
+		        AND    rv.user_id    = ?
+		        LIMIT  1
+		    ) AS viewer_reaction
+		FROM  comments c
+		JOIN  user u
+		      ON  u.user_id = c.user_id
+		LEFT  JOIN user_avatars ua
+		      ON  ua.user_id = u.user_id
+		LEFT  JOIN images_core ic_av
+		      ON  ic_av.image_id   = ua.image_id
+		      AND ic_av.deleted_at IS NULL
+		WHERE c.post_id   = ?
+		AND   c.content   IS NOT NULL
+		ORDER BY c.created_at ASC
+	`
+
+	// Bind order:
+	//   1  viewer_reaction subquery → viewerID
+	//   2  post filter              → postID
+	rows, err := r.db.Query(query, viewerID, postID)
+	if err != nil {
+		return nil, fmt.Errorf("feed: get comments by post: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []models.FeedComment
+	for rows.Next() {
+		c, err := scanFeedComment(rows)
+		if err != nil {
+			return nil, fmt.Errorf("feed: scan comment row: %w", err)
+		}
+		comments = append(comments, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("feed: comment rows iteration: %w", err)
+	}
+
+	// Always return a slice, never nil, so the frontend receives [] not null.
+	if comments == nil {
+		comments = []models.FeedComment{}
+	}
+	return comments, nil
+}
+
+// ============================================================================
 // queryPosts — primary query
 // ============================================================================
 
@@ -545,4 +633,46 @@ func scanFeedPostRow(row *sql.Row) (*models.FeedPost, error) {
 	p.AuthorAvatarThumbURL = toStaticURL(p.AuthorAvatarThumbURL)
 
 	return &p, nil
+}
+
+// ============================================================================
+// scanFeedComment — row scanner for GetCommentsByPost
+// ============================================================================
+
+// scanFeedComment scans one row from GetCommentsByPost's query into a FeedComment.
+func scanFeedComment(rows *sql.Rows) (models.FeedComment, error) {
+	var (
+		c              models.FeedComment
+		viewerReaction sql.NullInt64
+	)
+
+	err := rows.Scan(
+		&c.ID,
+		&c.PostID,
+		&c.AuthorID,
+		&c.AuthorNickname,
+		&c.AuthorFirstName,
+		&c.AuthorLastName,
+		&c.AuthorAvatarURL,
+		&c.AuthorAvatarThumbURL,
+		&c.Content,
+		&c.CreatedAt,
+		&c.UpdatedAt,
+		&c.LikeCount,
+		&c.DislikeCount,
+		&viewerReaction,
+	)
+	if err != nil {
+		return c, err
+	}
+
+	if viewerReaction.Valid {
+		v := int(viewerReaction.Int64)
+		c.ViewerReaction = &v
+	}
+
+	c.AuthorAvatarURL = toStaticURL(c.AuthorAvatarURL)
+	c.AuthorAvatarThumbURL = toStaticURL(c.AuthorAvatarThumbURL)
+
+	return c, nil
 }

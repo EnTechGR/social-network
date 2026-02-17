@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"social-network/middleware"
@@ -194,10 +195,39 @@ func buildFeedResponse(posts []models.FeedPost, params models.FeedParams, hasMor
 // GetPost — single post detail
 // ============================================================================
 
-// GetPost returns the fully-enriched FeedPost for a single post ID.
-// The same visibility rules as the feed apply: if the viewer is not allowed
-// to see the post, the response is 404 (not 403) to avoid leaking the
-// existence of private posts.
+// GetPost is the entry-point for the /api/v1/posts/ catch-all route.
+// It inspects the URL path and dispatches to the correct sub-handler:
+//
+//	GET /api/v1/posts/{id}           → post detail   (GetPostDetail)
+//	GET /api/v1/posts/{id}/comments  → comment list  (GetPostComments)
+//
+// Any other sub-path returns 404.
+// @Router       /api/v1/posts/{id} [get]
+func (h *FeedHandler) GetPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	viewer := middleware.GetCurrentUser(r)
+	if viewer == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Dispatch on path suffix.
+	// strings.TrimSuffix normalises a trailing slash so both
+	// /api/v1/posts/{id}/comments and /api/v1/posts/{id}/comments/ work.
+	path := strings.TrimSuffix(r.URL.Path, "/")
+	if strings.HasSuffix(path, "/comments") {
+		h.getPostComments(w, r, viewer.ID, path)
+		return
+	}
+
+	h.getPostDetail(w, r, viewer.ID)
+}
+
+// getPostDetail handles GET /api/v1/posts/{id}.
 //
 // @Summary      Get a single post
 // @Description  Returns the fully-enriched post detail for the given post ID.
@@ -214,28 +244,16 @@ func buildFeedResponse(posts []models.FeedPost, params models.FeedParams, hasMor
 // @Failure      401  {object}  models.ErrorResponse "Unauthorized"
 // @Failure      404  {object}  models.ErrorResponse "Post not found or not accessible"
 // @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
-// @Router       /api/v1/posts/{id} [get]
-func (h *FeedHandler) GetPost(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	viewer := middleware.GetCurrentUser(r)
-	if viewer == nil {
-		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
+func (h *FeedHandler) getPostDetail(w http.ResponseWriter, r *http.Request, viewerID string) {
 	postID := utils.GetLastPathParam(r)
 	if postID == "" {
 		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
 		return
 	}
 
-	post, err := h.FeedRepo.GetPostByID(postID, viewer.ID)
+	post, err := h.FeedRepo.GetPostByID(postID, viewerID)
 	if err != nil {
-		log.Printf("[FeedHandler] GetPostByID error for post %s viewer %s: %v", postID, viewer.ID, err)
+		log.Printf("[FeedHandler] GetPostByID error for post %s viewer %s: %v", postID, viewerID, err)
 		utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
 		return
 	}
@@ -247,4 +265,58 @@ func (h *FeedHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.JSONResponse(w, post, http.StatusOK)
+}
+
+// getPostComments handles GET /api/v1/posts/{id}/comments.
+//
+// @Summary      Get comments for a post
+// @Description  Returns all non-deleted comments for the given post, oldest-first.
+//               The viewer must be allowed to see the post (same visibility rules
+//               as the feed) — if not, 404 is returned so private post existence
+//               is never leaked.  Each comment carries author info, avatar URLs,
+//               reaction counts, and the viewer's own reaction state.
+// @Tags         Feed
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id  path      string  true  "Post ID (UUID)"
+// @Success      200  {array}   models.FeedComment
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      404  {object}  models.ErrorResponse "Post not found or not accessible"
+// @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/v1/posts/{id}/comments [get]
+func (h *FeedHandler) getPostComments(w http.ResponseWriter, r *http.Request, viewerID, path string) {
+	// Extract the post ID — it sits between the last two path segments:
+	//   /api/v1/posts/{postID}/comments
+	// TrimSuffix already removed the trailing slash, so we strip "/comments"
+	// and then take the last segment of what remains.
+	withoutComments := strings.TrimSuffix(path, "/comments")
+	parts := strings.Split(withoutComments, "/")
+	postID := parts[len(parts)-1]
+	if postID == "" {
+		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
+		return
+	}
+
+	// Visibility gate: verify the viewer is allowed to see the post at all.
+	// GetPostByID applies the full four-rule visibility predicate and returns
+	// nil when the post does not exist or is not accessible to this viewer.
+	post, err := h.FeedRepo.GetPostByID(postID, viewerID)
+	if err != nil {
+		log.Printf("[FeedHandler] GetPostByID (comments gate) error for post %s viewer %s: %v", postID, viewerID, err)
+		utils.ErrorResponse(w, "Failed to verify post access", http.StatusInternalServerError)
+		return
+	}
+	if post == nil {
+		utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	comments, err := h.FeedRepo.GetCommentsByPost(postID, viewerID)
+	if err != nil {
+		log.Printf("[FeedHandler] GetCommentsByPost error for post %s viewer %s: %v", postID, viewerID, err)
+		utils.ErrorResponse(w, "Failed to retrieve comments", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONResponse(w, comments, http.StatusOK)
 }

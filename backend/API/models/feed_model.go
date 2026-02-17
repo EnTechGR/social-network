@@ -114,6 +114,55 @@ type FeedResponse struct {
 	Count int `json:"count"`
 }
 
+// FeedComment is the enriched comment shape returned by GET /api/v1/posts/{id}/comments.
+// It mirrors the design of FeedPost: denormalised author info, pre-aggregated
+// reaction counts, and the viewer's own reaction state so the frontend needs
+// no secondary calls.
+//
+// swagger:model FeedComment
+type FeedComment struct {
+	// ── Identity ─────────────────────────────────────────────────────────────
+	// example: 550e8400-e29b-41d4-a716-446655440000
+	ID string `json:"id"`
+	// Post this comment belongs to
+	// example: 7b1a2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+	PostID string `json:"post_id"`
+	// example: 2025-02-17T10:30:00Z
+	CreatedAt time.Time `json:"created_at"`
+	// example: 2025-02-17T11:00:00Z
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+
+	// ── Author ───────────────────────────────────────────────────────────────
+	// example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+	AuthorID string `json:"author_id"`
+	// example: johndoe
+	AuthorNickname string `json:"author_nickname"`
+	// example: John
+	AuthorFirstName string `json:"author_first_name"`
+	// example: Doe
+	AuthorLastName string `json:"author_last_name"`
+	// URL to the author's full-size avatar; empty string when no avatar is set
+	AuthorAvatarURL string `json:"author_avatar_url"`
+	// URL to the author's thumbnail avatar; empty string when no avatar is set
+	AuthorAvatarThumbURL string `json:"author_avatar_thumb_url"`
+
+	// ── Content ──────────────────────────────────────────────────────────────
+	// Text body of the comment; empty string when the comment has been deleted
+	// example: Great post, really helpful!
+	Content string `json:"content"`
+
+	// ── Engagement counts ────────────────────────────────────────────────────
+	// example: 5
+	LikeCount int `json:"like_count"`
+	// example: 0
+	DislikeCount int `json:"dislike_count"`
+
+	// ── Viewer state ─────────────────────────────────────────────────────────
+	// null = no reaction, 1 = like, 2 = dislike, 3 = love
+	// example: 1
+	ViewerReaction *int `json:"viewer_reaction"`
+}
+
 // FeedParams bundles all inputs the repository needs to execute a paginated
 // feed query. Constructed by the handler after validating query parameters.
 type FeedParams struct {

@@ -128,6 +128,8 @@ export default function FeedPage() {
                   content={post.content}
                   href={`/post/${post.id}`}
                   imagePriority={index === 0}
+                  likeCount={post.like_count}
+                  commentCount={post.comment_count}
                 />
               );
             })}

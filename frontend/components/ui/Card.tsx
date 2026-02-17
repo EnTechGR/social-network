@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { CardImage } from './CardImage';
 import { CardAvatar } from './CardAvatar';
+import ReactionHolder from './ReactionHolder';
 
 interface CardProps {
   imageType: 'post' | 'event';
@@ -18,6 +19,10 @@ interface CardProps {
   href?: string;
   /** Set for first card in feed to fix LCP (loading="eager") */
   imagePriority?: boolean;
+  /** Like count for the post */
+  likeCount?: number;
+  /** Comment count for the post */
+  commentCount?: number;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -31,6 +36,8 @@ export const Card: React.FC<CardProps> = ({
   content,
   href,
   imagePriority,
+  likeCount = 0,
+  commentCount = 0,
 }) => {
   const inner = (
     <div className="flex
@@ -68,12 +75,18 @@ export const Card: React.FC<CardProps> = ({
             {content ?? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'}
           </p>
         </div>
-        <CardAvatar
-          src={avatarSrc}
-          alt={avatarAlt}
-          name={userName}
-          subtitle={userDate}
-        />
+        <div className="flex justify-between items-center w-full mt-4">
+          <CardAvatar
+            src={avatarSrc}
+            alt={avatarAlt}
+            name={userName}
+            subtitle={userDate}
+          />
+          <ReactionHolder
+            likeCount={likeCount}
+            commentCount={commentCount}
+          />
+        </div>
       </div>
     </div>
   );

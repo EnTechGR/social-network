@@ -100,6 +100,124 @@ func (r *FeedRepository) GetFeedPage(params models.FeedParams) ([]models.FeedPos
 }
 
 // ============================================================================
+// GetPostByID — single-post detail
+// ============================================================================
+
+// GetPostByID fetches one fully-enriched post by its ID, applying the same
+// visibility rules as the feed so a viewer cannot access a post they are not
+// permitted to see.
+//
+// Returns (nil, nil) when the post does not exist or the viewer is not
+// allowed to see it — the handler converts both cases to 404 so that
+// private post existence is never leaked to unauthorised callers.
+func (r *FeedRepository) GetPostByID(postID, viewerID string) (*models.FeedPost, error) {
+	// The query is the feed's primary query with two differences:
+	//   1.  The cursor/pagination clause is replaced by AND p.post_id = ?
+	//   2.  No LIMIT — we expect exactly one row.
+	// The visibility predicate is word-for-word identical to queryPosts so
+	// access rules are guaranteed to be consistent.
+	query := `
+		SELECT
+		    p.post_id,
+		    p.user_id,
+		    u.nickname,
+		    u.first_name,
+		    u.last_name,
+		    COALESCE(ic_av.file_path,      '')  AS avatar_url,
+		    COALESCE(ic_av.thumbnail_path, '')  AS avatar_thumb_url,
+		    p.visibility,
+		    COALESCE(p.title,   '')             AS title,
+		    COALESCE(p.content, '')             AS content,
+		    p.created_at,
+		    p.updated_at,
+		    (
+		        SELECT COUNT(*)
+		        FROM   comments c
+		        WHERE  c.post_id    = p.post_id
+		        AND    c.deleted_at IS NULL
+		    ) AS comment_count,
+		    (
+		        SELECT COUNT(*)
+		        FROM   reactions rk
+		        WHERE  rk.post_id      = p.post_id
+		        AND    rk.reaction_type = 1
+		    ) AS like_count,
+		    (
+		        SELECT COUNT(*)
+		        FROM   reactions rd
+		        WHERE  rd.post_id      = p.post_id
+		        AND    rd.reaction_type = 2
+		    ) AS dislike_count,
+		    (
+		        SELECT rv.reaction_type
+		        FROM   reactions rv
+		        WHERE  rv.post_id = p.post_id
+		        AND    rv.user_id = ?
+		        LIMIT  1
+		    ) AS viewer_reaction
+		FROM  posts p
+		JOIN  user u
+		      ON  u.user_id = p.user_id
+		LEFT  JOIN user_avatars ua
+		      ON  ua.user_id = u.user_id
+		LEFT  JOIN images_core ic_av
+		      ON  ic_av.image_id   = ua.image_id
+		      AND ic_av.deleted_at IS NULL
+		WHERE p.post_id = ?
+		AND   p.group_id IS NULL
+		AND   (
+		          p.user_id = ?
+		      OR  p.visibility = 'public'
+		      OR  (
+		              p.visibility = 'followers'
+		          AND EXISTS (
+		                  SELECT 1
+		                  FROM   follow_relationships fr
+		                  WHERE  fr.follower_id = ?
+		                  AND    fr.followee_id = p.user_id
+		                  AND    fr.status      = 'accepted'
+		              )
+		          )
+		      OR  (
+		              p.visibility = 'private'
+		          AND EXISTS (
+		                  SELECT 1
+		                  FROM   post_allowed_users pau
+		                  WHERE  pau.post_id = p.post_id
+		                  AND    pau.user_id = ?
+		              )
+		          )
+		      )
+	`
+
+	// Bind order:
+	//   1  viewer_reaction subquery  → viewerID
+	//   2  post identity             → postID
+	//   3  rule 1 (own posts)        → viewerID
+	//   4  rule 3 (followers)        → viewerID
+	//   5  rule 4 (private allowed)  → viewerID
+	row := r.db.QueryRow(query, viewerID, postID, viewerID, viewerID, viewerID)
+
+	post, err := scanFeedPostRow(row)
+	if err == sql.ErrNoRows {
+		return nil, nil // not found or not visible — caller returns 404
+	}
+	if err != nil {
+		return nil, fmt.Errorf("feed: get post by id: %w", err)
+	}
+
+	// Fetch images for this single post using the same batch helper.
+	imagesByPost, err := r.batchFetchImages([]string{postID})
+	if err == nil {
+		if imgs, ok := imagesByPost[postID]; ok {
+			post.Images = imgs
+		}
+	}
+
+	return post, nil
+}
+
+// ============================================================================
 // queryPosts — primary query
 // ============================================================================
 
@@ -383,4 +501,48 @@ func scanFeedPost(rows *sql.Rows) (models.FeedPost, error) {
 	p.AuthorAvatarThumbURL = toStaticURL(p.AuthorAvatarThumbURL)
 
 	return p, nil
+}
+
+// scanFeedPostRow is identical to scanFeedPost but accepts *sql.Row (QueryRow)
+// instead of *sql.Rows (Query).  The two types share the same column contract
+// but expose different interfaces, so both helpers are required.
+func scanFeedPostRow(row *sql.Row) (*models.FeedPost, error) {
+	var (
+		p              models.FeedPost
+		viewerReaction sql.NullInt64
+	)
+
+	p.Images = []models.FeedImage{}
+
+	err := row.Scan(
+		&p.ID,
+		&p.AuthorID,
+		&p.AuthorNickname,
+		&p.AuthorFirstName,
+		&p.AuthorLastName,
+		&p.AuthorAvatarURL,
+		&p.AuthorAvatarThumbURL,
+		&p.Visibility,
+		&p.Title,
+		&p.Content,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+		&p.CommentCount,
+		&p.LikeCount,
+		&p.DislikeCount,
+		&viewerReaction,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if viewerReaction.Valid {
+		v := int(viewerReaction.Int64)
+		p.ViewerReaction = &v
+	}
+
+	p.AuthorAvatarURL = toStaticURL(p.AuthorAvatarURL)
+	p.AuthorAvatarThumbURL = toStaticURL(p.AuthorAvatarThumbURL)
+
+	return &p, nil
 }

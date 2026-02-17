@@ -209,6 +209,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/events/delete/", protected(http.HandlerFunc(groupEventHandler.DeleteEvent)))        // DELETE /api/v1/events/{id}
 	
 	apiMux.Handle("/api/v1/feed",       protected(http.HandlerFunc(feedHandler.GetFeed)))
+	apiMux.Handle("/api/v1/posts/",     protected(http.HandlerFunc(feedHandler.GetPost)))
 	// =========================================================================
 	// 2. Wrap the API Mux with the authentication middleware
 	apiHandler := authMiddleware.Authenticate(apiMux)

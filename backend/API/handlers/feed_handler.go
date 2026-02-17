@@ -189,3 +189,62 @@ func buildFeedResponse(posts []models.FeedPost, params models.FeedParams, hasMor
 
 	return resp
 }
+
+// ============================================================================
+// GetPost — single post detail
+// ============================================================================
+
+// GetPost returns the fully-enriched FeedPost for a single post ID.
+// The same visibility rules as the feed apply: if the viewer is not allowed
+// to see the post, the response is 404 (not 403) to avoid leaking the
+// existence of private posts.
+//
+// @Summary      Get a single post
+// @Description  Returns the fully-enriched post detail for the given post ID.
+//               Visibility rules are identical to the feed: the viewer must be
+//               the author, the post must be public, the viewer must follow the
+//               author (followers-only), or the viewer must be explicitly allowed
+//               (private). Returns 404 for posts that don't exist or that the
+//               viewer cannot access.
+// @Tags         Feed
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id  path      string  true  "Post ID (UUID)"
+// @Success      200  {object}  models.FeedPost
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      404  {object}  models.ErrorResponse "Post not found or not accessible"
+// @Failure      500  {object}  models.ErrorResponse "Internal Server Error"
+// @Router       /api/v1/posts/{id} [get]
+func (h *FeedHandler) GetPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	viewer := middleware.GetCurrentUser(r)
+	if viewer == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	postID := utils.GetLastPathParam(r)
+	if postID == "" {
+		utils.ErrorResponse(w, "Missing post ID", http.StatusBadRequest)
+		return
+	}
+
+	post, err := h.FeedRepo.GetPostByID(postID, viewer.ID)
+	if err != nil {
+		log.Printf("[FeedHandler] GetPostByID error for post %s viewer %s: %v", postID, viewer.ID, err)
+		utils.ErrorResponse(w, "Failed to retrieve post", http.StatusInternalServerError)
+		return
+	}
+	if post == nil {
+		// Either the post does not exist or the viewer is not permitted to see it.
+		// We return 404 in both cases to avoid leaking the existence of private posts.
+		utils.ErrorResponse(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	utils.JSONResponse(w, post, http.StatusOK)
+}

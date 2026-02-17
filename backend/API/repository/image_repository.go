@@ -285,7 +285,12 @@ func (r *ImageRepository) UploadUserAvatar(
 	return nil
 }
 
-// UploadPostImages uploads and processes multiple images for a post
+// UploadPostImages uploads and processes multiple images for a post,
+// saving metadata to images_core and linking each image to the post
+// via the post_images relationship table.
+//
+// Replace the existing UploadPostImages function in
+// backend/API/repository/image_repository.go with this implementation.
 func (r *ImageRepository) UploadPostImages(
 	files []*multipart.FileHeader,
 	postID string,
@@ -297,41 +302,50 @@ func (r *ImageRepository) UploadPostImages(
 	}
 	defer tx.Rollback()
 
-	var savedImages []string // for cleanup on error
+	var savedFiles []string // paths for cleanup on error
 
-	for _, fileHeader := range files {
+	for i, fileHeader := range files {
 		file, err := fileHeader.Open()
 		if err != nil {
-			// Cleanup previously saved files
-			r.cleanupFiles(savedImages)
+			r.cleanupFiles(savedFiles)
 			return fmt.Errorf("failed to open file: %w", err)
 		}
 		defer file.Close()
 
-		// Process image
+		// Process image: validate, decode, save to disk, generate thumbnail
 		metadata, err := r.ProcessAndSaveImage(file, fileHeader, userID)
 		if err != nil {
-			r.cleanupFiles(savedImages)
+			r.cleanupFiles(savedFiles)
 			return err
 		}
-		savedImages = append(savedImages, metadata.FilePath, metadata.ThumbnailPath)
+		savedFiles = append(savedFiles, metadata.FilePath, metadata.ThumbnailPath)
 
-		// Save to images_core table (centralized image storage)
-		// Images are associated with posts through the uploader_user_id and context
+		// 1. Insert into centralized images_core table
 		if err := r.SaveImageMetadata(tx, metadata); err != nil {
-			r.cleanupFiles(savedImages)
+			r.cleanupFiles(savedFiles)
 			return fmt.Errorf("failed to save image metadata: %w", err)
+		}
+
+		// 2. Insert into post_images relationship table (this was the missing link)
+		postImageID := uuid.New().String()
+		_, err = tx.Exec(`
+			INSERT INTO post_images (post_image_id, post_id, image_id, display_order, created_at)
+			VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+		`, postImageID, postID, metadata.ImageID, i+1)
+		if err != nil {
+			r.cleanupFiles(savedFiles)
+			return fmt.Errorf("failed to link image %s to post %s: %w", metadata.ImageID, postID, err)
 		}
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		r.cleanupFiles(savedImages)
+		r.cleanupFiles(savedFiles)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
 }
+
 
 // ============================================================================
 // IMAGE RETRIEVAL METHODS

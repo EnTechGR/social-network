@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
-import { getUserProfile, getAvatarUrl } from '@/lib/api';
+import { getUserProfile, getAvatarUrl, followUser } from '@/lib/api';
 
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
@@ -15,6 +15,9 @@ export default function UserProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('Posts');
   const [showPrivateModal, setShowPrivateModal] = useState(false);
+  const [isSubmittingFollow, setIsSubmittingFollow] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
+  const [followDone, setFollowDone] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -23,6 +26,9 @@ export default function UserProfilePage() {
     async function load() {
       setIsLoading(true);
       setError(null);
+      setFollowError(null);
+      setFollowDone(false);
+      setIsSubmittingFollow(false);
       try {
         const data = await getUserProfile(id);
         if (cancelled) return;
@@ -39,6 +45,32 @@ export default function UserProfilePage() {
     load();
     return () => { cancelled = true; };
   }, [id]);
+
+  const requestFollow = async () => {
+    if (!id || followDone) return;
+
+    setIsSubmittingFollow(true);
+    setFollowError(null);
+
+    try {
+      await followUser(id);
+      setFollowDone(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to follow user';
+      const normalized = message.toLowerCase();
+
+      if (normalized.includes('already')) {
+        setFollowDone(true);
+        setFollowError(null);
+        return;
+      }
+
+      setFollowError(message);
+      throw err;
+    } finally {
+      setIsSubmittingFollow(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -73,15 +105,22 @@ export default function UserProfilePage() {
           <button
             type="button"
             onClick={() => setShowPrivateModal(true)}
+            disabled={followDone}
             className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90"
           >
-            Send follow request
+            {followDone ? 'Follow request sent' : 'Send follow request'}
           </button>
+          {followError && (
+            <p className="text-regular text-parea-black mt-3">{followError}</p>
+          )}
         </div>
         <PrivateProfileModal
           isOpen={showPrivateModal}
           onClose={() => setShowPrivateModal(false)}
           userName={name}
+          onSendRequest={requestFollow}
+          isSubmitting={isSubmittingFollow}
+          errorMessage={followError}
         />
       </main>
     );
@@ -120,6 +159,24 @@ export default function UserProfilePage() {
           onFollowersClick={handleFollowersClick}
           onFollowingClick={handleFollowingClick}
         />
+
+        {!profile.is_own_profile && (
+          <div className="mt-4 flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void requestFollow().catch(() => {});
+              }}
+              disabled={isSubmittingFollow || followDone}
+              className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {followDone ? 'Following' : isSubmittingFollow ? 'Following...' : 'Follow'}
+            </button>
+            {followError && (
+              <p className="text-regular text-parea-black">{followError}</p>
+            )}
+          </div>
+        )}
 
         <div className="mt-8">
           <Tabs

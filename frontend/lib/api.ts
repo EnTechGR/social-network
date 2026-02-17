@@ -9,6 +9,33 @@ import type { AuthResponse, ApiErrorResponse, LoginRequest, RegisterStep1Request
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+export interface NotificationItem {
+  id: string;
+  nickname: string;
+  type: string;
+  post_id?: string;
+  comment_id?: string | null;
+  created_at: string;
+  read: boolean;
+  visible: boolean;
+}
+
+export interface NotificationsResponse {
+  count: number;
+  notifications: NotificationItem[];
+}
+
+export interface ForumUser {
+  id: string;
+  nickname: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  gender: string;
+  is_online: boolean;
+}
+
 /**
  * Generic fetch wrapper with error handling
  */
@@ -187,6 +214,71 @@ export async function getProfile(): Promise<any> {
   return fetchAPI<any>('/api/v1/user/profile', {
     method: 'GET',
   });
+}
+
+/**
+ * Get notifications for the current user.
+ * GET /api/v1/notifications
+ */
+export async function getNotifications(): Promise<NotificationsResponse> {
+  return fetchAPI<NotificationsResponse>('/api/v1/notifications', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Hide (delete) a notification for the current user.
+ * DELETE /api/v1/notifications/delete/{id}
+ */
+export async function hideNotification(notificationId: string): Promise<{ status: string }> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+
+  return fetchAPI<{ status: string }>(`/api/v1/notifications/delete/${notificationId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+  });
+}
+
+/**
+ * Follow a user (private profiles become pending requests; public profiles become accepted follows).
+ * POST /api/v1/follow
+ */
+export async function followUser(followeeId: string): Promise<{
+  follower_id: string;
+  followee_id: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  created_at: string;
+  updated_at?: string;
+}> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+
+  return fetchAPI<{
+    follower_id: string;
+    followee_id: string;
+    status: 'pending' | 'accepted' | 'blocked';
+    created_at: string;
+    updated_at?: string;
+  }>('/api/v1/follow', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: JSON.stringify({ followee_id: followeeId }),
+  });
+}
+
+/**
+ * Get all forum users (excluding current user).
+ * GET /api/v1/chat/users
+ */
+export async function getForumUsers(): Promise<ForumUser[]> {
+  const response = await fetchAPI<{ users?: ForumUser[] }>('/api/v1/chat/users', {
+    method: 'GET',
+  });
+
+  return Array.isArray(response?.users) ? response.users : [];
 }
 
 /**

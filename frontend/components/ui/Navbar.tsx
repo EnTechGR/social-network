@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
 import { Search } from 'lucide-react';
 import SearchSuggestions from './SearchSuggestions';
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from './Button';
 import Link from 'next/link';
 import CreatePostModal from './CreatePostModal';
@@ -11,29 +10,27 @@ import CreatePostModal from './CreatePostModal';
 // --- SearchInputWithDropdown component ---
 function SearchInputWithDropdown() {
   const [showDropdown, setShowDropdown] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setShowDropdown(false);
       }
     }
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClick);
-    } else {
-      document.removeEventListener('mousedown', handleClick);
-    }
+
+    document.addEventListener('mousedown', handleClick);
+
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [showDropdown]);
+  }, []);
 
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
       <input
-        ref={inputRef}
         type="text"
         placeholder="Search..."
         className="
@@ -51,23 +48,25 @@ function SearchInputWithDropdown() {
           placeholder:text-black/60
           w-full
         "
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
         onFocus={() => setShowDropdown(true)}
       />
       {showDropdown && (
-        <div className="
-              fixed
-              flex
-              w-[1368px]
-              max-w-[1368px]
-              flex-col
-              items-center
-              top-[72px]
-              left-1/2
-              -translate-x-1/2
-              z-50
-            "
+        <div
+          className="
+            absolute
+            left-0
+            top-[calc(100%+14px)]
+            z-50
+            w-[620px]
+            max-w-[90vw]
+          "
         >
-          <SearchSuggestions />
+          <SearchSuggestions
+            query={searchQuery}
+            onClose={() => setShowDropdown(false)}
+          />
         </div>
       )}
     </div>

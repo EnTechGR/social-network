@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Button from './Button';
 import IconButton from './IconButtons';
 
@@ -10,6 +10,9 @@ interface PrivateProfileModalProps {
   userName: string;
   avatarSrc?: string;
   preview?: boolean;
+  onSendRequest?: () => Promise<void> | void;
+  isSubmitting?: boolean;
+  errorMessage?: string | null;
 }
 
 export default function PrivateProfileModal({
@@ -18,28 +21,38 @@ export default function PrivateProfileModal({
   userName,
   avatarSrc,
   preview = false,
+  onSendRequest,
+  isSubmitting = false,
+  errorMessage = null,
 }: PrivateProfileModalProps) {
   const [requestSent, setRequestSent] = useState(false);
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setRequestSent(false);
-    }
-  }, [isOpen]);
+  const handleClose = useCallback(() => {
+    setRequestSent(false);
+    onClose();
+  }, [onClose]);
 
   // Auto-close after 2-3 seconds when request is sent
   useEffect(() => {
     if (requestSent) {
       const timer = setTimeout(() => {
-        onClose();
+        handleClose();
       }, 2500); // 2.5 seconds
       return () => clearTimeout(timer);
     }
-  }, [requestSent, onClose]);
+  }, [requestSent, handleClose]);
 
-  const handleSendRequest = () => {
-    setRequestSent(true);
+  const handleSendRequest = async () => {
+    if (isSubmitting) return;
+
+    try {
+      if (onSendRequest) {
+        await onSendRequest();
+      }
+      setRequestSent(true);
+    } catch {
+      // Parent controls the error message.
+    }
   };
 
   if (!isOpen && !preview) return null;
@@ -63,7 +76,7 @@ export default function PrivateProfileModal({
       {/* Close Button */}
       <IconButton
         variant="close"
-        onClick={onClose}
+        onClick={handleClose}
         aria-label="Close modal"
         className="
           absolute
@@ -156,6 +169,19 @@ export default function PrivateProfileModal({
               </p>
             )}
 
+            {!requestSent && errorMessage && (
+              <p
+                className="
+                  text-parea-black
+                  text-center
+                  self-stretch
+                  text-small
+                "
+              >
+                {errorMessage}
+              </p>
+            )}
+
             {/* Request Sent Message */}
             {requestSent && (
               <p
@@ -178,9 +204,12 @@ export default function PrivateProfileModal({
             <Button
               variant="primary"
               size="sm"
-              onClick={handleSendRequest}
+              onClick={() => {
+                void handleSendRequest();
+              }}
+              disabled={isSubmitting}
             >
-              SEND FOLLOW REQUEST
+              {isSubmitting ? 'SENDING...' : 'SEND FOLLOW REQUEST'}
             </Button>
           )}
         </div>
@@ -202,7 +231,7 @@ export default function PrivateProfileModal({
         items-center
         justify-center
       "
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="

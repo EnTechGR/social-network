@@ -37,7 +37,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	groupRequestRepo := group.NewGroupJoinRequestRepository(db)
 	groupEventRepo := group.NewGroupEventRepository(db)
 	groupPostHandler := handlers.NewGroupPostHandler(postRepo, imageRepo)
-	feedRepo       := repository.NewFeedRepository(db)
+	feedRepo := repository.NewFeedRepository(db)
 
 	// ✅ Create and start WebSocket hub
 	hub := websocket.NewHub()
@@ -47,7 +47,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	authHandler := handlers.NewAuthHandler(userRepo, sessionRepo, imageRepo)
 	oauthHandler := handlers.NewOAuthHandler(userRepo, sessionRepo, authHandler)
 	userHandler := handlers.NewUserHandler(userRepo, imageRepo) // ✅ User handler for profile management
-	followHandler := handlers.NewFollowHandler(followRepo, userRepo)
+	followHandler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
 	postHandler := handlers.NewPostHandler(postRepo, imageRepo)
 	myPostsHandler := handlers.NewMyPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
 	likedPostsHandler := handlers.NewLikedPostsHandler(postRepo, commentRepo, reactionRepo, imageRepo)
@@ -66,7 +66,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	groupRequestHandler := handlers.NewGroupJoinRequestHandler(groupRequestRepo, groupMemberRepo, groupRepo)
 	groupEventHandler := handlers.NewGroupEventHandler(groupEventRepo, groupMemberRepo, groupRepo)
 
-	feedHandler      := handlers.NewFeedHandler(feedRepo)
+	feedHandler := handlers.NewFeedHandler(feedRepo)
 	// Create middleware
 	registerLimiter := middleware.NewRateLimiter()
 	authMiddleware := middleware.NewAuthMiddleware(sessionRepo, userRepo)
@@ -207,9 +207,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/events/", protected(http.HandlerFunc(groupEventHandler.GetEventDetails)))           // GET /api/v1/events/{id}
 	apiMux.Handle("/api/v1/events/vote/", protected(http.HandlerFunc(groupEventHandler.VoteOnEvent)))          // POST /api/v1/events/{id}/vote
 	apiMux.Handle("/api/v1/events/delete/", protected(http.HandlerFunc(groupEventHandler.DeleteEvent)))        // DELETE /api/v1/events/{id}
-	
-	apiMux.Handle("/api/v1/feed",       protected(http.HandlerFunc(feedHandler.GetFeed)))
-	apiMux.Handle("/api/v1/posts/",     protected(http.HandlerFunc(feedHandler.GetPost)))
+
+	apiMux.Handle("/api/v1/feed", protected(http.HandlerFunc(feedHandler.GetFeed)))
+	apiMux.Handle("/api/v1/posts/", protected(http.HandlerFunc(feedHandler.GetPost)))
 	// =========================================================================
 	// 2. Wrap the API Mux with the authentication middleware
 	apiHandler := authMiddleware.Authenticate(apiMux)

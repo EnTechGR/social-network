@@ -2,14 +2,117 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { getForumUsers, type ForumUser } from '@/lib/api';
+import { getForumUsers, type ForumUser, getFeed, getAllGroups } from '@/lib/api';
 import Tabs from './Tabs';
 
 const SEARCH_TABS = ['Posts', 'Events', 'Users', 'Groups'];
 
+interface FeedPost {
+  id: string;
+  created_at: string;
+  visibility: string;
+  author_id: string;
+  author_nickname: string;
+  author_first_name: string;
+  author_last_name: string;
+  author_avatar_url: string;
+  author_avatar_thumb_url: string;
+  title: string;
+  content: string;
+  images: Array<{
+    image_id: string;
+    url: string;
+    thumbnail_url: string;
+    display_order: number;
+  }>;
+  like_count: number;
+  dislike_count: number;
+  comment_count: number;
+  viewer_reaction: number | null;
+}
+
+interface Group {
+  id: string;
+  owner_id: string;
+  owner_nickname: string;
+  title: string;
+  description?: string | null;
+  member_count: number;
+  created_at: string;
+}
+
 interface SearchSuggestionsProps {
   query?: string;
   onClose?: () => void;
+}
+
+function GroupSuggestion({
+  group,
+  isLast,
+  onClose,
+}: {
+  group: Group;
+  isLast: boolean;
+  onClose?: () => void;
+}) {
+  const descriptionPreview = group.description 
+    ? (group.description.length > 80 ? group.description.substring(0, 80) + '...' : group.description)
+    : 'No description';
+
+  return (
+    <Link
+      href={`/group/${group.id}`}
+      onClick={onClose}
+      className={[
+        'flex w-full flex-col gap-2 bg-parea-white px-6 py-4 no-underline transition-colors duration-200 hover:bg-parea-yellow',
+        isLast ? '' : 'border-b border-parea-border',
+      ].join(' ')}
+    >
+      <span className="font-sans text-base font-semibold text-parea-black">{group.title}</span>
+      <p className="font-sans text-sm text-parea-black/70">{descriptionPreview}</p>
+      <div className="flex items-center gap-4 font-mono text-xs text-parea-black/50">
+        <span>👥 {group.member_count} {group.member_count === 1 ? 'member' : 'members'}</span>
+        <span>• Owner: @{group.owner_nickname}</span>
+      </div>
+    </Link>
+  );
+}
+
+function PostSuggestion({
+  post,
+  isLast,
+  onClose,
+}: {
+  post: FeedPost;
+  isLast: boolean;
+  onClose?: () => void;
+}) {
+  const authorName = [post.author_first_name, post.author_last_name].filter(Boolean).join(' ').trim() || post.author_nickname;
+  const contentPreview = post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content;
+
+  return (
+    <Link
+      href={`/post/${post.id}`}
+      onClick={onClose}
+      className={[
+        'flex w-full flex-col gap-2 bg-parea-white px-6 py-4 no-underline transition-colors duration-200 hover:bg-parea-yellow',
+        isLast ? '' : 'border-b border-parea-border',
+      ].join(' ')}
+    >
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-xs uppercase tracking-wide text-parea-black/60">@{post.author_nickname}</span>
+        <span className="font-sans text-xs text-parea-black/50">• {authorName}</span>
+      </div>
+      {post.title && (
+        <span className="font-sans text-base font-semibold text-parea-black">{post.title}</span>
+      )}
+      <p className="font-sans text-sm text-parea-black/70">{contentPreview}</p>
+      <div className="flex items-center gap-4 font-mono text-xs text-parea-black/50">
+        <span>❤️ {post.like_count}</span>
+        <span>💬 {post.comment_count}</span>
+      </div>
+    </Link>
+  );
 }
 
 function UserSuggestion({
@@ -51,24 +154,35 @@ function UserSuggestion({
 export default function SearchSuggestions({ query = '', onClose }: SearchSuggestionsProps) {
   const [activeTab, setActiveTab] = useState('Users');
   const [users, setUsers] = useState<ForumUser[]>([]);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    const loadUsers = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const loadedUsers = await getForumUsers();
+        const [loadedUsers, feedData, groupsData] = await Promise.all([
+          getForumUsers(),
+          getFeed(),
+          getAllGroups(),
+        ]);
+        
         if (mounted) {
           setUsers(loadedUsers);
+          // Handle both array and object responses from getFeed
+          const loadedPosts = Array.isArray(feedData) ? feedData : ((feedData as any)?.posts || []);
+          setPosts(loadedPosts);
+          setGroups(groupsData);
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load users');
+          setError(err instanceof Error ? err.message : 'Failed to load data');
         }
       } finally {
         if (mounted) {
@@ -77,7 +191,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       }
     };
 
-    loadUsers();
+    loadData();
 
     return () => {
       mounted = false;
@@ -98,18 +212,99 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
     );
   }, [query, users]);
 
+  const filteredPosts = useMemo(() => {
+    const value = query.trim().toLowerCase();
+
+    if (!value) {
+      return posts;
+    }
+
+    return posts.filter((post) =>
+      [post.title, post.content, post.author_nickname, post.author_first_name, post.author_last_name]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(value))
+    );
+  }, [query, posts]);
+
+  const filteredGroups = useMemo(() => {
+    const value = query.trim().toLowerCase();
+
+    if (!value) {
+      return groups;
+    }
+
+    return groups.filter((group) =>
+      [group.title, group.description, group.owner_nickname]
+        .filter(Boolean)
+        .some((field) => field?.toLowerCase().includes(value))
+    );
+  }, [query, groups]);
+
   return (
     <div className="w-full overflow-hidden rounded-xl border border-parea-border bg-parea-white shadow-lg">
       <div className="border-b border-parea-border px-6 py-4">
         <Tabs tabs={SEARCH_TABS} defaultTab="Users" onTabChange={setActiveTab} />
       </div>
 
-      {activeTab !== 'Users' && (
+      {activeTab === 'Events' && (
         <div className="px-6 py-8 font-sans text-sm text-parea-black/70">
-          The Users tab is wired to live forum users. Other tabs are not connected yet.
+          The Posts, Users, and Groups tabs are wired to live data. Events tab is not connected yet.
         </div>
       )}
 
+      {/* Posts Tab */}
+      {activeTab === 'Posts' && isLoading && (
+        <div className="px-6 py-8 font-sans text-sm text-parea-black/70">Loading posts...</div>
+      )}
+
+      {activeTab === 'Posts' && !isLoading && error && (
+        <div className="px-6 py-8 font-sans text-sm text-red-600">{error}</div>
+      )}
+
+      {activeTab === 'Posts' && !isLoading && !error && filteredPosts.length === 0 && (
+        <div className="px-6 py-8 font-sans text-sm text-parea-black/70">No posts found.</div>
+      )}
+
+      {activeTab === 'Posts' && !isLoading && !error && filteredPosts.length > 0 && (
+        <div className="max-h-[420px] overflow-y-auto">
+          {filteredPosts.map((post, index) => (
+            <PostSuggestion
+              key={post.id}
+              post={post}
+              isLast={index === filteredPosts.length - 1}
+              onClose={onClose}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Groups Tab */}
+      {activeTab === 'Groups' && isLoading && (
+        <div className="px-6 py-8 font-sans text-sm text-parea-black/70">Loading groups...</div>
+      )}
+
+      {activeTab === 'Groups' && !isLoading && error && (
+        <div className="px-6 py-8 font-sans text-sm text-red-600">{error}</div>
+      )}
+
+      {activeTab === 'Groups' && !isLoading && !error && filteredGroups.length === 0 && (
+        <div className="px-6 py-8 font-sans text-sm text-parea-black/70">No groups found.</div>
+      )}
+
+      {activeTab === 'Groups' && !isLoading && !error && filteredGroups.length > 0 && (
+        <div className="max-h-[420px] overflow-y-auto">
+          {filteredGroups.map((group, index) => (
+            <GroupSuggestion
+              key={group.id}
+              group={group}
+              isLast={index === filteredGroups.length - 1}
+              onClose={onClose}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Users Tab */}
       {activeTab === 'Users' && isLoading && (
         <div className="px-6 py-8 font-sans text-sm text-parea-black/70">Loading users...</div>
       )}

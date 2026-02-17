@@ -496,6 +496,11 @@ export async function getGroupById(groupId: string): Promise<any> {
   return fetchAPI<any>(`/api/v1/groups/${groupId}`, { method: 'GET' });
 }
 
+export async function getAllGroups(): Promise<any[]> {
+  const res = await fetchAPI<any>('/api/v1/groups', { method: 'GET' });
+  return Array.isArray(res) ? res : (res?.groups ?? []);
+}
+
 export async function getMyGroups(): Promise<any[]> {
   const res = await fetchAPI<any>('/api/v1/groups/my-groups', { method: 'GET' });
   return Array.isArray(res) ? res : (res?.groups ?? []);

@@ -16,6 +16,9 @@ import {
   hideNotification,
   acceptFollowRequest,
   declineFollowRequest,
+  getMyGroupInvites,
+  acceptGroupInvite,
+  declineGroupInvite,
   type NotificationItem,
 } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
@@ -96,6 +99,9 @@ export default function Sidebar() {
   const [notificationsError, setNotificationsError] = useState<string | null>(null);
   const [followRequestActionId, setFollowRequestActionId] = useState<string | null>(null);
   const [followRequestActionError, setFollowRequestActionError] = useState<string | null>(null);
+  const [groupInvites, setGroupInvites] = useState<any[]>([]);
+  const [isLoadingGroupInvites, setIsLoadingGroupInvites] = useState(false);
+  const [groupInviteActionId, setGroupInviteActionId] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -118,6 +124,18 @@ export default function Sidebar() {
     }
   }, []);
 
+  const loadGroupInvites = useCallback(async () => {
+    setIsLoadingGroupInvites(true);
+    try {
+      const invites = await getMyGroupInvites();
+      setGroupInvites(invites ?? []);
+    } catch (error) {
+      console.error('Failed to fetch group invites:', error);
+    } finally {
+      setIsLoadingGroupInvites(false);
+    }
+  }, []);
+
   useEffect(() => {
     getProfile()
       .then((p) => {
@@ -129,7 +147,8 @@ export default function Sidebar() {
 
   useEffect(() => {
     void loadNotifications();
-  }, [loadNotifications]);
+    void loadGroupInvites();
+  }, [loadNotifications, loadGroupInvites]);
 
   useEffect(() => {
     let isUnmounted = false;
@@ -317,6 +336,27 @@ export default function Sidebar() {
 
   const handleMarkAllAsRead = () => {
     setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+  };
+
+  const handleGroupInviteAction = async (
+    invite: any,
+    action: 'accept' | 'decline',
+  ) => {
+    setGroupInviteActionId(invite.id);
+
+    try {
+      if (action === 'accept') {
+        await acceptGroupInvite(invite.id);
+      } else {
+        await declineGroupInvite(invite.id);
+      }
+
+      setGroupInvites((prev) => prev.filter((item) => item.id !== invite.id));
+    } catch (error) {
+      console.error(`Failed to ${action} group invite:`, error);
+    } finally {
+      setGroupInviteActionId(null);
+    }
   };
 
   useEffect(() => {
@@ -523,6 +563,73 @@ export default function Sidebar() {
                 </div>
 
                 <div className="flex flex-1 px-4 flex-col items-start gap-2 self-stretch overflow-y-auto">
+                  {/* Group Invites Section */}
+                  {(isLoadingGroupInvites || groupInvites.length > 0) && (
+                    <>
+                      <div className="flex py-2 px-2 items-center self-stretch border-b border-parea-black mt-2">
+                        <span
+                          className="text-parea-black font-mono text-sm font-semibold leading-[150%] uppercase"
+                          style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
+                        >
+                          Group Invitations
+                        </span>
+                      </div>
+                      {isLoadingGroupInvites ? (
+                        <div className="flex py-4 px-4 items-center self-stretch">
+                          <span
+                            className="text-parea-black text-sm font-medium leading-[150%]"
+                            style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                          >
+                            Loading group invitations...
+                          </span>
+                        </div>
+                      ) : (
+                        groupInvites.map((invite) => (
+                          <div
+                            key={invite.id}
+                            className="flex py-2 px-4 items-center gap-4 self-stretch rounded-lg bg-parea-yellow/30"
+                          >
+                            <div className="flex items-start flex-1">
+                              <span
+                                className="text-parea-black text-sm font-medium leading-[150%]"
+                                style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                              >
+                                {invite.from_nickname || 'Someone'} invited you to {invite.group_title || 'a group'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  void handleGroupInviteAction(invite, 'accept');
+                                }}
+                                disabled={groupInviteActionId === invite.id}
+                                className="rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => {
+                                  void handleGroupInviteAction(invite, 'decline');
+                                }}
+                                disabled={groupInviteActionId === invite.id}
+                                className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div className="flex py-2 px-2 items-center self-stretch border-b border-parea-black">
+                        <span
+                          className="text-parea-black font-mono text-sm font-semibold leading-[150%] uppercase"
+                          style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
+                        >
+                          Notifications
+                        </span>
+                      </div>
+                    </>
+                  )}
                   {followRequestActionError && (
                     <div className="flex py-2 px-4 items-center self-stretch">
                       <span

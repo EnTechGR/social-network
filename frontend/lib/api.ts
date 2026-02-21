@@ -16,6 +16,7 @@ export interface NotificationItem {
   type: string;
   post_id?: string;
   comment_id?: string | null;
+  group_id?: string | null;
   created_at: string;
   read: boolean;
   visible: boolean;
@@ -651,5 +652,35 @@ export async function createGroupEvent(groupId: string, data: { title: string; d
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
     body: JSON.stringify(data),
+  });
+}
+
+export async function inviteToGroup(groupId: string, userId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/invite/${groupId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
+export async function getMyGroupInvites(): Promise<any[]> {
+  const res = await fetchAPI<any>('/api/v1/groups/invites', { method: 'GET' });
+  return Array.isArray(res?.invites) ? res.invites : [];
+}
+
+export async function acceptGroupInvite(inviteId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/invites/accept/${inviteId}`, {
+    method: 'PUT',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function declineGroupInvite(inviteId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/invites/decline/${inviteId}`, {
+    method: 'PUT',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
   });
 }

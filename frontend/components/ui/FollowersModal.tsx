@@ -27,6 +27,7 @@ interface FollowersModalProps {
   users?: FollowerUser[];
   onRemoveFollower?: (userId: string) => Promise<void>;
   onUnfollow?: (userId: string) => Promise<void>;
+  onInvite?: (userId: string) => Promise<void>;
   isActionLoading?: string | null;
 }
 
@@ -38,6 +39,7 @@ export default function FollowersModal({
   users = [],
   onRemoveFollower,
   onUnfollow,
+  onInvite,
   isActionLoading = null,
 }: FollowersModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +64,8 @@ export default function FollowersModal({
       await onRemoveFollower(userId);
     } else if (heading === 'Following' && onUnfollow) {
       await onUnfollow(userId);
+    } else if (heading === 'Members' && onInvite) {
+      await onInvite(userId);
     }
   };
 
@@ -262,6 +266,14 @@ export default function FollowersModal({
                         disabled={isActionLoading === user.user_id}
                       >
                         {isActionLoading === user.user_id ? 'Unfollowing...' : 'Unfollow'}
+                      </Button>
+                    ) : heading === 'Members' && onInvite ? (
+                      <Button
+                        variant="tertiary"
+                        onClick={() => handleAction(user.user_id)}
+                        disabled={isActionLoading === user.user_id}
+                      >
+                        {isActionLoading === user.user_id ? 'Inviting...' : 'Invite'}
                       </Button>
                     ) : null}
                   </div>

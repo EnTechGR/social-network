@@ -7,11 +7,16 @@ import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import CreatePostModal from '@/components/ui/CreatePostModal';
+import CreateEventModal from '@/components/ui/CreateEventModal';
+import FollowersModal, { type FollowerUser } from '@/components/ui/FollowersModal';
 import {
   getGroupById,
   getGroupMembers,
   getGroupPosts,
   getGroupEvents,
+  getProfile,
+  getUserProfile,
+  inviteToGroup,
 } from '@/lib/api';
 
 function formatDate(iso: string): string {
@@ -38,6 +43,9 @@ export default function GroupDetailPage() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [createEventOpen, setCreateEventOpen] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [followers, setFollowers] = useState<FollowerUser[]>([]);
+  const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) {
@@ -121,8 +129,33 @@ export default function GroupDetailPage() {
     // TODO: open members modal if needed
   };
 
-  const handleInvite = () => {
-    // TODO: open invite modal if needed
+  const handleInvite = async () => {
+    try {
+      const profile = await getProfile();
+      if (!profile?.id) return;
+      const userProfile = await getUserProfile(profile.id);
+      if (userProfile.privateProfile) return;
+      const followersList = Array.isArray(userProfile.followers) ? userProfile.followers as FollowerUser[] : [];
+      setFollowers(followersList);
+      setShowInviteModal(true);
+    } catch (err) {
+      console.error('Failed to load followers:', err);
+    }
+  };
+
+  const handleInviteUser = async (userId: string) => {
+    if (!groupId) return;
+    setInviteLoading(userId);
+    try {
+      await inviteToGroup(groupId, userId);
+      // Optionally remove the invited user from the list or show success
+      setFollowers((prev) => prev.filter((f) => f.user_id !== userId));
+    } catch (err: any) {
+      console.error('Failed to invite user:', err);
+      alert(err?.message || 'Failed to invite user');
+    } finally {
+      setInviteLoading(null);
+    }
   };
 
   const handleJoin = () => {
@@ -279,6 +312,15 @@ export default function GroupDetailPage() {
           }}
         />
       )}
+
+      <FollowersModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        heading="Members"
+        users={followers}
+        onInvite={handleInviteUser}
+        isActionLoading={inviteLoading}
+      />
     </main>
   );
 }

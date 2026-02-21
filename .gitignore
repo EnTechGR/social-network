@@ -22,6 +22,9 @@ dist/
 build/
 *.swp
 *.swo
+*.prof
+*.test
+*.tsbuildinfo
 
 # IDE
 .vscode/

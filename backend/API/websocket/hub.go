@@ -2,8 +2,9 @@ package websocket
 
 import (
 	"encoding/json"
-	"social-network/models" // Added import
 	"log"
+	"social-network/models" // Added import
+	"strings"
 	"sync"
 	"time"
 )
@@ -52,7 +53,7 @@ func (h *Hub) BroadcastToUser(userID string, message []byte) {
 	// Acquire a Read Lock to safely read the 'Clients' map.
 	h.mu.RLock()
 	// Ensure the Read Lock is released when the function exits, regardless of the path.
-	defer h.mu.RUnlock() 
+	defer h.mu.RUnlock()
 
 	// 1. Attempt to retrieve the client connection for the target user ID.
 	client, exists := h.Clients[userID]
@@ -69,15 +70,15 @@ func (h *Hub) BroadcastToUser(userID string, message []byte) {
 		// The client's 'Send' channel buffer is full. This indicates the client is
 		// reading too slowly or is unresponsive, suggesting a dead connection.
 		log.Printf("Client buffer full for user %s. Attempting graceful shutdown.", userID)
-		
+
 		// NOTE ON RACE CONDITION: Sending to the Unregister channel from within a
 		// Broadcast function (which holds an RLock) is safe, but the actual removal
 		// of the client from the map must happen in the Hub's main Run loop, which
 		// holds the Write Lock (Lock). This pattern avoids deadlocks.
-		
+
 		// Unregistering here is a standard way to handle a slow client,
 		// relying on the Hub's main loop to clean up the client connection.
-		h.Unregister <- client 
+		h.Unregister <- client
 	}
 }
 
@@ -124,7 +125,7 @@ func (h *Hub) registerClient(client *Client) {
 	log.Printf("User %s connected. Total clients: %d", client.UserID, len(h.Clients))
 
 	// 4. Release Write Lock. Crucial to allow other goroutines (like BroadcastToUser) to proceed.
-	h.mu.Unlock() 
+	h.mu.Unlock()
 
 	// 5. Broadcast status updates (performed outside the lock).
 	// Notify all other connected clients that this user is now online.
@@ -147,11 +148,11 @@ func (h *Hub) unregisterClient(client *Client) {
 	if activeClient, exists := h.Clients[client.UserID]; exists && activeClient == client {
 		// Remove the client from the map.
 		delete(h.Clients, client.UserID)
-		
+
 		// Close the client's outgoing Send channel. This signals the client's goroutines
 		// (writer loop) to terminate cleanly, releasing the associated WebSocket connection.
 		close(client.Send)
-		
+
 		log.Printf("User %s disconnected. Total clients: %d", client.UserID, len(h.Clients))
 
 		// 3. Release Write Lock. Crucial to allow other goroutines to proceed.
@@ -221,13 +222,41 @@ func (h *Hub) SendChatMessage(receiverID string, msgData models.MessageWithUser)
 	}
 
 	// 2. Targeted delivery. Use BroadcastToUser for safe, synchronous routing.
-	
+
 	// Broadcast to Receiver: Ensure the recipient sees the new message in real-time.
 	h.BroadcastToUser(receiverID, message)
 
 	// Send back to Sender: Crucial for multi-device support. The sender's other
 	// active connections (e.g., phone, desktop) need to be updated with the sent message.
 	h.BroadcastToUser(msgData.SenderID, message)
+}
+
+// SendGroupChatMessage broadcasts a group chat message to all connected group members.
+func (h *Hub) SendGroupChatMessage(memberIDs []string, msgData models.GroupMessage) {
+	wsMsg := WebSocketMessage{
+		Type:      MessageTypeGroupChat,
+		Data:      msgData,
+		Timestamp: time.Now(),
+	}
+
+	message, err := json.Marshal(wsMsg)
+	if err != nil {
+		log.Printf("Failed to marshal group chat message: %v", err)
+		return
+	}
+
+	seen := make(map[string]struct{}, len(memberIDs))
+	for _, memberID := range memberIDs {
+		memberID = strings.TrimSpace(memberID)
+		if memberID == "" {
+			continue
+		}
+		if _, exists := seen[memberID]; exists {
+			continue
+		}
+		seen[memberID] = struct{}{}
+		h.BroadcastToUser(memberID, message)
+	}
 }
 
 // SendMessageDeleteNotification creates and sends a notification signal to both the
@@ -255,7 +284,7 @@ func (h *Hub) SendMessageDeleteNotification(userID, messageID, senderID string) 
 
 	// 3. Notify the receiver (the user who received the message).
 	h.BroadcastToUser(userID, message)
-	
+
 	// 4. Notify the sender (the user who performed the deletion),
 	// to update their own UI on any other connected devices.
 	h.BroadcastToUser(senderID, message)
@@ -311,10 +340,10 @@ func (h *Hub) broadcastOnlineStatus(userID, username string, isOnline bool) {
 func (h *Hub) sendOnlineUsersList(client *Client) {
 	// 1. Acquire Read Lock to safely access the Clients map for iteration.
 	h.mu.RLock()
-	
+
 	// Pre-allocate slice capacity for efficiency.
 	onlineUsers := make([]OnlineStatusData, 0, len(h.Clients))
-	
+
 	// Build the list of currently active users.
 	for userID, c := range h.Clients {
 		// Exclude the client receiving the list.
@@ -326,7 +355,7 @@ func (h *Hub) sendOnlineUsersList(client *Client) {
 			})
 		}
 	}
-	
+
 	// 2. Release the lock immediately after reading is complete.
 	h.mu.RUnlock()
 
@@ -378,7 +407,7 @@ func (h *Hub) GetOnlineUsers() []string {
 
 	// Pre-allocate the slice to the exact size of the map for efficiency.
 	users := make([]string, 0, len(h.Clients))
-	
+
 	// Iterate over the map keys (User IDs) and append them to the slice.
 	for userID := range h.Clients {
 		users = append(users, userID)
@@ -450,20 +479,20 @@ func (h *Hub) SendChatImageDeleteNotification(userID, imageID, messageID string)
 
 // SendNotification sends a real-time notification to a user
 func (h *Hub) SendNotification(userID string, notification models.NotificationView) {
-    wsMsg := WebSocketMessage{
-        Type:      "notification",
-        Data:      notification,
-        Timestamp: time.Now(),
-    }
+	wsMsg := WebSocketMessage{
+		Type:      "notification",
+		Data:      notification,
+		Timestamp: time.Now(),
+	}
 
-    message, err := json.Marshal(wsMsg)
-    if err != nil {
-        log.Printf("Failed to marshal notification: %v", err)
-        return
-    }
+	message, err := json.Marshal(wsMsg)
+	if err != nil {
+		log.Printf("Failed to marshal notification: %v", err)
+		return
+	}
 
-    log.Printf("[Hub] Sending notification to user %s: Type=%s, From=%s", 
-        userID, notification.Type, notification.Nickname)
+	log.Printf("[Hub] Sending notification to user %s: Type=%s, From=%s",
+		userID, notification.Type, notification.Nickname)
 
-    h.BroadcastToUser(userID, message)
+	h.BroadcastToUser(userID, message)
 }

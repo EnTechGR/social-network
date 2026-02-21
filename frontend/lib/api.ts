@@ -38,6 +38,35 @@ export interface ForumUser {
   is_online: boolean;
 }
 
+export interface ChatConversation {
+  user_id: string;
+  nickname: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+  is_online: boolean;
+}
+
+export interface DirectChatMessage {
+  message_id: string;
+  sender_id: string;
+  sender_name: string;
+  receiver_id: string;
+  receiver_name?: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface GroupChatMessage {
+  message_id: string;
+  group_id: string;
+  sender_id: string;
+  sender_name: string;
+  content: string;
+  created_at: string;
+}
+
 export interface FollowRelationship {
   follower_id: string;
   followee_id: string;
@@ -393,6 +422,95 @@ export async function getForumUsers(): Promise<ForumUser[]> {
   });
 
   return Array.isArray(response?.users) ? response.users : [];
+}
+
+/**
+ * Get all direct conversations for the current user.
+ * GET /api/v1/chat/conversations
+ */
+export async function getChatConversations(): Promise<ChatConversation[]> {
+  const response = await fetchAPI<{ conversations?: ChatConversation[] }>('/api/v1/chat/conversations', {
+    method: 'GET',
+  });
+  return Array.isArray(response?.conversations) ? response.conversations : [];
+}
+
+/**
+ * Get one direct conversation with another user.
+ * GET /api/v1/chat/conversation?user_id={id}
+ */
+export async function getChatConversation(userId: string, limit = 50, offset = 0): Promise<DirectChatMessage[]> {
+  const params = new URLSearchParams({
+    user_id: userId,
+    limit: String(limit),
+    offset: String(offset),
+  });
+  const response = await fetchAPI<{ messages?: DirectChatMessage[] }>(`/api/v1/chat/conversation?${params.toString()}`, {
+    method: 'GET',
+  });
+  return Array.isArray(response?.messages) ? response.messages : [];
+}
+
+/**
+ * Get users eligible to chat.
+ * GET /api/v1/chat/users-for-chat
+ */
+export async function getChatUsersForChat(includeAll = true): Promise<ForumUser[]> {
+  const query = includeAll ? '?all=true' : '';
+  const response = await fetchAPI<{ users?: ForumUser[] }>(`/api/v1/chat/users-for-chat${query}`, {
+    method: 'GET',
+  });
+  return Array.isArray(response?.users) ? response.users : [];
+}
+
+/**
+ * Send a direct chat message.
+ * POST /api/v1/chat/send
+ */
+export async function sendChatMessage(receiverId: string, content: string): Promise<DirectChatMessage> {
+  const csrfToken = getCSRFToken();
+  const response = await fetchAPI<{ message: DirectChatMessage }>('/api/v1/chat/send', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken,
+    },
+    body: JSON.stringify({
+      receiver_id: receiverId,
+      content,
+    }),
+  });
+  return response.message;
+}
+
+/**
+ * Get group chat room history.
+ * GET /api/v1/groups/chat/messages/{groupId}
+ */
+export async function getGroupChatMessages(groupId: string, limit = 100, offset = 0): Promise<GroupChatMessage[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  const response = await fetchAPI<{ messages?: GroupChatMessage[] }>(`/api/v1/groups/chat/messages/${groupId}?${params.toString()}`, {
+    method: 'GET',
+  });
+  return Array.isArray(response?.messages) ? response.messages : [];
+}
+
+/**
+ * Send a message to a group chat room.
+ * POST /api/v1/groups/chat/send/{groupId}
+ */
+export async function sendGroupChatMessage(groupId: string, content: string): Promise<GroupChatMessage> {
+  const csrfToken = getCSRFToken();
+  const response = await fetchAPI<{ message: GroupChatMessage }>(`/api/v1/groups/chat/send/${groupId}`, {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken,
+    },
+    body: JSON.stringify({ content }),
+  });
+  return response.message;
 }
 
 /**

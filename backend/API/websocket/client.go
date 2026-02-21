@@ -52,6 +52,8 @@ type Client struct {
 const (
 	// Standard text/image chat message (new message).
 	MessageTypeChat = "chat"
+	// Group chat message.
+	MessageTypeGroupChat = "group_chat"
 	// Real-time notification when a user is typing.
 	MessageTypeTyping = "typing"
 	// User presence notification (online/offline status).
@@ -177,7 +179,7 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	// Create a periodic ticker for sending ping frames.
 	ticker := time.NewTicker(pingPeriod)
-	
+
 	// 1. Cleanup on exit (defer). Stop the ticker and close the connection.
 	defer func() {
 		ticker.Stop()
@@ -191,7 +193,7 @@ func (c *Client) writePump() {
 		case message, ok := <-c.Send:
 			// Set a deadline for the write operation (writeWait) to prevent indefinite blocking.
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			
+
 			if !ok {
 				// The Hub closed the Send channel, indicating the client is being unregistered.
 				// Send a normal close message to the peer and exit the pump.
@@ -224,7 +226,7 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			// Set a write deadline for the ping message.
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			
+
 			// Send a control frame (Ping). No payload is needed.
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return // Ping failed, connection likely dead, exit pump.
@@ -267,7 +269,7 @@ func (c *Client) handleTypingIndicator(msg WebSocketMessage) {
 	// 2. Augment data for security and consistency. Use the Client's authenticated details, not user-supplied ones.
 	// NOTE: The 'UserID' in typingData should logically be the *recipient* of the typing notification.
 	// Assuming `typingData.UserID` here refers to the *recipient* and we set the *sender* details.
-	typingData.UserID = c.UserID    // Set the actual sender's ID (the user doing the typing)
+	typingData.UserID = c.UserID // Set the actual sender's ID (the user doing the typing)
 	typingData.Username = c.Nickname
 
 	// 3. Re-wrap and serialize the clean message for broadcast.

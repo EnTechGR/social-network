@@ -21,7 +21,7 @@ import (
 	"social-network/websocket"
 )
 
-const maxUploadSize = 5 * 1024 * 1024 // 5MB limit
+const maxUploadSize = 5 * 1024 * 1024      // 5MB limit
 const uploadPath = "./uploads/chat_images" // Directory to store chat images
 
 // ChatImageHandler handles file upload and serving for chat images
@@ -100,6 +100,16 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	}
 	if receiverID == user.ID {
 		utils.ErrorResponse(w, "Cannot send message to yourself", http.StatusBadRequest)
+		return
+	}
+	canMessage, err := h.MessageRepo.CanUsersMessage(user.ID, receiverID)
+	if err != nil {
+		log.Printf("Failed to verify chat permission for image message: %v", err)
+		utils.ErrorResponse(w, "Failed to verify chat permissions", http.StatusInternalServerError)
+		return
+	}
+	if !canMessage {
+		utils.ErrorResponse(w, "You can only message users with an accepted follow relationship", http.StatusForbidden)
 		return
 	}
 	if len(caption) > 1000 {
@@ -251,13 +261,13 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 
 	// 8. Prepare final message model for response and WS broadcast
 	messageWithImage := models.MessageWithUser{
-		MessageID:  message.MessageID,
-		SenderID:   message.SenderID,
+		MessageID:      message.MessageID,
+		SenderID:       message.SenderID,
 		SenderNickname: user.Nickname,
-		ReceiverID: message.ReceiverID,
-		Content:    message.Content,
-		CreatedAt:  message.CreatedAt,
-		IsRead:     message.IsRead,
+		ReceiverID:     message.ReceiverID,
+		Content:        message.Content,
+		CreatedAt:      message.CreatedAt,
+		IsRead:         message.IsRead,
 		// Embed the complete image metadata for immediate client display
 		Image: image,
 	}
@@ -486,8 +496,8 @@ func (h *ChatImageHandler) GetUserImageStats(w http.ResponseWriter, r *http.Requ
 
 	// 3. Return the statistics in the response.
 	utils.JSONResponse(w, map[string]interface{}{
-		"image_count":      count,          // Total number of images (int)
-		"total_size_bytes": totalSize,      // Total size in bytes (int64)
+		"image_count":      count,     // Total number of images (int)
+		"total_size_bytes": totalSize, // Total size in bytes (int64)
 	}, http.StatusOK)
 }
 

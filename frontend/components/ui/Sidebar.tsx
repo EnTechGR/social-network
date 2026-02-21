@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SidebarToggle from './SidebarToggle';
-import Tabs from './Tabs';
+import ChatDrawer from './ChatDrawer';
 import {
   logout,
   getProfile,
@@ -501,52 +501,7 @@ export default function Sidebar() {
         `}
       >
           {(activeDrawer || lastDrawer) === 'chat' ? (
-            <>
-              {/* Tabs Section */}
-              <div className="flex pt-5 px-2 pb-3 justify-center items-center self-stretch">
-                <Tabs
-                  tabs={['DIRECT CHATS', 'GROUP CHATS']}
-                  defaultTab="DIRECT CHATS"
-                  className="w-full justify-center"
-                />
-              </div>
-
-              {/* Chat List */}
-              <div className="flex flex-1 pt-2 flex-col items-start gap-4 self-stretch overflow-y-auto px-4">
-                  {[
-                    { name: 'JENNIFER WHITE', count: 2, avatar: '/test-avatar.png' },
-                    { name: 'ALEX DONHAM', count: 1, avatar: '/test-avatar.png' },
-                    { name: 'KAREN HILLS', count: null, avatar: '/test-avatar.png' },
-                  ].map((profile, index) => (
-                    <div
-                      key={index}
-                      className="flex h-14 py-2 px-4 justify-between items-center self-stretch rounded-lg hover:bg-parea-grey/30 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0">
-                          <Image src={profile.avatar} alt={profile.name} fill className="object-cover" />
-                        </div>
-                        <span
-                          className="text-parea-black font-mono text-base font-medium leading-[150%] tracking-[-0.16px] uppercase"
-                          style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                        >
-                          {profile.name}
-                        </span>
-                      </div>
-                      {profile.count !== null && (
-                        <div className="flex px-2 justify-center items-center rounded-full bg-parea-yellow border border-parea-black">
-                          <span
-                            className="text-parea-black font-mono text-base font-medium leading-[150%] tracking-[-0.16px] uppercase"
-                            style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                          >
-                            {profile.count}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            </>
+            <ChatDrawer />
           ) : (
             <>
               {/* Notifications */}

@@ -271,6 +271,16 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 		SELECT u.user_id, u.nickname, u.email, u.first_name, u.last_name, u.date_of_birth, u.gender, u.created_at
 		FROM user u
 		WHERE u.user_id != ?
+		AND EXISTS (
+			SELECT 1
+			FROM follow_relationships fr
+			WHERE fr.status = 'accepted'
+			  AND (
+				(fr.follower_id = ? AND fr.followee_id = u.user_id)
+				OR
+				(fr.follower_id = u.user_id AND fr.followee_id = ?)
+			  )
+		)
 		AND u.user_id NOT IN (
 			SELECT DISTINCT 
 				CASE 
@@ -281,7 +291,7 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 			WHERE sender_id = ? OR receiver_id = ?
 		)
 		ORDER BY u.nickname ASC
-	`, userID, userID, userID, userID)
+	`, userID, userID, userID, userID, userID, userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users without conversation: %v", err)
@@ -328,8 +338,18 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 		SELECT user_id, nickname, email, first_name, last_name, date_of_birth, gender, created_at
 		FROM user
 		WHERE user_id != ?
+		AND EXISTS (
+			SELECT 1
+			FROM follow_relationships fr
+			WHERE fr.status = 'accepted'
+			  AND (
+				(fr.follower_id = ? AND fr.followee_id = user.user_id)
+				OR
+				(fr.follower_id = user.user_id AND fr.followee_id = ?)
+			  )
+		)
 		ORDER BY nickname ASC
-	`, currentUserID)
+	`, currentUserID, currentUserID, currentUserID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all users: %v", err)

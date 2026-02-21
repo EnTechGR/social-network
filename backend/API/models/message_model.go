@@ -75,7 +75,7 @@ type MessageWithUser struct {
 	// example: 2025-12-29T18:00:00Z
 	CreatedAt time.Time `json:"created_at"`
 	// example: true
-	IsRead bool `json:"is_read"`
+	IsRead bool       `json:"is_read"`
 	Image  *ChatImage `json:"image,omitempty"`
 }
 
@@ -138,4 +138,38 @@ type MessagesResponse struct {
 	// Total messages in this specific conversation
 	// example: 150
 	Total int `json:"total"`
+}
+
+// GroupMessage represents a message sent in a group chat room.
+// swagger:model GroupMessage
+type GroupMessage struct {
+	// example: 31b7d4e4-6ef9-42cc-b8af-9ad4a8ecf63f
+	MessageID string `json:"message_id"`
+	// example: e01a5a0b-668b-4ae8-95e3-8ca482d900f9
+	GroupID string `json:"group_id"`
+	// example: 0b1fb3bb-8db0-4f1d-9abf-b0e49d2f2e60
+	SenderID string `json:"sender_id"`
+	// example: green_fox
+	SenderNickname string `json:"sender_name"`
+	// example: hello team 👋
+	Content string `json:"content"`
+	// example: 2026-02-21T12:00:00Z
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// CreateGroupMessageRequest defines the body for sending a group chat message.
+// swagger:model CreateGroupMessageRequest
+type CreateGroupMessageRequest struct {
+	// Message content
+	// required: true
+	// example: Hi everyone!
+	Content string `json:"content" binding:"required"`
+}
+
+// GroupMessagesResponse is the envelope for group chat history.
+// swagger:model GroupMessagesResponse
+type GroupMessagesResponse struct {
+	Messages []GroupMessage `json:"messages"`
+	HasMore  bool           `json:"has_more"`
+	Total    int            `json:"total"`
 }

@@ -59,6 +59,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, hub)
 	messageHandler := handlers.NewMessageHandler(messageRepo, hub)     // ✅ Pass hub to handler
 	chatImageHandler := handlers.NewChatImageHandler(messageRepo, hub) // ✅ Chat image handler
+	groupChatHandler := handlers.NewGroupChatHandler(messageRepo, hub)
 	// Group handlers - UPDATED
 	groupHandler := handlers.NewGroupHandler(groupRepo, groupMemberRepo, groupInviteRepo)
 	groupMemberHandler := handlers.NewGroupMemberHandler(groupMemberRepo, groupRepo)
@@ -165,6 +166,10 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	apiMux.Handle("/api/v1/chat/images/serve/", protected(http.HandlerFunc(chatImageHandler.ServeChatImage)))
 	apiMux.Handle("/api/v1/chat/images/delete/", protected(http.HandlerFunc(chatImageHandler.DeleteChatImage)))
 	apiMux.Handle("/api/v1/chat/images/stats", protected(http.HandlerFunc(chatImageHandler.GetUserImageStats)))
+
+	// Protected group chat routes
+	apiMux.Handle("/api/v1/groups/chat/send/", protected(http.HandlerFunc(groupChatHandler.SendGroupMessage)))
+	apiMux.Handle("/api/v1/groups/chat/messages/", protected(http.HandlerFunc(groupChatHandler.GetGroupMessages)))
 
 	// Core group operations
 	apiMux.Handle("/api/v1/groups/create", protected(http.HandlerFunc(groupHandler.CreateGroup)))

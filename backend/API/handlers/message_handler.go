@@ -85,6 +85,18 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enforce social graph rule: users can only chat when at least one accepted follow exists.
+	canMessage, err := h.MessageRepo.CanUsersMessage(user.ID, req.ReceiverID)
+	if err != nil {
+		log.Printf("Failed to verify chat permission: %v", err)
+		utils.ErrorResponse(w, "Failed to verify chat permissions", http.StatusInternalServerError)
+		return
+	}
+	if !canMessage {
+		utils.ErrorResponse(w, "You can only message users with an accepted follow relationship", http.StatusForbidden)
+		return
+	}
+
 	// 1. Create message record in the database.
 	msg, err := h.MessageRepo.Create(user.ID, req.ReceiverID, req.Content)
 	if err != nil {
@@ -214,7 +226,7 @@ func (h *MessageHandler) GetConversation(w http.ResponseWriter, r *http.Request)
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200 
+// @Success      200
 // @Router       /api/v1/messages/conversations [get]
 func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -260,7 +272,7 @@ func (h *MessageHandler) GetConversations(w http.ResponseWriter, r *http.Request
 // @Tags         Messaging
 // @Security     CookieAuth
 // @Produce      json
-// @Success      200 
+// @Success      200
 // @Failure      401  {object}  models.ErrorResponse
 // @Router       /api/v1/messages/users [get]
 func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {

@@ -8,23 +8,35 @@ import (
 	"strings"
 
 	"social-network/middleware"
+	"social-network/repository"
 	"social-network/repository/group"
 	"social-network/utils"
+	"social-network/websocket"
 )
 
 // GroupInviteHandler handles group invitation requests
 type GroupInviteHandler struct {
-	InviteRepo *group.GroupInviteRepository
-	MemberRepo *group.GroupMemberRepository
-	GroupRepo  *group.GroupRepository
+	InviteRepo       *group.GroupInviteRepository
+	MemberRepo       *group.GroupMemberRepository
+	GroupRepo        *group.GroupRepository
+	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub
 }
 
 // NewGroupInviteHandler creates a new GroupInviteHandler
-func NewGroupInviteHandler(inviteRepo *group.GroupInviteRepository, memberRepo *group.GroupMemberRepository, groupRepo *group.GroupRepository) *GroupInviteHandler {
+func NewGroupInviteHandler(
+	inviteRepo *group.GroupInviteRepository,
+	memberRepo *group.GroupMemberRepository,
+	groupRepo *group.GroupRepository,
+	notificationRepo *repository.NotificationRepository,
+	hub *websocket.Hub,
+) *GroupInviteHandler {
 	return &GroupInviteHandler{
-		InviteRepo: inviteRepo,
-		MemberRepo: memberRepo,
-		GroupRepo:  groupRepo,
+		InviteRepo:       inviteRepo,
+		MemberRepo:       memberRepo,
+		GroupRepo:        groupRepo,
+		NotificationRepo: notificationRepo,
+		Hub:              hub,
 	}
 }
 
@@ -127,6 +139,8 @@ func (h *GroupInviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) 
 		utils.ErrorResponse(w, "Failed to send invitation", http.StatusInternalServerError)
 		return
 	}
+
+	createAndPushNotification(h.NotificationRepo, h.Hub, req.UserID, user.ID, user.Nickname, "group_invite")
 
 	utils.JSONResponse(w, invite, http.StatusCreated)
 }

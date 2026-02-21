@@ -63,9 +63,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Group handlers - UPDATED
 	groupHandler := handlers.NewGroupHandler(groupRepo, groupMemberRepo, groupInviteRepo)
 	groupMemberHandler := handlers.NewGroupMemberHandler(groupMemberRepo, groupRepo)
-	groupInviteHandler := handlers.NewGroupInviteHandler(groupInviteRepo, groupMemberRepo, groupRepo)
-	groupRequestHandler := handlers.NewGroupJoinRequestHandler(groupRequestRepo, groupMemberRepo, groupRepo)
-	groupEventHandler := handlers.NewGroupEventHandler(groupEventRepo, groupMemberRepo, groupRepo)
+	groupInviteHandler := handlers.NewGroupInviteHandler(groupInviteRepo, groupMemberRepo, groupRepo, notificationRepo, hub)
+	groupRequestHandler := handlers.NewGroupJoinRequestHandler(groupRequestRepo, groupMemberRepo, groupRepo, notificationRepo, hub)
+	groupEventHandler := handlers.NewGroupEventHandler(groupEventRepo, groupMemberRepo, groupRepo, notificationRepo, hub)
 
 	feedHandler := handlers.NewFeedHandler(feedRepo)
 	// Create middleware

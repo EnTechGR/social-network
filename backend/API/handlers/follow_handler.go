@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"social-network/middleware"
@@ -37,36 +36,7 @@ func NewFollowHandler(
 }
 
 func (h *FollowHandler) createAndPushFollowNotification(targetUserID, fromUserID, fromNickname, notificationType string) {
-	if h.NotificationRepo == nil {
-		return
-	}
-
-	n := models.Notification{
-		UserID:     targetUserID,
-		FromUserID: fromUserID,
-		Type:       notificationType,
-	}
-
-	if err := h.NotificationRepo.Create(&n); err != nil {
-		log.Printf("[FollowHandler] Failed to create %s notification for user %s: %v", notificationType, targetUserID, err)
-		return
-	}
-
-	if h.Hub == nil {
-		return
-	}
-
-	h.Hub.SendNotification(targetUserID, models.NotificationView{
-		ID:         n.ID,
-		FromUserID: fromUserID,
-		Nickname:   fromNickname,
-		Type:       notificationType,
-		PostID:     "",
-		CommentID:  nil,
-		CreatedAt:  n.CreatedAt,
-		Read:       false,
-		Visible:    true,
-	})
+	createAndPushNotification(h.NotificationRepo, h.Hub, targetUserID, fromUserID, fromNickname, notificationType)
 }
 
 // FollowPublicUser creates an accepted follow relationship when both users are public.

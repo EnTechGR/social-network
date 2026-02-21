@@ -9,8 +9,10 @@ import (
 
 	"social-network/middleware"
 	"social-network/models"
+	"social-network/repository"
 	"social-network/repository/group"
 	"social-network/utils"
+	"social-network/websocket"
 )
 
 // validChoices is the single source of truth for allowed RSVP values.
@@ -24,17 +26,27 @@ var validChoices = map[string]bool{
 
 // GroupEventHandler handles group event and RSVP operations
 type GroupEventHandler struct {
-	EventRepo  *group.GroupEventRepository
-	MemberRepo *group.GroupMemberRepository
-	GroupRepo  *group.GroupRepository
+	EventRepo        *group.GroupEventRepository
+	MemberRepo       *group.GroupMemberRepository
+	GroupRepo        *group.GroupRepository
+	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub
 }
 
 // NewGroupEventHandler creates a new GroupEventHandler
-func NewGroupEventHandler(eventRepo *group.GroupEventRepository, memberRepo *group.GroupMemberRepository, groupRepo *group.GroupRepository) *GroupEventHandler {
+func NewGroupEventHandler(
+	eventRepo *group.GroupEventRepository,
+	memberRepo *group.GroupMemberRepository,
+	groupRepo *group.GroupRepository,
+	notificationRepo *repository.NotificationRepository,
+	hub *websocket.Hub,
+) *GroupEventHandler {
 	return &GroupEventHandler{
-		EventRepo:  eventRepo,
-		MemberRepo: memberRepo,
-		GroupRepo:  groupRepo,
+		EventRepo:        eventRepo,
+		MemberRepo:       memberRepo,
+		GroupRepo:        groupRepo,
+		NotificationRepo: notificationRepo,
+		Hub:              hub,
 	}
 }
 
@@ -136,6 +148,19 @@ func (h *GroupEventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) 
 		log.Printf("Failed to create event: %v", err)
 		utils.ErrorResponse(w, "Failed to create event", http.StatusInternalServerError)
 		return
+	}
+
+	// Notify all other members that a new group event was created.
+	members, err := h.MemberRepo.GetGroupMembers(groupID)
+	if err != nil {
+		log.Printf("Failed to load group members for notifications: %v", err)
+	} else {
+		for _, member := range members {
+			if member.UserID == "" || member.UserID == user.ID {
+				continue
+			}
+			createAndPushNotification(h.NotificationRepo, h.Hub, member.UserID, user.ID, user.Nickname, "group_event")
+		}
 	}
 
 	// Return event with details

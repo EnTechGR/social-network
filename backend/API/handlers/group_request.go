@@ -7,23 +7,35 @@ import (
 	"strings"
 
 	"social-network/middleware"
+	"social-network/repository"
 	"social-network/repository/group"
 	"social-network/utils"
+	"social-network/websocket"
 )
 
 // GroupJoinRequestHandler handles group join request operations
 type GroupJoinRequestHandler struct {
-	RequestRepo *group.GroupJoinRequestRepository
-	MemberRepo  *group.GroupMemberRepository
-	GroupRepo   *group.GroupRepository
+	RequestRepo      *group.GroupJoinRequestRepository
+	MemberRepo       *group.GroupMemberRepository
+	GroupRepo        *group.GroupRepository
+	NotificationRepo *repository.NotificationRepository
+	Hub              *websocket.Hub
 }
 
 // NewGroupJoinRequestHandler creates a new GroupJoinRequestHandler
-func NewGroupJoinRequestHandler(requestRepo *group.GroupJoinRequestRepository, memberRepo *group.GroupMemberRepository, groupRepo *group.GroupRepository) *GroupJoinRequestHandler {
+func NewGroupJoinRequestHandler(
+	requestRepo *group.GroupJoinRequestRepository,
+	memberRepo *group.GroupMemberRepository,
+	groupRepo *group.GroupRepository,
+	notificationRepo *repository.NotificationRepository,
+	hub *websocket.Hub,
+) *GroupJoinRequestHandler {
 	return &GroupJoinRequestHandler{
-		RequestRepo: requestRepo,
-		MemberRepo:  memberRepo,
-		GroupRepo:   groupRepo,
+		RequestRepo:      requestRepo,
+		MemberRepo:       memberRepo,
+		GroupRepo:        groupRepo,
+		NotificationRepo: notificationRepo,
+		Hub:              hub,
 	}
 }
 
@@ -106,6 +118,8 @@ func (h *GroupJoinRequestHandler) RequestToJoin(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	createAndPushNotification(h.NotificationRepo, h.Hub, group.OwnerID, user.ID, user.Nickname, "group_join_request")
+
 	utils.JSONResponse(w, request, http.StatusCreated)
 }
 
@@ -131,7 +145,6 @@ func (h *GroupJoinRequestHandler) GetPendingRequests(w http.ResponseWriter, r *h
 		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 
 	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/requests/")
 	groupID = strings.TrimSpace(groupID)
@@ -252,6 +265,8 @@ func (h *GroupJoinRequestHandler) ApproveRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
+	createAndPushNotification(h.NotificationRepo, h.Hub, request.UserID, user.ID, user.Nickname, "group_join_decision")
+
 	utils.JSONResponse(w, map[string]string{
 		"message": "Request approved successfully",
 	}, http.StatusOK)
@@ -338,6 +353,8 @@ func (h *GroupJoinRequestHandler) DenyRequest(w http.ResponseWriter, r *http.Req
 		utils.ErrorResponse(w, "Failed to deny request", http.StatusInternalServerError)
 		return
 	}
+
+	createAndPushNotification(h.NotificationRepo, h.Hub, request.UserID, user.ID, user.Nickname, "group_join_decision")
 
 	utils.JSONResponse(w, map[string]string{
 		"message": "Request denied",

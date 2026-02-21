@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"social-network/models"
 	"social-network/utils"
@@ -31,7 +32,7 @@ func (r *MessageRepository) Create(senderID, receiverID, content string) (*model
 		return nil, fmt.Errorf("message content cannot be empty")
 	}
 	// Validate content length
-	if len(content) > 1000 {
+	if utf8.RuneCountInString(content) > 1000 {
 		return nil, fmt.Errorf("message content cannot exceed 1000 characters")
 	}
 	// Generate unique message ID and timestamp
@@ -98,14 +99,14 @@ func (r *MessageRepository) GetByID(messageID string) (*models.Message, error) {
 
 	// Retrieve associated chat images, if any
 	images, err := r.GetChatImagesByMessageID(messageID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to retrieve chat images for message %s: %w", messageID, err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve chat images for message %s: %w", messageID, err)
+	}
 
 	// Attach the first image found, if available
-    if len(images) > 0 {
-        msg.Image = images[0]
-    }
+	if len(images) > 0 {
+		msg.Image = images[0]
+	}
 
 	// Return the complete message object
 	return &msg, nil

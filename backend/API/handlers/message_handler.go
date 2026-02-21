@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"social-network/middleware"
 	"social-network/models"
@@ -74,7 +75,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate content length (data integrity and resource management).
-	if len(req.Content) > 1000 {
+	if utf8.RuneCountInString(req.Content) > 1000 {
 		utils.ErrorResponse(w, "Message content cannot exceed 1000 characters", http.StatusBadRequest)
 		return
 	}
@@ -105,7 +106,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Broadcast message via WebSocket to the receiver (Real-time update).
+	// 2. Broadcast message via WebSocket when realtime delivery rules are met.
 	if h.Hub != nil {
 		// Construct the enhanced model required for WebSocket transmission.
 		// This includes the sender's nickname for immediate display on the client side.
@@ -119,8 +120,19 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			IsRead:         msg.IsRead,
 			// Image field is zero-valued (nil) for standard text messages
 		}
-		// Send the structured message object to the recipient's connection pool.
-		h.Hub.SendChatMessage(req.ReceiverID, msgWithUser)
+
+		canDeliverRealtime, err := h.MessageRepo.CanDeliverMessageRealtime(user.ID, req.ReceiverID)
+		if err != nil {
+			log.Printf("Failed to verify realtime chat delivery: %v", err)
+			// Best effort fallback: keep sender's active sessions in sync.
+			h.Hub.SendChatMessageNotification(user.ID, msgWithUser)
+		} else if canDeliverRealtime {
+			// Send to both recipient and sender (for multi-device sender sync).
+			h.Hub.SendChatMessage(req.ReceiverID, msgWithUser)
+		} else {
+			// Receiver is not eligible for live delivery; still sync sender sessions.
+			h.Hub.SendChatMessageNotification(user.ID, msgWithUser)
+		}
 	}
 
 	// 3. Send HTTP success response back to the sender.

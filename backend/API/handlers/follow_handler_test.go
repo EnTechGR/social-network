@@ -62,7 +62,7 @@ func TestFollowPublicUser_PrivateTarget_CreatesAndPushesFollowRequestNotificatio
 		Send:     make(chan []byte, 1),
 		Hub:      hub,
 	}
-	hub.Clients[followeeID] = targetClient
+	hub.Clients[followeeID] = map[*websocket.Client]struct{}{targetClient: {}}
 
 	handler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
 
@@ -211,7 +211,7 @@ func TestAcceptFollowRequest_SendsFollowAcceptNotificationToFollower(t *testing.
 		Send:     make(chan []byte, 1),
 		Hub:      hub,
 	}
-	hub.Clients[followerID] = followerClient
+	hub.Clients[followerID] = map[*websocket.Client]struct{}{followerClient: {}}
 
 	handler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
 

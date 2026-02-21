@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"social-network/middleware"
 	"social-network/models"
@@ -112,7 +113,7 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		utils.ErrorResponse(w, "You can only message users with an accepted follow relationship", http.StatusForbidden)
 		return
 	}
-	if len(caption) > 1000 {
+	if utf8.RuneCountInString(caption) > 1000 {
 		utils.ErrorResponse(w, "Caption content cannot exceed 1000 characters", http.StatusBadRequest)
 		return
 	}
@@ -280,10 +281,20 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 		messageWithImage.Image.Width,
 		messageWithImage.Image.Height)
 
-	// 9. Broadcast message via WebSocket to the receiver
+	// 9. Broadcast message via WebSocket when realtime delivery rules are met.
 	if h.Hub != nil {
-		// Send the message object (which includes the image) over the wire.
-		h.Hub.SendChatMessage(receiverID, messageWithImage)
+		canDeliverRealtime, err := h.MessageRepo.CanDeliverMessageRealtime(user.ID, receiverID)
+		if err != nil {
+			log.Printf("Failed to verify realtime chat delivery for image message: %v", err)
+			// Best effort fallback: keep sender's active sessions in sync.
+			h.Hub.SendChatMessageNotification(user.ID, messageWithImage)
+		} else if canDeliverRealtime {
+			// Send to both recipient and sender (for multi-device sender sync).
+			h.Hub.SendChatMessage(receiverID, messageWithImage)
+		} else {
+			// Receiver is not eligible for live delivery; still sync sender sessions.
+			h.Hub.SendChatMessageNotification(user.ID, messageWithImage)
+		}
 	}
 
 	// 10. Send HTTP success response (for sender's immediate display)

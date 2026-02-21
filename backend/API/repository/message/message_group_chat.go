@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"social-network/models"
 	"social-network/utils"
@@ -27,6 +28,45 @@ func (r *MessageRepository) CanUsersMessage(userAID, userBID string) (bool, erro
 	if err != nil {
 		return false, fmt.Errorf("failed to validate chat permission: %w", err)
 	}
+	return count > 0, nil
+}
+
+// CanDeliverMessageRealtime returns true when the receiver can get live websocket
+// delivery for a direct message from senderID.
+//
+// Rule:
+//   - receiver has a public profile, OR
+//   - receiver follows sender with an accepted follow relationship.
+func (r *MessageRepository) CanDeliverMessageRealtime(senderID, receiverID string) (bool, error) {
+	var receiverIsPrivate bool
+	err := r.DB.QueryRow(`
+		SELECT is_private
+		FROM user
+		WHERE user_id = ?
+	`, receiverID).Scan(&receiverIsPrivate)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("receiver not found")
+		}
+		return false, fmt.Errorf("failed to load receiver privacy: %w", err)
+	}
+
+	if !receiverIsPrivate {
+		return true, nil
+	}
+
+	var count int
+	err = r.DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM follow_relationships
+		WHERE status = 'accepted'
+		  AND follower_id = ?
+		  AND followee_id = ?
+	`, receiverID, senderID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to validate realtime chat delivery: %w", err)
+	}
+
 	return count > 0, nil
 }
 
@@ -77,7 +117,7 @@ func (r *MessageRepository) CreateGroupMessage(groupID, senderID, content string
 	if content == "" {
 		return nil, fmt.Errorf("message content cannot be empty")
 	}
-	if len(content) > 1000 {
+	if utf8.RuneCountInString(content) > 1000 {
 		return nil, fmt.Errorf("message content cannot exceed 1000 characters")
 	}
 

@@ -3,6 +3,7 @@ package message
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"social-network/models"
@@ -162,6 +163,11 @@ func (r *MessageRepository) GetChatImagesByMessageID(messageID string) ([]*model
 
 	rows, err := r.DB.Query(query, messageID)
 	if err != nil {
+		// Some migrated databases no longer include the legacy chat_images table.
+		// In that case, direct messages should still load, just without image metadata.
+		if isMissingChatImagesTableError(err) {
+			return []*models.ChatImage{}, nil
+		}
 		return nil, fmt.Errorf("failed to query chat images: %w", err)
 	}
 	defer rows.Close()
@@ -194,6 +200,14 @@ func (r *MessageRepository) GetChatImagesByMessageID(messageID string) ([]*model
 	}
 
 	return images, nil
+}
+
+func isMissingChatImagesTableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "no such table") && strings.Contains(msg, "chat_images")
 }
 
 // GetChatImagesByUserID retrieves paginated list of all image metadata records uploaded by a specific user.
@@ -501,7 +515,7 @@ func (r *MessageRepository) CanAccessImage(imageID, userID string) (bool, error)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// This case is unlikely for EXISTS, but handled defensively
-			return false, nil 
+			return false, nil
 		}
 		return false, fmt.Errorf("failed to verify image access: %w", err)
 	}

@@ -13,8 +13,8 @@ import (
 // It acts as the central router for all WebSocket traffic.
 type Hub struct {
 	// Registered clients mapped by user ID.
-	// This map stores the active WebSocket connection for each authenticated user.
-	Clients map[string]*Client // Key: UserID (string), Value: The active Client connection struct
+	// A user can have multiple active WebSocket connections (e.g. sidebar + chat drawer + another tab).
+	Clients map[string]map[*Client]struct{} // Key: UserID, Value: set of active client connections
 
 	// Mutex to protect the Clients map from concurrent read/write access.
 	// RWMutex allows multiple readers simultaneously but requires exclusive lock for writing (register/unregister).
@@ -39,7 +39,7 @@ type Hub struct {
 // - Register and Unregister channels are unbuffered, ensuring synchronous communication for client lifecycle management.
 func NewHub() *Hub {
 	return &Hub{
-		Clients: make(map[string]*Client),
+		Clients: make(map[string]map[*Client]struct{}),
 		// Use a moderately sized buffer for the broadcast channel (256) to handle bursts of messages.
 		Broadcast:  make(chan []byte, 256),
 		Register:   make(chan *Client),
@@ -50,35 +50,28 @@ func NewHub() *Hub {
 // BroadcastToUser sends a raw message payload to a single, specific user's active connection.
 // This function is thread-safe as it uses a Read Lock (RLock) to access the Clients map.
 func (h *Hub) BroadcastToUser(userID string, message []byte) {
-	// Acquire a Read Lock to safely read the 'Clients' map.
 	h.mu.RLock()
-	// Ensure the Read Lock is released when the function exits, regardless of the path.
-	defer h.mu.RUnlock()
-
-	// 1. Attempt to retrieve the client connection for the target user ID.
-	client, exists := h.Clients[userID]
-	if !exists {
-		// User is not currently connected via WebSocket; silently drop the message.
+	clientSet, exists := h.Clients[userID]
+	if !exists || len(clientSet) == 0 {
+		h.mu.RUnlock()
 		return
 	}
 
-	// 2. Non-blocking send attempt to the client's outgoing 'Send' channel.
-	select {
-	case client.Send <- message:
-		// Message sent successfully to the client's outgoing buffer.
-	default:
-		// The client's 'Send' channel buffer is full. This indicates the client is
-		// reading too slowly or is unresponsive, suggesting a dead connection.
-		log.Printf("Client buffer full for user %s. Attempting graceful shutdown.", userID)
+	clients := make([]*Client, 0, len(clientSet))
+	for client := range clientSet {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
 
-		// NOTE ON RACE CONDITION: Sending to the Unregister channel from within a
-		// Broadcast function (which holds an RLock) is safe, but the actual removal
-		// of the client from the map must happen in the Hub's main Run loop, which
-		// holds the Write Lock (Lock). This pattern avoids deadlocks.
-
-		// Unregistering here is a standard way to handle a slow client,
-		// relying on the Hub's main loop to clean up the client connection.
-		h.Unregister <- client
+	for _, client := range clients {
+		select {
+		case client.Send <- message:
+			// Message sent successfully to the client's outgoing buffer.
+		default:
+			// Slow or dead connection. Unregister this specific client connection.
+			log.Printf("Client buffer full for user %s. Attempting graceful shutdown.", userID)
+			h.Unregister <- client
+		}
 	}
 }
 
@@ -110,28 +103,32 @@ func (h *Hub) Run() {
 // It handles authentication, concurrent connection management (replacing old sessions),
 // and broadcasts presence status updates.
 func (h *Hub) registerClient(client *Client) {
-	// 1. Acquire Write Lock. All modifications to the Clients map must be protected.
 	h.mu.Lock()
 
-	// 2. Handle concurrent connections: If the user already has a connection, close the old one.
-	if existingClient, exists := h.Clients[client.UserID]; exists {
-		// Closing the Send channel signals the old client's read/write loops to terminate.
-		close(existingClient.Send)
-		log.Printf("Replacing existing connection for user %s", client.UserID)
+	clientSet, exists := h.Clients[client.UserID]
+	if !exists {
+		clientSet = make(map[*Client]struct{})
+		h.Clients[client.UserID] = clientSet
 	}
 
-	// 3. Register the new client connection.
-	h.Clients[client.UserID] = client
-	log.Printf("User %s connected. Total clients: %d", client.UserID, len(h.Clients))
+	wasOffline := len(clientSet) == 0
+	clientSet[client] = struct{}{}
+	userCount := len(h.Clients)
+	connectionCount := 0
+	for _, connections := range h.Clients {
+		connectionCount += len(connections)
+	}
 
-	// 4. Release Write Lock. Crucial to allow other goroutines (like BroadcastToUser) to proceed.
 	h.mu.Unlock()
 
-	// 5. Broadcast status updates (performed outside the lock).
-	// Notify all other connected clients that this user is now online.
-	h.broadcastOnlineStatus(client.UserID, client.Nickname, true)
+	log.Printf("User %s connected. Online users: %d, connections: %d", client.UserID, userCount, connectionCount)
 
-	// Send list of online users to the newly connected client for initial state synchronization.
+	// Only broadcast online status for the first active connection for that user.
+	if wasOffline {
+		h.broadcastOnlineStatus(client.UserID, client.Nickname, true)
+	}
+
+	// Send list of online users to this newly connected client.
 	h.sendOnlineUsersList(client)
 }
 
@@ -139,32 +136,41 @@ func (h *Hub) registerClient(client *Client) {
 //
 // This operation is critical for maintaining accurate user presence and preventing resource leaks.
 func (h *Hub) unregisterClient(client *Client) {
-	// 1. Acquire Write Lock. Modification of the Clients map must be protected.
 	h.mu.Lock()
 
-	// 2. Safely remove the client.
-	// Only proceed if the client exists AND the client being unregistered is the currently active connection
-	// for that UserID. This prevents removing a newer connection if the unregister request is from an old one.
-	if activeClient, exists := h.Clients[client.UserID]; exists && activeClient == client {
-		// Remove the client from the map.
+	clientSet, exists := h.Clients[client.UserID]
+	if !exists {
+		h.mu.Unlock()
+		return
+	}
+
+	if _, registered := clientSet[client]; !registered {
+		h.mu.Unlock()
+		return
+	}
+
+	delete(clientSet, client)
+	close(client.Send)
+
+	becameOffline := false
+	if len(clientSet) == 0 {
 		delete(h.Clients, client.UserID)
+		becameOffline = true
+	}
 
-		// Close the client's outgoing Send channel. This signals the client's goroutines
-		// (writer loop) to terminate cleanly, releasing the associated WebSocket connection.
-		close(client.Send)
+	userCount := len(h.Clients)
+	connectionCount := 0
+	for _, connections := range h.Clients {
+		connectionCount += len(connections)
+	}
 
-		log.Printf("User %s disconnected. Total clients: %d", client.UserID, len(h.Clients))
+	h.mu.Unlock()
 
-		// 3. Release Write Lock. Crucial to allow other goroutines to proceed.
-		h.mu.Unlock()
+	log.Printf("User %s disconnected. Online users: %d, connections: %d", client.UserID, userCount, connectionCount)
 
-		// 4. Broadcast status update (performed outside the lock).
-		// Notify all remaining connected clients that this user is now offline.
+	// Only broadcast offline when the last active connection for that user closed.
+	if becameOffline {
 		h.broadcastOnlineStatus(client.UserID, client.Nickname, false)
-	} else {
-		// The client was already replaced by a newer connection or never fully registered.
-		// Simply unlock and do nothing.
-		h.mu.Unlock()
 	}
 }
 
@@ -173,22 +179,20 @@ func (h *Hub) unregisterClient(client *Client) {
 // This is typically used for general, non-targeted messages (e.g., global announcements)
 // or for real-time presence updates (handled by auxiliary functions).
 func (h *Hub) broadcastMessage(message []byte) {
-	// Acquire a Read Lock to safely iterate over the Clients map.
 	h.mu.RLock()
-	// Ensure the Read Lock is released when the function completes.
-	defer h.mu.RUnlock()
+	clients := make([]*Client, 0)
+	for _, clientSet := range h.Clients {
+		for client := range clientSet {
+			clients = append(clients, client)
+		}
+	}
+	h.mu.RUnlock()
 
-	// Iterate through all currently connected clients.
-	for _, client := range h.Clients {
-		// Use a non-blocking select statement to send the message.
+	for _, client := range clients {
 		select {
 		case client.Send <- message:
 			// Message successfully buffered for the client's writer goroutine.
 		default:
-			// The client's Send channel is full. Instead of blocking the Hub's main
-			// broadcast loop (which would stop all traffic), we skip this client.
-			// The client's own read loop should eventually detect the problem and
-			// trigger an unregister request if the connection is dead.
 			log.Printf("Skipping message for user %s (buffer full)", client.UserID)
 		}
 	}
@@ -314,21 +318,24 @@ func (h *Hub) broadcastOnlineStatus(userID, username string, isOnline bool) {
 		return
 	}
 
-	// 3. Broadcast the status update (thread-safe iteration).
 	h.mu.RLock()
-	defer h.mu.RUnlock() // Release Read Lock when iteration is complete
+	receivers := make([]*Client, 0)
+	for clientID, clientSet := range h.Clients {
+		if clientID == userID {
+			continue
+		}
+		for client := range clientSet {
+			receivers = append(receivers, client)
+		}
+	}
+	h.mu.RUnlock()
 
-	// Iterate through all connected clients.
-	for clientID, client := range h.Clients {
-		// IMPORTANT: Do not send the status update to the user whose status just changed.
-		if clientID != userID {
-			select {
-			case client.Send <- message:
-				// Message successfully queued.
-			default:
-				// Skip client if buffer is full to prevent blocking the status broadcast loop.
-				log.Printf("Skipping online status for user %s (buffer full)", clientID)
-			}
+	for _, receiver := range receivers {
+		select {
+		case receiver.Send <- message:
+			// Message successfully queued.
+		default:
+			log.Printf("Skipping online status for user %s (buffer full)", receiver.UserID)
 		}
 	}
 }
@@ -338,25 +345,26 @@ func (h *Hub) broadcastOnlineStatus(userID, username string, isOnline bool) {
 //
 // This is essential for initial state synchronization.
 func (h *Hub) sendOnlineUsersList(client *Client) {
-	// 1. Acquire Read Lock to safely access the Clients map for iteration.
 	h.mu.RLock()
-
-	// Pre-allocate slice capacity for efficiency.
 	onlineUsers := make([]OnlineStatusData, 0, len(h.Clients))
-
-	// Build the list of currently active users.
-	for userID, c := range h.Clients {
-		// Exclude the client receiving the list.
-		if userID != client.UserID {
-			onlineUsers = append(onlineUsers, OnlineStatusData{
-				UserID:   c.UserID,
-				Username: c.Nickname,
-				IsOnline: true, // They are currently online
-			})
+	for userID, connections := range h.Clients {
+		// Exclude the user receiving the list.
+		if userID == client.UserID || len(connections) == 0 {
+			continue
 		}
-	}
 
-	// 2. Release the lock immediately after reading is complete.
+		var nickname string
+		for c := range connections {
+			nickname = c.Nickname
+			break
+		}
+
+		onlineUsers = append(onlineUsers, OnlineStatusData{
+			UserID:   userID,
+			Username: nickname,
+			IsOnline: true,
+		})
+	}
 	h.mu.RUnlock()
 
 	// 3. Prepare and serialize the list message.

@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProfileWrap from '@/components/ui/ProfileWrap';
@@ -16,7 +16,22 @@ import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import CreateGroupModal from '@/components/ui/CreateGroupModal';
-import { getProfile, updatePrivacy, uploadAvatar, getAvatarUrl, getPostsByUserId, getMyGroups } from '@/lib/api';
+import {
+  getProfile,
+  updatePrivacy,
+  uploadAvatar,
+  getAvatarUrl,
+  getPostsByUserId,
+  getMyGroups,
+  getUserProfile,
+  getFollowRequests,
+  acceptFollowRequest,
+  declineFollowRequest,
+  removeFollower,
+  unfollowUser,
+  getForumUsers,
+  type FollowRelationship,
+} from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
 // When false, API failures show error or redirect to login instead of mock data
@@ -37,6 +52,14 @@ const mockUser = {
 
 type ProfileUser = typeof mockUser;
 
+type RelationUser = {
+  user_id: string;
+  nickname?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+};
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<ProfileUser | null>(null);
@@ -53,6 +76,82 @@ export default function ProfilePage() {
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [followers, setFollowers] = useState<RelationUser[]>([]);
+  const [following, setFollowing] = useState<RelationUser[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<FollowRelationship[]>([]);
+  const [followDataLoading, setFollowDataLoading] = useState(false);
+  const [followDataError, setFollowDataError] = useState<string | null>(null);
+  const [followActionUserId, setFollowActionUserId] = useState<string | null>(null);
+  const [showFollowersList, setShowFollowersList] = useState(false);
+  const [showFollowingList, setShowFollowingList] = useState(false);
+  const [directoryById, setDirectoryById] = useState<Record<string, RelationUser>>({});
+
+  const formatRelationName = (entry: RelationUser | undefined): string => {
+    if (!entry) return 'Unknown user';
+    const fullName = [entry.first_name, entry.last_name].filter(Boolean).join(' ').trim();
+    return fullName || entry.nickname || entry.email || entry.user_id;
+  };
+
+  const getUserLabel = (userId: string): string => {
+    const fromDirectory = directoryById[userId];
+    if (fromDirectory) return formatRelationName(fromDirectory);
+
+    const fromFollowers = followers.find((item) => item.user_id === userId);
+    if (fromFollowers) return formatRelationName(fromFollowers);
+
+    const fromFollowing = following.find((item) => item.user_id === userId);
+    if (fromFollowing) return formatRelationName(fromFollowing);
+
+    return userId;
+  };
+
+  const refreshFollowData = useCallback(async (userId: string) => {
+    setFollowDataLoading(true);
+    setFollowDataError(null);
+
+    try {
+      const [profileView, requests, users] = await Promise.all([
+        getUserProfile(userId),
+        getFollowRequests(),
+        getForumUsers(),
+      ]);
+
+      if (!profileView.privateProfile) {
+        const followerList = Array.isArray(profileView.followers) ? profileView.followers as RelationUser[] : [];
+        const followingList = Array.isArray(profileView.following) ? profileView.following as RelationUser[] : [];
+
+        setFollowers(followerList);
+        setFollowing(followingList);
+
+        setUser((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            followersCount: profileView.counts.followers,
+            followingCount: profileView.counts.following,
+          };
+        });
+      }
+
+      setPendingRequests(Array.isArray(requests.pending) ? requests.pending : []);
+
+      const byId = (users || []).reduce<Record<string, RelationUser>>((acc, item) => {
+        acc[item.id] = {
+          user_id: item.id,
+          nickname: item.nickname,
+          first_name: item.first_name,
+          last_name: item.last_name,
+          email: item.email,
+        };
+        return acc;
+      }, {});
+      setDirectoryById(byId);
+    } catch (err: any) {
+      setFollowDataError(err?.message ?? 'Failed to load follower data');
+    } finally {
+      setFollowDataLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -104,6 +203,11 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [router]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    void refreshFollowData(currentUserId);
+  }, [currentUserId, refreshFollowData]);
 
   useEffect(() => {
     if (activeTab !== 'Groups') return;
@@ -171,14 +275,71 @@ export default function ProfilePage() {
     }
   };
 
+  const reloadFollowData = async () => {
+    if (!currentUserId) return;
+    await refreshFollowData(currentUserId);
+  };
+
+  const handleAcceptRequest = async (followerId: string) => {
+    setFollowActionUserId(followerId);
+    setFollowDataError(null);
+    try {
+      await acceptFollowRequest(followerId);
+      await reloadFollowData();
+    } catch (err: any) {
+      setFollowDataError(err?.message ?? 'Failed to accept follow request');
+    } finally {
+      setFollowActionUserId(null);
+    }
+  };
+
+  const handleDeclineRequest = async (followerId: string) => {
+    setFollowActionUserId(followerId);
+    setFollowDataError(null);
+    try {
+      await declineFollowRequest(followerId);
+      await reloadFollowData();
+    } catch (err: any) {
+      setFollowDataError(err?.message ?? 'Failed to decline follow request');
+    } finally {
+      setFollowActionUserId(null);
+    }
+  };
+
+  const handleRemoveFollower = async (followerId: string) => {
+    setFollowActionUserId(followerId);
+    setFollowDataError(null);
+    try {
+      await removeFollower(followerId);
+      await reloadFollowData();
+    } catch (err: any) {
+      setFollowDataError(err?.message ?? 'Failed to remove follower');
+    } finally {
+      setFollowActionUserId(null);
+    }
+  };
+
+  const handleUnfollow = async (followeeId: string) => {
+    setFollowActionUserId(followeeId);
+    setFollowDataError(null);
+    try {
+      await unfollowUser(followeeId);
+      await reloadFollowData();
+    } catch (err: any) {
+      setFollowDataError(err?.message ?? 'Failed to unfollow user');
+    } finally {
+      setFollowActionUserId(null);
+    }
+  };
+
   const handleFollowersClick = () => {
-    // TODO: Open followers modal/page
-    console.log('Show followers list');
+    setShowFollowersList((prev) => !prev);
+    setShowFollowingList(false);
   };
 
   const handleFollowingClick = () => {
-    // TODO: Open following modal/page
-    console.log('Show following list');
+    setShowFollowingList((prev) => !prev);
+    setShowFollowersList(false);
   };
 
   const handleAvatarUpload = async (file: File) => {
@@ -215,6 +376,93 @@ export default function ProfilePage() {
             onFollowingClick={handleFollowingClick}
             onAvatarUpload={handleAvatarUpload}
           />
+        )}
+
+        {followDataError && (
+          <p className="mt-4 text-regular text-parea-black">{followDataError}</p>
+        )}
+
+        <section className="mt-6 rounded border border-parea-black bg-parea-white p-4">
+          <h2 className="text-small font-medium uppercase text-parea-black">Pending Follow Requests</h2>
+          {followDataLoading ? (
+            <p className="mt-3 text-regular text-parea-black">Loading follow requests...</p>
+          ) : pendingRequests.length === 0 ? (
+            <p className="mt-3 text-regular text-parea-black">No pending follow requests.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-3">
+              {pendingRequests.map((request) => (
+                <li key={`${request.follower_id}:${request.followee_id}`} className="flex flex-wrap items-center gap-2">
+                  <span className="text-regular text-parea-black">{getUserLabel(request.follower_id)}</span>
+                  <button
+                    type="button"
+                    onClick={() => { void handleAcceptRequest(request.follower_id); }}
+                    disabled={followActionUserId === request.follower_id}
+                    className="rounded border border-parea-black bg-parea-yellow px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { void handleDeclineRequest(request.follower_id); }}
+                    disabled={followActionUserId === request.follower_id}
+                    className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Decline
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {showFollowersList && (
+          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
+            <h2 className="text-small font-medium uppercase text-parea-black">Followers ({followers.length})</h2>
+            {followers.length === 0 ? (
+              <p className="mt-3 text-regular text-parea-black">No followers yet.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-3">
+                {followers.map((entry) => (
+                  <li key={entry.user_id} className="flex flex-wrap items-center gap-2">
+                    <span className="text-regular text-parea-black">{formatRelationName(entry)}</span>
+                    <button
+                      type="button"
+                      onClick={() => { void handleRemoveFollower(entry.user_id); }}
+                      disabled={followActionUserId === entry.user_id}
+                      className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {showFollowingList && (
+          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
+            <h2 className="text-small font-medium uppercase text-parea-black">Following ({following.length})</h2>
+            {following.length === 0 ? (
+              <p className="mt-3 text-regular text-parea-black">You are not following anyone yet.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-3">
+                {following.map((entry) => (
+                  <li key={entry.user_id} className="flex flex-wrap items-center gap-2">
+                    <span className="text-regular text-parea-black">{formatRelationName(entry)}</span>
+                    <button
+                      type="button"
+                      onClick={() => { void handleUnfollow(entry.user_id); }}
+                      disabled={followActionUserId === entry.user_id}
+                      className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Unfollow
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
 
         {/* Placeholder for tabs and content below */}

@@ -44,7 +44,7 @@ func (r *NotificationRepository) Create(n *models.Notification) error {
 // notification (from_user_id).
 func (r *NotificationRepository) GetByUser(userID string) ([]models.NotificationView, error) {
 	rows, err := r.db.Query(`
-                SELECT n.notification_id, COALESCE(u.nickname, ''), n.type, COALESCE(n.post_id, ''), n.comment_id, n.created_at, n.is_read, n.is_visible
+                SELECT n.notification_id, COALESCE(n.from_user_id, ''), COALESCE(u.nickname, ''), n.type, COALESCE(n.post_id, ''), n.comment_id, n.created_at, n.is_read, n.is_visible
                 FROM notifications n
                 LEFT JOIN user u ON n.from_user_id = u.user_id
                 WHERE n.user_id = ? AND n.is_visible = 1
@@ -57,7 +57,7 @@ func (r *NotificationRepository) GetByUser(userID string) ([]models.Notification
 	var notifs []models.NotificationView
 	for rows.Next() {
 		var n models.NotificationView
-		if err := rows.Scan(&n.ID, &n.Nickname, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read, &n.Visible); err != nil {
+		if err := rows.Scan(&n.ID, &n.FromUserID, &n.Nickname, &n.Type, &n.PostID, &n.CommentID, &n.CreatedAt, &n.Read, &n.Visible); err != nil {
 			return nil, err
 		}
 		notifs = append(notifs, n)

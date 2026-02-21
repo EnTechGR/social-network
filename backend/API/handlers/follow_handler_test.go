@@ -135,6 +135,60 @@ func TestFollowPublicUser_PrivateTarget_CreatesAndPushesFollowRequestNotificatio
 	}
 }
 
+func TestFollowPublicUser_PublicTarget_CreatesAcceptedRelationship(t *testing.T) {
+	testDB := SetupTestDB(t)
+	defer testDB.TeardownTestDB()
+
+	followerID := createFollowTestUser(t, testDB, "follower_public_case", false)
+	followeeID := createFollowTestUser(t, testDB, "public_target_case", false)
+
+	followRepo := repository.NewFollowRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
+	notificationRepo := repository.NewNotificationRepository(testDB.DB)
+	hub := websocket.NewHub()
+
+	handler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
+
+	body := `{"followee_id":"` + followeeID + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/follow", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = withAuthUser(req, followerID, "follower_public_case")
+
+	w := httptest.NewRecorder()
+	handler.FollowPublicUser(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d (body: %s)", http.StatusCreated, w.Code, w.Body.String())
+	}
+
+	var relationship models.FollowRelationship
+	if err := json.NewDecoder(strings.NewReader(w.Body.String())).Decode(&relationship); err != nil {
+		t.Fatalf("failed to decode follow response: %v", err)
+	}
+	if relationship.Status != "accepted" {
+		t.Fatalf("expected follow status accepted, got %s", relationship.Status)
+	}
+	if relationship.FollowerID != followerID {
+		t.Fatalf("expected follower_id %s, got %s", followerID, relationship.FollowerID)
+	}
+	if relationship.FolloweeID != followeeID {
+		t.Fatalf("expected followee_id %s, got %s", followeeID, relationship.FolloweeID)
+	}
+
+	var status string
+	err := testDB.DB.QueryRow(`
+		SELECT status
+		FROM follow_relationships
+		WHERE follower_id = ? AND followee_id = ?
+	`, followerID, followeeID).Scan(&status)
+	if err != nil {
+		t.Fatalf("failed to query follow relationship: %v", err)
+	}
+	if status != "accepted" {
+		t.Fatalf("expected persisted status accepted, got %s", status)
+	}
+}
+
 func TestAcceptFollowRequest_SendsFollowAcceptNotificationToFollower(t *testing.T) {
 	testDB := SetupTestDB(t)
 	defer testDB.TeardownTestDB()
@@ -212,5 +266,89 @@ func TestAcceptFollowRequest_SendsFollowAcceptNotificationToFollower(t *testing.
 		}
 	default:
 		t.Fatal("expected websocket follow_accept notification to be sent to follower")
+	}
+}
+
+func TestUnfollow_RemovesAcceptedRelationship(t *testing.T) {
+	testDB := SetupTestDB(t)
+	defer testDB.TeardownTestDB()
+
+	followerID := createFollowTestUser(t, testDB, "unfollow_follower_case", false)
+	followeeID := createFollowTestUser(t, testDB, "unfollow_followee_case", false)
+
+	followRepo := repository.NewFollowRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
+	notificationRepo := repository.NewNotificationRepository(testDB.DB)
+	hub := websocket.NewHub()
+
+	if _, err := followRepo.CreateAcceptedFollow(followerID, followeeID); err != nil {
+		t.Fatalf("failed to seed accepted follow relationship: %v", err)
+	}
+
+	handler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/follower/delete/"+followeeID, nil)
+	req = withAuthUser(req, followerID, "unfollow_follower_case")
+
+	w := httptest.NewRecorder()
+	handler.Unfollow(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d (body: %s)", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var remaining int
+	err := testDB.DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM follow_relationships
+		WHERE follower_id = ? AND followee_id = ?
+	`, followerID, followeeID).Scan(&remaining)
+	if err != nil {
+		t.Fatalf("failed to count remaining relationships: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected relationship to be deleted, found %d rows", remaining)
+	}
+}
+
+func TestRemoveFollower_DeclinesPendingFollowRequest(t *testing.T) {
+	testDB := SetupTestDB(t)
+	defer testDB.TeardownTestDB()
+
+	followerID := createFollowTestUser(t, testDB, "pending_request_sender_case", false)
+	followeeID := createFollowTestUser(t, testDB, "pending_request_receiver_case", true)
+
+	followRepo := repository.NewFollowRepository(testDB.DB)
+	userRepo := user_repository.NewUserRepository(testDB.DB)
+	notificationRepo := repository.NewNotificationRepository(testDB.DB)
+	hub := websocket.NewHub()
+
+	if _, err := followRepo.CreateFollowRequest(followerID, followeeID); err != nil {
+		t.Fatalf("failed to seed pending follow request: %v", err)
+	}
+
+	handler := handlers.NewFollowHandler(followRepo, userRepo, notificationRepo, hub)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/followee/delete/"+followerID, nil)
+	req = withAuthUser(req, followeeID, "pending_request_receiver_case")
+
+	w := httptest.NewRecorder()
+	handler.RemoveFollower(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d (body: %s)", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var remaining int
+	err := testDB.DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM follow_relationships
+		WHERE follower_id = ? AND followee_id = ?
+	`, followerID, followeeID).Scan(&remaining)
+	if err != nil {
+		t.Fatalf("failed to count remaining relationships: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected pending request to be removed, found %d rows", remaining)
 	}
 }

@@ -11,6 +11,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export interface NotificationItem {
   id: string;
+  from_user_id?: string;
   nickname: string;
   type: string;
   post_id?: string;
@@ -34,6 +35,19 @@ export interface ForumUser {
   date_of_birth: string;
   gender: string;
   is_online: boolean;
+}
+
+export interface FollowRelationship {
+  follower_id: string;
+  followee_id: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface FollowRequestsResponse {
+  pending: FollowRelationship[];
+  accepted: FollowRelationship[];
 }
 
 /**
@@ -81,6 +95,11 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     // Re-throw other errors
     throw error;
   }
+}
+
+function getCSRFToken(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('csrf_token') || '';
 }
 
 /**
@@ -231,12 +250,10 @@ export async function getNotifications(): Promise<NotificationsResponse> {
  * DELETE /api/v1/notifications/delete/{id}
  */
 export async function hideNotification(notificationId: string): Promise<{ status: string }> {
-  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
-
   return fetchAPI<{ status: string }>(`/api/v1/notifications/delete/${notificationId}`, {
     method: 'DELETE',
     headers: {
-      'X-CSRF-Token': csrfToken || '',
+      'X-CSRF-Token': getCSRFToken(),
     },
   });
 }
@@ -252,8 +269,6 @@ export async function followUser(followeeId: string): Promise<{
   created_at: string;
   updated_at?: string;
 }> {
-  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
-
   return fetchAPI<{
     follower_id: string;
     followee_id: string;
@@ -263,10 +278,84 @@ export async function followUser(followeeId: string): Promise<{
   }>('/api/v1/follow', {
     method: 'POST',
     headers: {
-      'X-CSRF-Token': csrfToken || '',
+      'X-CSRF-Token': getCSRFToken(),
     },
     body: JSON.stringify({ followee_id: followeeId }),
   });
+}
+
+/**
+ * Get follow requests for the current user.
+ * GET /api/v1/follow/requests
+ */
+export async function getFollowRequests(): Promise<FollowRequestsResponse> {
+  const response = await fetchAPI<Partial<FollowRequestsResponse>>('/api/v1/follow/requests', {
+    method: 'GET',
+  });
+
+  return {
+    pending: response.pending ?? [],
+    accepted: response.accepted ?? [],
+  };
+}
+
+/**
+ * Get pending follow requests for the current user.
+ * GET /api/v1/follow/requests/pending
+ */
+export async function getPendingFollowRequests(): Promise<FollowRelationship[]> {
+  const response = await fetchAPI<{ pending?: FollowRelationship[] }>('/api/v1/follow/requests/pending', {
+    method: 'GET',
+  });
+
+  return response.pending ?? [];
+}
+
+/**
+ * Accept an incoming follow request.
+ * PUT /api/v1/follow/accept/{followerId}
+ */
+export async function acceptFollowRequest(followerId: string): Promise<{ status: string }> {
+  return fetchAPI<{ status: string }>(`/api/v1/follow/accept/${followerId}`, {
+    method: 'PUT',
+    headers: {
+      'X-CSRF-Token': getCSRFToken(),
+    },
+  });
+}
+
+/**
+ * Unfollow a user.
+ * DELETE /api/v1/follower/delete/{followeeId}
+ */
+export async function unfollowUser(followeeId: string): Promise<{ status: string }> {
+  return fetchAPI<{ status: string }>(`/api/v1/follower/delete/${followeeId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-Token': getCSRFToken(),
+    },
+  });
+}
+
+/**
+ * Remove a follower from your profile.
+ * DELETE /api/v1/followee/delete/{followerId}
+ */
+export async function removeFollower(followerId: string): Promise<{ status: string }> {
+  return fetchAPI<{ status: string }>(`/api/v1/followee/delete/${followerId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-Token': getCSRFToken(),
+    },
+  });
+}
+
+/**
+ * Decline an incoming follow request.
+ * Alias for removeFollower when request status is pending.
+ */
+export async function declineFollowRequest(followerId: string): Promise<{ status: string }> {
+  return removeFollower(followerId);
 }
 
 /**

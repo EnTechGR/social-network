@@ -14,6 +14,8 @@ import {
   getAvatarUrl,
   getNotifications,
   hideNotification,
+  acceptFollowRequest,
+  declineFollowRequest,
   type NotificationItem,
 } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
@@ -92,6 +94,8 @@ export default function Sidebar() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [followRequestActionId, setFollowRequestActionId] = useState<string | null>(null);
+  const [followRequestActionError, setFollowRequestActionError] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -262,6 +266,36 @@ export default function Sidebar() {
     } catch (error) {
       console.error('Failed to delete notification:', error);
       void loadNotifications();
+    }
+  };
+
+  const handleFollowRequestAction = async (
+    notification: NotificationItem,
+    action: 'accept' | 'decline',
+  ) => {
+    const followerId = notification.from_user_id;
+    if (!followerId) {
+      setFollowRequestActionError('Cannot process this follow request right now.');
+      return;
+    }
+
+    setFollowRequestActionId(notification.id);
+    setFollowRequestActionError(null);
+
+    try {
+      if (action === 'accept') {
+        await acceptFollowRequest(followerId);
+      } else {
+        await declineFollowRequest(followerId);
+      }
+
+      await hideNotification(notification.id);
+      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+    } catch (error) {
+      console.error(`Failed to ${action} follow request:`, error);
+      setFollowRequestActionError(`Failed to ${action} follow request`);
+    } finally {
+      setFollowRequestActionId(null);
     }
   };
 
@@ -489,6 +523,16 @@ export default function Sidebar() {
                 </div>
 
                 <div className="flex flex-1 px-4 flex-col items-start gap-2 self-stretch overflow-y-auto">
+                  {followRequestActionError && (
+                    <div className="flex py-2 px-4 items-center self-stretch">
+                      <span
+                        className="text-parea-black text-sm font-medium leading-[150%]"
+                        style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                      >
+                        {followRequestActionError}
+                      </span>
+                    </div>
+                  )}
                   {isLoadingNotifications ? (
                     <div className="flex py-4 px-4 items-center self-stretch">
                       <span
@@ -531,6 +575,28 @@ export default function Sidebar() {
                             {formatNotificationText(notification)}
                           </span>
                         </div>
+                        {notification.type === 'follow_request' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                void handleFollowRequestAction(notification, 'accept');
+                              }}
+                              disabled={followRequestActionId === notification.id}
+                              className="rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => {
+                                void handleFollowRequestAction(notification, 'decline');
+                              }}
+                              disabled={followRequestActionId === notification.id}
+                              className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        )}
                         <button
                           onClick={() => {
                             void handleDeleteNotification(notification.id);

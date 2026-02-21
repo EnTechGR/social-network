@@ -14,7 +14,7 @@ type Notification struct {
 	// The ID of the user who triggered the notification
 	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
 	FromUserID string `json:"from_user_id"`
-	// The type of activity. 
+	// The type of activity.
 	// Enum: like, dislike, comment, edit_comment, delete_comment
 	// example: comment
 	Type string `json:"type"`
@@ -41,6 +41,9 @@ type NotificationView struct {
 	// The unique identifier for the notification (UUID)
 	// example: e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6
 	ID string `json:"id"`
+	// The ID of the user who triggered the notification
+	// example: f2g3h4i5-j6k7-l8m9-n0o1-p2q3r4s5t6u7
+	FromUserID string `json:"from_user_id,omitempty"`
 	// The nickname of the user who triggered the notification
 	// example: johndoe_99
 	Nickname string `json:"nickname"`

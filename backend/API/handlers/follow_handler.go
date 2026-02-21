@@ -57,14 +57,15 @@ func (h *FollowHandler) createAndPushFollowNotification(targetUserID, fromUserID
 	}
 
 	h.Hub.SendNotification(targetUserID, models.NotificationView{
-		ID:        n.ID,
-		Nickname:  fromNickname,
-		Type:      notificationType,
-		PostID:    "",
-		CommentID: nil,
-		CreatedAt: n.CreatedAt,
-		Read:      false,
-		Visible:   true,
+		ID:         n.ID,
+		FromUserID: fromUserID,
+		Nickname:   fromNickname,
+		Type:       notificationType,
+		PostID:     "",
+		CommentID:  nil,
+		CreatedAt:  n.CreatedAt,
+		Read:       false,
+		Visible:    true,
 	})
 }
 

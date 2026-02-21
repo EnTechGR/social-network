@@ -164,39 +164,53 @@ func (r *FeedRepository) GetPostByID(postID, viewerID string) (*models.FeedPost,
 		      ON  ic_av.image_id   = ua.image_id
 		      AND ic_av.deleted_at IS NULL
 		WHERE p.post_id = ?
-		AND   p.group_id IS NULL
-		AND   (
-		          p.user_id = ?
-		      OR  p.visibility = 'public'
-		      OR  (
-		              p.visibility = 'followers'
-		          AND EXISTS (
-		                  SELECT 1
-		                  FROM   follow_relationships fr
-		                  WHERE  fr.follower_id = ?
-		                  AND    fr.followee_id = p.user_id
-		                  AND    fr.status      = 'accepted'
+		AND (
+		      (
+		          p.group_id IS NULL
+		          AND (
+		                  p.user_id = ?
+		              OR  p.visibility = 'public'
+		              OR  (
+		                      p.visibility = 'followers'
+		                  AND EXISTS (
+		                          SELECT 1
+		                          FROM   follow_relationships fr
+		                          WHERE  fr.follower_id = ?
+		                          AND    fr.followee_id = p.user_id
+		                          AND    fr.status      = 'accepted'
+		                      )
+		                  )
+		              OR  (
+		                      p.visibility = 'private'
+		                  AND EXISTS (
+		                          SELECT 1
+		                          FROM   post_allowed_users pau
+		                          WHERE  pau.post_id = p.post_id
+		                          AND    pau.user_id = ?
+		                      )
+		                  )
 		              )
-		          )
-		      OR  (
-		              p.visibility = 'private'
+		      )
+		      OR (
+		          p.group_id IS NOT NULL
 		          AND EXISTS (
-		                  SELECT 1
-		                  FROM   post_allowed_users pau
-		                  WHERE  pau.post_id = p.post_id
-		                  AND    pau.user_id = ?
-		              )
+		              SELECT 1
+		              FROM group_members gm
+		              WHERE gm.group_id = p.group_id
+		                AND gm.user_id = ?
 		          )
 		      )
+		)
 	`
 
 	// Bind order:
 	//   1  viewer_reaction subquery  → viewerID
 	//   2  post identity             → postID
-	//   3  rule 1 (own posts)        → viewerID
-	//   4  rule 3 (followers)        → viewerID
-	//   5  rule 4 (private allowed)  → viewerID
-	row := r.db.QueryRow(query, viewerID, postID, viewerID, viewerID, viewerID)
+	//   3  non-group rule 1 (own posts)       → viewerID
+	//   4  non-group rule 3 (followers)       → viewerID
+	//   5  non-group rule 4 (private allowed) → viewerID
+	//   6  group-post visibility (membership) → viewerID
+	row := r.db.QueryRow(query, viewerID, postID, viewerID, viewerID, viewerID, viewerID)
 
 	post, err := scanFeedPostRow(row)
 	if err == sql.ErrNoRows {

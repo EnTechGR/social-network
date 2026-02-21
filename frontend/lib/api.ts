@@ -71,19 +71,43 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     });
 
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json().catch(() => ({
-        code: response.status,
-        error: response.statusText,
-        message: response.statusText,
-      }));
-      throw new Error(errorData.message || errorData.error || `API Error: ${response.statusText}`);
+      const location = (response.headers.get('location') || '').toLowerCase();
+      if (
+        response.status === 401 ||
+        response.status === 403 ||
+        response.status === 303 ||
+        location.includes('/login')
+      ) {
+        throw new Error('Authentication required');
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const errorData: ApiErrorResponse = await response.json().catch(() => ({
+          code: response.status,
+          error: response.statusText,
+          message: response.statusText,
+        }));
+        throw new Error(errorData.message || errorData.error || `API Error: ${response.statusText}`);
+      }
+
+      const fallbackText = (await response.text().catch(() => '')).trim();
+      throw new Error(fallbackText || response.statusText || `API Error: ${response.status}`);
     }
 
     // Handle empty responses (e.g., 204 No Content or empty body)
     const contentType = response.headers.get('content-type');
     const contentLength = response.headers.get('content-length');
     
-    if (contentLength === '0' || !contentType?.includes('application/json')) {
+    if (contentLength === '0') {
+      return undefined as T;
+    }
+
+    // Some unauthenticated flows may redirect to /login and return HTML.
+    if (!contentType?.includes('application/json')) {
+      if (response.redirected && response.url.toLowerCase().includes('/login')) {
+        throw new Error('Authentication required');
+      }
       return undefined as T;
     }
 
@@ -682,5 +706,50 @@ export async function declineGroupInvite(inviteId: string): Promise<any> {
   return fetchAPI<any>(`/api/v1/groups/invites/decline/${inviteId}`, {
     method: 'PUT',
     headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function requestToJoinGroup(groupId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/request/${groupId}`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function getPendingGroupRequests(groupId: string): Promise<any[]> {
+  const res = await fetchAPI<any>(`/api/v1/groups/requests/${groupId}`, { method: 'GET' });
+  return Array.isArray(res?.requests) ? res.requests : [];
+}
+
+export async function approveGroupRequest(requestId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/requests/approve/${requestId}`, {
+    method: 'PUT',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function denyGroupRequest(requestId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/requests/deny/${requestId}`, {
+    method: 'PUT',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function getEventById(eventId: string): Promise<any> {
+  return fetchAPI<any>(`/api/v1/events/${eventId}`, { method: 'GET' });
+}
+
+export async function voteOnEvent(eventId: string, choice: 'going' | 'not going' | 'maybe'): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/events/vote/${eventId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: JSON.stringify({ choice }),
   });
 }

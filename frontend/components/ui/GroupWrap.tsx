@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from './Button';
 import Avatar from './Avatar';
 
@@ -102,6 +102,10 @@ export default function GroupWrap({
 }: GroupWrapProps) {
   // Local state for pending join request
   const [isPending, setIsPending] = useState(initialPending);
+
+  useEffect(() => {
+    setIsPending(initialPending);
+  }, [initialPending]);
 
   const handleJoinClick = () => {
     setIsPending(true);

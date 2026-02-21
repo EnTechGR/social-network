@@ -17,6 +17,10 @@ import {
   getProfile,
   getUserProfile,
   inviteToGroup,
+  requestToJoinGroup,
+  getPendingGroupRequests,
+  approveGroupRequest,
+  denyGroupRequest,
 } from '@/lib/api';
 
 function formatDate(iso: string): string {
@@ -33,9 +37,13 @@ export default function GroupDetailPage() {
   const params = useParams();
   const groupId = typeof params?.id === 'string' ? params.id : '';
   const [group, setGroup] = useState<any | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isMember, setIsMember] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('Posts');
@@ -46,6 +54,9 @@ export default function GroupDetailPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [followers, setFollowers] = useState<FollowerUser[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinPending, setJoinPending] = useState(false);
+  const [requestActionId, setRequestActionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) {
@@ -56,10 +67,12 @@ export default function GroupDetailPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getGroupById(groupId)
-      .then((g) => {
+    Promise.all([getGroupById(groupId), getProfile()])
+      .then(([g, profile]) => {
         if (cancelled) return;
         setGroup(g);
+        setCurrentUserId(profile?.id ?? null);
+        setIsOwner(Boolean(g?.owner_id && profile?.id && g.owner_id === profile.id));
       })
       .catch((err: any) => {
         if (cancelled) return;
@@ -76,14 +89,39 @@ export default function GroupDetailPage() {
     if (!groupId || !group) return;
     let cancelled = false;
     getGroupMembers(groupId)
-      .then(() => {
-        if (!cancelled) setIsMember(true);
+      .then((list) => {
+        if (cancelled) return;
+        setIsMember(true);
+        setMembers(Array.isArray(list) ? list : []);
       })
       .catch(() => {
-        if (!cancelled) setIsMember(false);
+        if (cancelled) return;
+        setIsMember(false);
+        setMembers([]);
       });
     return () => { cancelled = true; };
   }, [groupId, group]);
+
+  useEffect(() => {
+    if (!group) return;
+    setIsOwner(Boolean(group.owner_id && currentUserId && group.owner_id === currentUserId));
+  }, [group, currentUserId]);
+
+  useEffect(() => {
+    if (!groupId || !isOwner) {
+      setPendingRequests([]);
+      return;
+    }
+    let cancelled = false;
+    getPendingGroupRequests(groupId)
+      .then((requests) => {
+        if (!cancelled) setPendingRequests(Array.isArray(requests) ? requests : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPendingRequests([]);
+      });
+    return () => { cancelled = true; };
+  }, [groupId, isOwner]);
 
   useEffect(() => {
     if (!groupId || !isMember) return;
@@ -120,9 +158,7 @@ export default function GroupDetailPage() {
   }, [groupId, isMember]);
 
   const handleLeaveGroup = () => {
-    setIsMember(false);
-    setPosts([]);
-    setEvents([]);
+    alert('Leaving groups is not available in this build yet.');
   };
 
   const handleMembersClick = () => {
@@ -131,12 +167,18 @@ export default function GroupDetailPage() {
 
   const handleInvite = async () => {
     try {
-      const profile = await getProfile();
-      if (!profile?.id) return;
-      const userProfile = await getUserProfile(profile.id);
-      if (userProfile.privateProfile) return;
+      const profileId = currentUserId ?? (await getProfile())?.id;
+      if (!profileId) return;
+      const userProfile = await getUserProfile(profileId);
+      if (userProfile.privateProfile) {
+        setFollowers([]);
+        setShowInviteModal(true);
+        return;
+      }
+      const memberIds = new Set((members ?? []).map((m: any) => m.user_id));
       const followersList = Array.isArray(userProfile.followers) ? userProfile.followers as FollowerUser[] : [];
-      setFollowers(followersList);
+      const inviteCandidates = followersList.filter((f) => f.user_id && !memberIds.has(f.user_id));
+      setFollowers(inviteCandidates);
       setShowInviteModal(true);
     } catch (err) {
       console.error('Failed to load followers:', err);
@@ -159,7 +201,42 @@ export default function GroupDetailPage() {
   };
 
   const handleJoin = () => {
-    // TODO: request to join
+    if (!groupId || joinLoading || joinPending) return;
+    setJoinLoading(true);
+    requestToJoinGroup(groupId)
+      .then(() => {
+        setJoinPending(true);
+      })
+      .catch((err: any) => {
+        const message = err?.message ?? '';
+        if (message.toLowerCase().includes('already') && message.toLowerCase().includes('pending')) {
+          setJoinPending(true);
+          return;
+        }
+        alert(message || 'Failed to send join request');
+      })
+      .finally(() => setJoinLoading(false));
+  };
+
+  const handleRequestAction = async (requestId: string, action: 'approve' | 'deny') => {
+    setRequestActionId(requestId);
+    try {
+      if (action === 'approve') {
+        await approveGroupRequest(requestId);
+        setGroup((prev: any) => {
+          if (!prev) return prev;
+          const nextCount = typeof prev.member_count === 'number' ? prev.member_count + 1 : prev.member_count;
+          return { ...prev, member_count: nextCount };
+        });
+      } else {
+        await denyGroupRequest(requestId);
+      }
+      setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch (err: any) {
+      alert(err?.message ?? `Failed to ${action} request`);
+    } finally {
+      setRequestActionId(null);
+    }
   };
 
   if (loading) {
@@ -196,11 +273,59 @@ export default function GroupDetailPage() {
         <GroupWrap
           group={groupWrapData}
           isMember={isMember}
+          isPending={joinPending}
           onJoin={handleJoin}
           onInvite={handleInvite}
           onLeaveGroup={handleLeaveGroup}
           onMembersClick={handleMembersClick}
         />
+
+        {!isMember && (
+          <div className="rounded border border-parea-black bg-parea-white p-4">
+            <p className="text-regular text-parea-black">
+              {joinPending
+                ? 'Join request sent. Wait for the group owner to approve it.'
+                : joinLoading
+                  ? 'Sending join request...'
+                  : 'You are not a member yet. Send a join request to access posts and events.'}
+            </p>
+          </div>
+        )}
+
+        {isOwner && (
+          <section className="rounded border border-parea-black bg-parea-white p-4">
+            <h3 className="text-small font-medium uppercase text-parea-black">Pending Join Requests</h3>
+            {pendingRequests.length === 0 ? (
+              <p className="mt-3 text-regular text-parea-black">No pending requests.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-3">
+                {pendingRequests.map((request) => (
+                  <li key={request.id} className="flex flex-wrap items-center gap-2">
+                    <span className="text-regular text-parea-black">
+                      {request.user_nickname || request.first_name || request.user_id}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { void handleRequestAction(request.id, 'approve'); }}
+                      disabled={requestActionId === request.id}
+                      className="rounded border border-parea-black bg-parea-yellow px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { void handleRequestAction(request.id, 'deny'); }}
+                      disabled={requestActionId === request.id}
+                      className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Decline
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         <div>
           <Tabs
@@ -278,6 +403,7 @@ export default function GroupDetailPage() {
                         userDate={formatDate(ev.event_time ?? ev.created_at)}
                         title={ev.title}
                         content={ev.description}
+                        href={`/event/${ev.id ?? ev.event_id}`}
                         imagePriority={false}
                       />
                     ))}

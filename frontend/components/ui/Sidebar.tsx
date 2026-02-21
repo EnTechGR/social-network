@@ -117,8 +117,14 @@ export default function Sidebar() {
       const data = await getNotifications();
       setNotifications(data.notifications ?? []);
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-      setNotificationsError('Failed to load notifications');
+      const message = error instanceof Error ? error.message : '';
+      if (message === 'Authentication required') {
+        setNotifications([]);
+        setNotificationsError(null);
+      } else {
+        console.error('Failed to fetch notifications:', error);
+        setNotificationsError('Failed to load notifications');
+      }
     } finally {
       setIsLoadingNotifications(false);
     }
@@ -130,7 +136,11 @@ export default function Sidebar() {
       const invites = await getMyGroupInvites();
       setGroupInvites(invites ?? []);
     } catch (error) {
-      console.error('Failed to fetch group invites:', error);
+      const message = error instanceof Error ? error.message : '';
+      if (message !== 'Authentication required') {
+        console.error('Failed to fetch group invites:', error);
+      }
+      setGroupInvites([]);
     } finally {
       setIsLoadingGroupInvites(false);
     }

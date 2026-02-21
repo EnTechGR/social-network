@@ -32,14 +32,17 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
+    if (!eventTime) {
+      setError('Event day/time is required.');
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
     try {
-      const timeValue = eventTime || new Date().toISOString();
       await createGroupEvent(groupId, {
         title: title.trim(),
         description: description.trim(),
-        event_time: new Date(timeValue).toISOString(),
+        event_time: new Date(eventTime).toISOString(),
       });
       handleClose();
       onSuccess?.();
@@ -100,6 +103,14 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
               onChange={(e) => setEventTime(e.target.value)}
               className="w-full p-3 bg-parea-white border border-parea-black focus:outline-none"
             />
+          </div>
+          <div className="mb-6">
+            <label className="label block mb-2">RSVP OPTIONS</label>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded border border-parea-black bg-parea-yellow px-3 py-1 text-small font-medium uppercase text-parea-black">Going</span>
+              <span className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black">Not going</span>
+              <span className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black">Maybe</span>
+            </div>
           </div>
           {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
           <div className="flex justify-end">

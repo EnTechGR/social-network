@@ -5,7 +5,7 @@ import { MapPin, Calendar, Clock } from 'lucide-react';
 import Button from './Button';
 import DropdownButton from './DropdownButton';
 
-export type RsvpOption = 'RSVP' | 'GOING' | "CAN'T GO";
+export type RsvpOption = 'RSVP' | 'GOING' | 'NOT GOING' | 'MAYBE';
 
 export interface EventInfoBarProps {
   location?: string;
@@ -20,7 +20,7 @@ export interface EventInfoBarProps {
 
 const labelClass = 'label text-foreground';
 
-const RSVP_OPTIONS: RsvpOption[] = ['RSVP', 'GOING', "CAN'T GO"];
+const RSVP_OPTIONS: RsvpOption[] = ['RSVP', 'GOING', 'NOT GOING', 'MAYBE'];
 
 export function EventInfoBar({
   location,

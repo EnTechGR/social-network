@@ -344,20 +344,40 @@ export default function GroupDetailPage() {
   const handleInvite = async () => {
     try {
       const profileId = currentUserId ?? (await getProfile())?.id;
-      if (!profileId) return;
+      if (!profileId) {
+        alert('Unable to get your profile. Please try logging in again.');
+        return;
+      }
+      
       const userProfile = await getUserProfile(profileId);
+      
       if (userProfile.privateProfile) {
+        alert('Unable to load followers from a private profile.');
         setFollowers([]);
         setShowInviteModal(true);
         return;
       }
+      
       const memberIds = new Set((members ?? []).map((m: any) => m.user_id));
       const followersList = Array.isArray(userProfile.followers) ? userProfile.followers as FollowerUser[] : [];
+      
+      if (followersList.length === 0) {
+        alert('You don\'t have any followers yet. Only your followers can be invited to this group.');
+        return;
+      }
+      
       const inviteCandidates = followersList.filter((f) => f.user_id && !memberIds.has(f.user_id));
+      
+      if (inviteCandidates.length === 0) {
+        alert('All of your followers are already members of this group.');
+        return;
+      }
+      
       setFollowers(inviteCandidates);
       setShowInviteModal(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load followers:', err);
+      alert(err?.message || 'Failed to load followers. Please try again.');
     }
   };
 

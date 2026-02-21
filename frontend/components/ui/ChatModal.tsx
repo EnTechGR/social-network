@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import IconButton from './IconButtons';
 import Image from 'next/image';
+import { getConversation, sendMessage, type ChatMessage } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -17,37 +18,55 @@ interface ChatModalProps {
   preview?: boolean;
   /** Display name of the other user */
   userName: string;
+  /** User ID of the other user */
+  userId: string;
   /** Avatar URL of the other user */
   userAvatar?: string;
   /** Avatar URL of the current user */
   selfAvatar?: string;
-  /** Initial messages for demo/preview */
-  initialMessages?: Message[];
 }
-
-const mockMessages: Message[] = [
-  { id: '1', text: 'Hey there!', sender: 'other', avatarUrl: '/test-avatar.png' },
-  {
-    id: '2',
-    text: 'Wanted to thank you for help yesterday! You are so kind and I thought I should reach you out to tell how I am appreciated.',
-    sender: 'other',
-    avatarUrl: '/test-avatar.png',
-  },
-  { id: '3', text: 'Ohh come on! Anyone would the same!', sender: 'self', avatarUrl: '/test-avatar.png' },
-];
 
 export default function ChatModal({
   isOpen,
   onClose,
   preview = false,
   userName,
+  userId,
   userAvatar = '/test-avatar.png',
   selfAvatar = '/test-avatar.png',
-  initialMessages = mockMessages,
 }: ChatModalProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+
+  // Load messages when modal opens or userId changes
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+
+    const loadMessages = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getConversation(userId, 50, 0);
+        const formattedMessages: Message[] = data.messages.map((msg: ChatMessage) => ({
+          id: msg.message_id,
+          text: msg.content,
+          sender: msg.sender_id === userId ? 'other' : 'self',
+          avatarUrl: msg.sender_id === userId ? userAvatar : selfAvatar,
+        })).reverse(); // Reverse to show oldest first
+        
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [isOpen, userId, userAvatar, selfAvatar]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,18 +74,44 @@ export default function ChatModal({
 
   if (!isOpen && !preview) return null;
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: inputValue.trim(),
-        sender: 'self',
-        avatarUrl: selfAvatar,
-      },
-    ]);
+  const handleSend = async () => {
+    const trimmedValue = inputValue.trim();
+    if (!trimmedValue || isSending) return;
+
+    setIsSending(true);
+    const tempId = Date.now().toString();
+    
+    // Optimistically add message to UI
+    const optimisticMessage: Message = {
+      id: tempId,
+      text: trimmedValue,
+      sender: 'self',
+      avatarUrl: selfAvatar,
+    };
+    
+    setMessages((prev) => [...prev, optimisticMessage]);
     setInputValue('');
+
+    try {
+      const response = await sendMessage(userId, trimmedValue);
+      
+      // Replace temp message with real message from backend
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === tempId 
+            ? { ...msg, id: response.message.message_id } 
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Remove failed message
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+      // Restore input value
+      setInputValue(trimmedValue);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

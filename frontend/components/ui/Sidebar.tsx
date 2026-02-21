@@ -15,8 +15,12 @@ import {
   getNotifications,
   hideNotification,
   type NotificationItem,
+  getConversations,
+  type Conversation,
+  type ChatMessage,
 } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
+import ChatModal from './ChatModal';
 
 type DrawerType = 'chat' | 'notifications' | null;
 type WebSocketEnvelope = {
@@ -92,6 +96,10 @@ export default function Sidebar() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [activeChatUser, setActiveChatUser] = useState<{ id: string; name: string; avatar?: string } | null>(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,6 +122,18 @@ export default function Sidebar() {
     }
   }, []);
 
+  const loadConversations = useCallback(async () => {
+    setIsLoadingConversations(true);
+    try {
+      const data = await getConversations();
+      setConversations(data.conversations ?? []);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, []);
+
   useEffect(() => {
     getProfile()
       .then((p) => {
@@ -126,6 +146,10 @@ export default function Sidebar() {
   useEffect(() => {
     void loadNotifications();
   }, [loadNotifications]);
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
 
   useEffect(() => {
     let isUnmounted = false;
@@ -153,10 +177,21 @@ export default function Sidebar() {
       for (const payload of payloads) {
         try {
           const parsed = JSON.parse(payload) as WebSocketEnvelope;
-          if (parsed.type !== 'notification' || !parsed.data) {
-            continue;
+          
+          // Handle notifications
+          if (parsed.type === 'notification' && parsed.data) {
+            pushNotification(parsed.data as NotificationItem);
           }
-          pushNotification(parsed.data as NotificationItem);
+          
+          // Handle incoming chat messages
+          if (parsed.type === 'message' && parsed.data) {
+            const message = parsed.data as ChatMessage;
+            // Reload conversations to update last message and unread count
+            void loadConversations();
+            
+            // If chat modal is open with this user, could trigger message update
+            // TODO: Add message to active conversation in ChatModal
+          }
         } catch (error) {
           console.error('Failed to parse websocket message:', error);
         }
@@ -220,7 +255,7 @@ export default function Sidebar() {
         wsRef.current = null;
       }
     };
-  }, []);
+  }, [loadConversations]);
 
   const handleToggle = () => {
     if (activeDrawer) {
@@ -263,6 +298,18 @@ export default function Sidebar() {
       console.error('Failed to delete notification:', error);
       void loadNotifications();
     }
+  };
+
+  const handleOpenChat = (userId: string, userName: string, userAvatar?: string) => {
+    setActiveChatUser({ id: userId, name: userName, avatar: userAvatar });
+    setIsChatModalOpen(true);
+  };
+
+  const handleCloseChatModal = () => {
+    setIsChatModalOpen(false);
+    setActiveChatUser(null);
+    // Refresh conversations when closing chat (in case messages were sent/read)
+    void loadConversations();
   };
 
   const handleDeleteAllNotifications = async () => {
@@ -429,38 +476,62 @@ export default function Sidebar() {
 
               {/* Chat List */}
               <div className="flex flex-1 pt-2 flex-col items-start gap-4 self-stretch overflow-y-auto px-4">
-                  {[
-                    { name: 'JENNIFER WHITE', count: 2, avatar: '/test-avatar.png' },
-                    { name: 'ALEX DONHAM', count: 1, avatar: '/test-avatar.png' },
-                    { name: 'KAREN HILLS', count: null, avatar: '/test-avatar.png' },
-                  ].map((profile, index) => (
-                    <div
-                      key={index}
-                      className="flex h-14 py-2 px-4 justify-between items-center self-stretch rounded-lg hover:bg-parea-grey/30 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0">
-                          <Image src={profile.avatar} alt={profile.name} fill className="object-cover" />
-                        </div>
+                {isLoadingConversations && (
+                  <div className="w-full text-center py-8 text-parea-black/60 font-mono text-sm">
+                    Loading conversations...
+                  </div>
+                )}
+                {!isLoadingConversations && conversations.length === 0 && (
+                  <div className="w-full text-center py-8 text-parea-black/60 font-mono text-sm">
+                    No conversations yet
+                  </div>
+                )}
+                {!isLoadingConversations && conversations.map((conversation) => (
+                  <div
+                    key={conversation.user_id}
+                    onClick={() => handleOpenChat(conversation.user_id, conversation.nickname)}
+                    className="flex h-14 py-2 px-4 justify-between items-center self-stretch rounded-lg hover:bg-parea-grey/30 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0 bg-parea-grey">
+                        <Image 
+                          src={DEFAULT_AVATAR} 
+                          alt={conversation.nickname} 
+                          fill 
+                          className="object-cover" 
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
                         <span
-                          className="text-parea-black font-mono text-base font-medium leading-[150%] tracking-[-0.16px] uppercase"
+                          className="text-parea-black font-mono text-base font-medium leading-[150%] tracking-[-0.16px] uppercase truncate"
                           style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
                         >
-                          {profile.name}
+                          {conversation.nickname}
                         </span>
+                        {conversation.last_message && (
+                          <span className="text-parea-black/60 font-sans text-xs truncate">
+                            {conversation.last_message}
+                          </span>
+                        )}
                       </div>
-                      {profile.count !== null && (
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {conversation.is_online && (
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      )}
+                      {conversation.unread_count > 0 && (
                         <div className="flex px-2 justify-center items-center rounded-full bg-parea-yellow border border-parea-black">
                           <span
                             className="text-parea-black font-mono text-base font-medium leading-[150%] tracking-[-0.16px] uppercase"
                             style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
                           >
-                            {profile.count}
+                            {conversation.unread_count}
                           </span>
                         </div>
                       )}
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </>
           ) : (
@@ -556,6 +627,18 @@ export default function Sidebar() {
             </div>
           )}
         </aside>
+
+      {/* Chat Modal */}
+      {activeChatUser && (
+        <ChatModal
+          isOpen={isChatModalOpen}
+          onClose={handleCloseChatModal}
+          userName={activeChatUser.name}
+          userAvatar={activeChatUser.avatar || DEFAULT_AVATAR}
+          selfAvatar={avatarUrl}
+          userId={activeChatUser.id}
+        />
+      )}
     </div>
   );
 }

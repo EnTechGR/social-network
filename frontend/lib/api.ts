@@ -541,3 +541,108 @@ export async function createGroupEvent(groupId: string, data: { title: string; d
     body: JSON.stringify(data),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Chat/Messaging APIs
+// ---------------------------------------------------------------------------
+
+export interface ChatMessage {
+  message_id: string;
+  sender_id: string;
+  sender_name: string;
+  receiver_id: string;
+  receiver_name?: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+  image?: {
+    image_id: string;
+    url: string;
+    thumbnail_url: string;
+  };
+}
+
+export interface Conversation {
+  user_id: string;
+  nickname: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+  is_online: boolean;
+}
+
+/**
+ * Send a message to another user
+ * POST /api/v1/chat/send
+ */
+export async function sendMessage(receiverId: string, content: string): Promise<{ message: ChatMessage }> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<{ message: ChatMessage }>('/api/v1/chat/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: JSON.stringify({
+      receiver_id: receiverId,
+      content: content,
+    }),
+  });
+}
+
+/**
+ * Get conversation history with a specific user
+ * GET /api/v1/chat/conversation?user_id={userId}&limit={limit}&offset={offset}
+ */
+export async function getConversation(userId: string, limit: number = 50, offset: number = 0): Promise<{
+  messages: ChatMessage[];
+  has_more: boolean;
+  total: number;
+}> {
+  return fetchAPI<any>(`/api/v1/chat/conversation?user_id=${userId}&limit=${limit}&offset=${offset}`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get all conversations (chat list)
+ * GET /api/v1/chat/conversations
+ */
+export async function getConversations(): Promise<{ conversations: Conversation[] }> {
+  return fetchAPI<{ conversations: Conversation[] }>('/api/v1/chat/conversations', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get unread message count
+ * GET /api/v1/chat/unread-count
+ */
+export async function getUnreadCount(): Promise<{ unread_count: number }> {
+  return fetchAPI<{ unread_count: number }>('/api/v1/chat/unread-count', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Mark a message as read
+ * POST /api/v1/chat/mark-read/{messageId}
+ */
+export async function markMessageAsRead(messageId: string): Promise<{ success: boolean }> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<{ success: boolean }>(`/api/v1/chat/mark-read/${messageId}`, {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+  });
+}
+
+/**
+ * Get users available for chat (search/filter)
+ * GET /api/v1/chat/users-for-chat
+ */
+export async function getUsersForChat(): Promise<any[]> {
+  const res = await fetchAPI<any>('/api/v1/chat/users-for-chat', { method: 'GET' });
+  return Array.isArray(res) ? res : (res?.users ?? []);
+}

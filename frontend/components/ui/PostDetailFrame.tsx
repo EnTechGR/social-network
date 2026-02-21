@@ -21,6 +21,10 @@ export interface PostDetailFrameProps {
   commentValue?: string;
   onCommentChange?: (value: string) => void;
   onCommentSubmit?: () => void;
+  onCommentImageSelect?: (file: File) => void;
+  onCommentImageRemove?: () => void;
+  commentImagePreview?: string | null;
+  commentImageName?: string | null;
 }
 
 export function PostDetailFrame({
@@ -37,6 +41,10 @@ export function PostDetailFrame({
   commentValue,
   onCommentChange,
   onCommentSubmit,
+  onCommentImageSelect,
+  onCommentImageRemove,
+  commentImagePreview,
+  commentImageName,
 }: PostDetailFrameProps) {
   return (
     <div className="flex flex-col items-start gap-9 self-stretch">
@@ -116,6 +124,10 @@ export function PostDetailFrame({
         commentValue={commentValue}
         onCommentChange={onCommentChange}
         onCommentSubmit={onCommentSubmit}
+        onCommentImageSelect={onCommentImageSelect}
+        onCommentImageRemove={onCommentImageRemove}
+        commentImagePreview={commentImagePreview}
+        commentImageName={commentImageName}
         comments={comments}
       />
     </div>

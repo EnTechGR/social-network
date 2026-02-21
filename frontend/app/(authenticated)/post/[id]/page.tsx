@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PostDetailFrame from '@/components/ui/PostDetailFrame';
 import type { CommentItem } from '@/components/ui/CommentHolder';
-import { getPostById, createComment, getCommentsByPostId } from '@/lib/api';
+import { getPostById, createCommentWithImage, getCommentsByPostId } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -37,6 +37,8 @@ export default function PostPage() {
   const [error, setError] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [commentImage, setCommentImage] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!postId) {
@@ -78,26 +80,52 @@ export default function PostPage() {
     return () => { cancelled = true; };
   }, [postId]);
 
+  useEffect(() => {
+    return () => {
+      if (commentImagePreview) {
+        URL.revokeObjectURL(commentImagePreview);
+      }
+    };
+  }, [commentImagePreview]);
+
+  const handleCommentImageSelect = (file: File) => {
+    if (commentImagePreview) {
+      URL.revokeObjectURL(commentImagePreview);
+    }
+    setCommentImage(file);
+    setCommentImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearCommentImage = () => {
+    if (commentImagePreview) {
+      URL.revokeObjectURL(commentImagePreview);
+    }
+    setCommentImage(null);
+    setCommentImagePreview(null);
+  };
+
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || submitting || !postId) return;
 
     setSubmitting(true);
     try {
-      const result = await createComment(postId, commentText.trim());
+      const result = await createCommentWithImage(postId, commentText.trim(), commentImage || undefined);
       
       // Add the new comment to the list
       const newComment: CommentItem = {
-        id: result.comment?.comment_id || result.id || Date.now().toString(),
+        id: result.comment?.id || result.comment?.comment_id || result.id || Date.now().toString(),
         avatarSrc: '/user-avatar-default.png', // Use default avatar for current user
         avatarAlt: 'You',
         userName: 'YOU',
         userDate: formatPostDate(new Date().toISOString()),
         text: commentText.trim(),
         likeCount: 0,
+        imageSrc: commentImagePreview || undefined,
       };
       
       setComments([newComment, ...comments]);
       setCommentText('');
+      clearCommentImage();
       
       // Update comment count in post
       if (post) {
@@ -153,6 +181,10 @@ export default function PostPage() {
           commentValue={commentText}
           onCommentChange={setCommentText}
           onCommentSubmit={handleCommentSubmit}
+          onCommentImageSelect={handleCommentImageSelect}
+          onCommentImageRemove={clearCommentImage}
+          commentImagePreview={commentImagePreview}
+          commentImageName={commentImage?.name || null}
         />
       </div>
     </div>

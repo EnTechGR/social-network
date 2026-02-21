@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { CardAvatar } from './CardAvatar';
 import ReactionHolder from './ReactionHolder';
 import Button from './Button';
@@ -13,12 +13,17 @@ export interface CommentItem {
   userDate?: string;
   text: string;
   likeCount?: number;
+  imageSrc?: string;
 }
 
 export interface CommentHolderProps {
   commentValue?: string;
   onCommentChange?: (value: string) => void;
   onCommentSubmit?: () => void;
+  onCommentImageSelect?: (file: File) => void;
+  onCommentImageRemove?: () => void;
+  commentImagePreview?: string | null;
+  commentImageName?: string | null;
   commentPlaceholder?: string;
   comments: CommentItem[];
   className?: string;
@@ -28,11 +33,16 @@ export function CommentHolder({
   commentValue: controlledValue,
   onCommentChange,
   onCommentSubmit,
+  onCommentImageSelect,
+  onCommentImageRemove,
+  commentImagePreview,
+  commentImageName,
   commentPlaceholder = 'Leave a comment...',
   comments,
   className = '',
 }: CommentHolderProps) {
   const [internalValue, setInternalValue] = useState('');
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const isControlled = onCommentChange != null;
   const commentValue = isControlled ? (controlledValue ?? '') : internalValue;
   const handleChange = (value: string) => {
@@ -72,6 +82,26 @@ export function CommentHolder({
             className="flex-1 bg-transparent border-0 outline-none text-foreground font-body text-regular font-normal leading-relaxed placeholder:text-foreground/60"
             aria-label="Leave a comment"
           />
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              onCommentImageSelect?.(file);
+              e.currentTarget.value = '';
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="rounded border border-parea-black px-2 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90"
+            aria-label="Attach image to comment"
+          >
+            Image
+          </button>
           <Button
             variant="primary"
             size="md"
@@ -81,6 +111,19 @@ export function CommentHolder({
             POST
           </Button>
         </div>
+        {commentImagePreview && (
+          <div className="mt-3 flex items-center gap-2 rounded border border-parea-black/30 bg-parea-white px-3 py-2">
+            <img src={commentImagePreview} alt={commentImageName || 'Comment image'} className="h-10 w-10 rounded object-cover" />
+            <span className="max-w-[220px] truncate text-small text-parea-black">{commentImageName || 'Attached image'}</span>
+            <button
+              type="button"
+              onClick={onCommentImageRemove}
+              className="rounded border border-parea-black px-2 py-1 text-small uppercase text-parea-black hover:opacity-90"
+            >
+              Remove
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Outer container holding all comments */}
@@ -103,10 +146,19 @@ export function CommentHolder({
                 />
               </div>
               {/* Second row: comment text (left) + reaction (right) */}
-              <div className="flex justify-between items-center gap-4 self-stretch">
-                <p className="text-foreground font-body text-regular font-normal leading-relaxed flex-1 min-w-0">
-                  {comment.text}
-                </p>
+              <div className="flex justify-between items-start gap-4 self-stretch">
+                <div className="flex-1 min-w-0">
+                  <p className="text-foreground font-body text-regular font-normal leading-relaxed">
+                    {comment.text}
+                  </p>
+                  {comment.imageSrc && (
+                    <img
+                      src={comment.imageSrc}
+                      alt="Comment attachment"
+                      className="mt-3 max-h-56 w-auto max-w-full rounded border border-parea-black/20 object-contain"
+                    />
+                  )}
+                </div>
                 <ReactionHolder
                   likeCount={comment.likeCount ?? 0}
                   commentCount={0}

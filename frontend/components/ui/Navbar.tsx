@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import Button from './Button';
 import Link from 'next/link';
 import CreatePostModal from './CreatePostModal';
+import { getForumUsers } from '@/lib/api';
 
 // --- SearchInputWithDropdown component ---
 function SearchInputWithDropdown() {
@@ -75,6 +76,35 @@ function SearchInputWithDropdown() {
 
 export const Navbar = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [selectableUsers, setSelectableUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getForumUsers()
+      .then((users) => {
+        if (cancelled) return;
+        const mapped = users.map((user) => {
+          const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+          return {
+            id: user.id,
+            name: fullName || user.nickname || user.email || user.id,
+            avatarUrl: undefined,
+          };
+        });
+        setSelectableUsers(mapped);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('Failed to load selectable users for private posts:', err);
+          setSelectableUsers([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
@@ -216,6 +246,7 @@ export const Navbar = () => {
     <CreatePostModal 
       isOpen={isCreatePostOpen}
       onClose={() => setIsCreatePostOpen(false)}
+      followers={selectableUsers}
     />
     </>
   );

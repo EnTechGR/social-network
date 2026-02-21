@@ -17,6 +17,7 @@ interface ProfileWrapProps {
     bio?: string;
     email: string;
     birthDate: string;
+    gender?: string;
     isPublic: boolean;
     followersCount: number;
     followingCount: number;
@@ -184,6 +185,8 @@ export default function ProfileWrap({
         <InfoRow label="Birth Date">
           {user.birthDate ? (user.birthDate.includes('T') ? user.birthDate.split('T')[0] : user.birthDate) : 'N/A'}
         </InfoRow>
+
+        <InfoRow label="Gender">{user.gender || 'N/A'}</InfoRow>
 
         {/* Public Profile Toggle */}
         {isSelf && (

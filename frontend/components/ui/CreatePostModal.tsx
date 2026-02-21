@@ -21,7 +21,7 @@ interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   preview?: boolean;
-  /** List of followers to select from when visibility is FOLLOWERS */
+  /** List of users to select from when visibility is PRIVATE */
   followers?: Follower[];
   /** When set, post is created in this group (no visibility dropdown) */
   groupId?: string;
@@ -29,17 +29,7 @@ interface CreatePostModalProps {
   onSuccess?: () => void;
 }
 
-// Mock followers for preview/demo
-const mockFollowers: Follower[] = [
-  { id: '1', name: 'Alex Donham', avatarUrl: '/test-avatar.png' },
-  { id: '2', name: 'Anette Black', avatarUrl: '/test-avatar.png' },
-  { id: '3', name: 'Mario Salvante', avatarUrl: '/test-avatar.png' },
-  { id: '4', name: 'Karen Hills', avatarUrl: '/test-avatar.png' },
-  { id: '5', name: 'Jacob Jones', avatarUrl: '/test-avatar.png' },
-  { id: '6', name: 'Ammy Stones', avatarUrl: '/test-avatar.png' },
-];
-
-export default function CreatePostModal({ isOpen, onClose, preview = false, followers = mockFollowers, groupId, onSuccess }: CreatePostModalProps) {
+export default function CreatePostModal({ isOpen, onClose, preview = false, followers = [], groupId, onSuccess }: CreatePostModalProps) {
   const isGroupPost = Boolean(groupId);
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -95,7 +85,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
   };
 
   const handleNext = () => {
-    if (visibility === 'FOLLOWERS') {
+    if (visibility === 'PRIVATE') {
       setStep(2);
     } else {
       handleSubmit();
@@ -274,13 +264,13 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
 
         {/* Submit/Next Button - fixed height container to prevent layout shift */}
         <div className="flex justify-end h-12 items-center mt-4">
-          {visibility === 'FOLLOWERS' ? (
+          {visibility === 'PRIVATE' ? (
             <IconButton
               variant="arrow-right"
               text="NEXT"
               onClick={handleNext}
               aria-label="Next step"
-              disabled={isSubmitting}
+              disabled={isSubmitting || followers.length === 0}
             />
           ) : (
             <Button 
@@ -332,36 +322,42 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
             onScroll={handleScroll}
             className="h-full overflow-y-auto pb-8"
           >
-            {followers.map((follower) => (
-              <div
-                key={follower.id}
-                className="flex items-center justify-between h-14 px-2"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    size="sm"
-                    type={follower.avatarUrl ? 'image' : 'user'}
-                    src={follower.avatarUrl}
-                    alt={follower.name}
-                  />
-                  <span
-                    className="text-base font-medium uppercase tracking-[-0.01em] leading-relaxed"
+            {followers.length === 0 ? (
+              <p className="text-regular text-parea-black/80 px-2 py-4">
+                No users available for private sharing.
+              </p>
+            ) : (
+              followers.map((follower) => (
+                <div
+                  key={follower.id}
+                  className="flex items-center justify-between h-14 px-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      size="sm"
+                      type={follower.avatarUrl ? 'image' : 'user'}
+                      src={follower.avatarUrl}
+                      alt={follower.name}
+                    />
+                    <span
+                      className="text-base font-medium uppercase tracking-[-0.01em] leading-relaxed"
+                      style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
+                    >
+                      {follower.name}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleFollowerSelection(follower.id)}
+                    className={`text-base font-medium uppercase tracking-[-0.01em] leading-relaxed cursor-pointer border-b-2 border-parea-black text-parea-black
+                      }`}
                     style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
                   >
-                    {follower.name}
-                  </span>
+                    {selectedFollowers.has(follower.id) ? 'SELECTED' : 'SELECT'}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleFollowerSelection(follower.id)}
-                  className={`text-base font-medium uppercase tracking-[-0.01em] leading-relaxed cursor-pointer border-b-2 border-parea-black text-parea-black
-                    }`}
-                  style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
-                >
-                  {selectedFollowers.has(follower.id) ? 'SELECTED' : 'SELECT'}
-                </button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
           {/* Fade gradient at bottom to indicate scrollability - fades out when at bottom */}
           <div

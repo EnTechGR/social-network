@@ -19,6 +19,38 @@ type PostHandler struct {
 	ImageRepo *repository.ImageRepository
 }
 
+func parseAllowedUserIDs(raw string) ([]string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+
+	var ids []string
+	if strings.HasPrefix(raw, "[") {
+		if err := json.Unmarshal([]byte(raw), &ids); err != nil {
+			return nil, err
+		}
+	} else {
+		ids = strings.Split(raw, ",")
+	}
+
+	unique := make([]string, 0, len(ids))
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		trimmed := strings.TrimSpace(id)
+		if trimmed == "" {
+			continue
+		}
+		if _, exists := seen[trimmed]; exists {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		unique = append(unique, trimmed)
+	}
+
+	return unique, nil
+}
+
 // NewPostHandler creates a new PostHandler
 func NewPostHandler(repo *repository.PostRepository, imageRepo *repository.ImageRepository) *PostHandler {
 	return &PostHandler{PostRepo: repo, ImageRepo: imageRepo}
@@ -76,6 +108,27 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		if visibility == "" {
 			visibility = "public" // Default to public
 		}
+
+		rawAllowedValues := r.MultipartForm.Value["allowed_user_ids"]
+		for _, raw := range rawAllowedValues {
+			parsedIDs, err := parseAllowedUserIDs(raw)
+			if err != nil {
+				utils.ErrorResponse(w, "Invalid allowed_user_ids format", http.StatusBadRequest)
+				return
+			}
+			allowedUserIDs = append(allowedUserIDs, parsedIDs...)
+		}
+
+		// Support singular field name as fallback.
+		if len(allowedUserIDs) == 0 {
+			parsedIDs, err := parseAllowedUserIDs(r.FormValue("allowed_user_id"))
+			if err != nil {
+				utils.ErrorResponse(w, "Invalid allowed_user_id format", http.StatusBadRequest)
+				return
+			}
+			allowedUserIDs = append(allowedUserIDs, parsedIDs...)
+		}
+
 		log.Printf("DEBUG: Extracted from multipart - title: %s, content: %s, visibility: %s", title, content, visibility)
 	} else {
 		// Parse as JSON (backward compatibility)
@@ -96,7 +149,16 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		title = req.Title
 		content = req.Content
 		visibility = req.Visibility
-		allowedUserIDs = req.AllowedUserIDs
+		parsedIDs := make([]string, 0, len(req.AllowedUserIDs))
+		for _, raw := range req.AllowedUserIDs {
+			ids, err := parseAllowedUserIDs(raw)
+			if err != nil {
+				utils.ErrorResponse(w, "Invalid allowed_user_ids format", http.StatusBadRequest)
+				return
+			}
+			parsedIDs = append(parsedIDs, ids...)
+		}
+		allowedUserIDs = parsedIDs
 		if visibility == "" {
 			visibility = "public" // Default to public
 		}

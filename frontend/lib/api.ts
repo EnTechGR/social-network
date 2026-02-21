@@ -419,7 +419,7 @@ export async function getFeed(): Promise<any[]> {
  */
 export async function createComment(postId: string, content: string): Promise<any> {
   const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
-  
+
   return fetchAPI<any>('/api/v1/comments/create', {
     method: 'POST',
     headers: {
@@ -429,6 +429,31 @@ export async function createComment(postId: string, content: string): Promise<an
       post_id: postId,
       content: content,
     }),
+  });
+}
+
+/**
+ * Create a new comment with optional image upload.
+ * POST /api/v1/comments/create
+ */
+export async function createCommentWithImage(postId: string, content: string, image?: File): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+
+  if (!image) {
+    return createComment(postId, content);
+  }
+
+  const formData = new FormData();
+  formData.append('post_id', postId);
+  formData.append('content', content);
+  formData.append('image', image);
+
+  return fetchAPI<any>('/api/v1/comments/create', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken || '',
+    },
+    body: formData,
   });
 }
 
@@ -541,7 +566,7 @@ export async function createPost(data: {
   image?: File;
   allowedUserIds?: string[];
 }): Promise<any> {
-  const csrfToken = typeof window !== 'string' ? localStorage.getItem('csrf_token') : null;
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
   
   const formData = new FormData();
   formData.append('title', data.title);
@@ -554,8 +579,6 @@ export async function createPost(data: {
 
   // For private posts with specific allowed users
   if (data.allowedUserIds && data.allowedUserIds.length > 0) {
-    // Backend expects allowed_user_ids as JSON field, but we're using multipart
-    // May need to send as JSON instead or handle it differently based on backend implementation
     formData.append('allowed_user_ids', JSON.stringify(data.allowedUserIds));
   }
 

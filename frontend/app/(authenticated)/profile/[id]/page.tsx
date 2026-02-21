@@ -5,7 +5,23 @@ import { useParams } from 'next/navigation';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
+import Card from '@/components/ui/Card';
 import { getUserProfile, getAvatarUrl, followUser, getProfile, unfollowUser } from '@/lib/api';
+
+function formatPostDate(isoDate: string): string {
+  if (!isoDate) return '';
+  try {
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return isoDate;
+  }
+}
+
+function formatRelationName(entry: any): string {
+  const fullName = [entry?.first_name, entry?.last_name].filter(Boolean).join(' ').trim();
+  return fullName || entry?.nickname || entry?.email || entry?.user_id || 'Unknown user';
+}
 
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
@@ -19,6 +35,8 @@ export default function UserProfilePage() {
   const [followError, setFollowError] = useState<string | null>(null);
   const [followRequested, setFollowRequested] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showFollowersList, setShowFollowersList] = useState(false);
+  const [showFollowingList, setShowFollowingList] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -171,17 +189,20 @@ export default function UserProfilePage() {
     bio: u.about_me || '',
     email: u.email || '—',
     birthDate,
+    gender: u.gender || '',
     isPublic: !u.is_private,
     followersCount: profile.counts.followers,
     followingCount: profile.counts.following,
   };
 
   const handleFollowersClick = () => {
-    // TODO: Open followers modal with real data
+    setShowFollowersList((prev) => !prev);
+    setShowFollowingList(false);
   };
 
   const handleFollowingClick = () => {
-    // TODO: Open following modal with real data
+    setShowFollowingList((prev) => !prev);
+    setShowFollowersList(false);
   };
 
   return (
@@ -218,6 +239,44 @@ export default function UserProfilePage() {
           </div>
         )}
 
+        {showFollowersList && (
+          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
+            <h2 className="text-small font-medium uppercase text-parea-black">
+              Followers ({Array.isArray(profile.followers) ? profile.followers.length : 0})
+            </h2>
+            {!Array.isArray(profile.followers) || profile.followers.length === 0 ? (
+              <p className="mt-3 text-regular text-parea-black">No followers yet.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {profile.followers.map((entry: any) => (
+                  <li key={entry?.user_id ?? entry?.id} className="text-regular text-parea-black">
+                    {formatRelationName(entry)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {showFollowingList && (
+          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
+            <h2 className="text-small font-medium uppercase text-parea-black">
+              Following ({Array.isArray(profile.following) ? profile.following.length : 0})
+            </h2>
+            {!Array.isArray(profile.following) || profile.following.length === 0 ? (
+              <p className="mt-3 text-regular text-parea-black">Not following anyone yet.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {profile.following.map((entry: any) => (
+                  <li key={entry?.user_id ?? entry?.id} className="text-regular text-parea-black">
+                    {formatRelationName(entry)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
         <div className="mt-8">
           <Tabs
             tabs={['Posts', 'Events', 'Reactions', 'Groups']}
@@ -225,7 +284,36 @@ export default function UserProfilePage() {
             onTabChange={(tab) => setActiveTab(tab)}
           />
           <div className="mt-6">
-            {activeTab === 'Posts' && <p>Posts content...</p>}
+            {activeTab === 'Posts' && (
+              <>
+                {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
+                  <p className="text-regular text-parea-black">No posts yet.</p>
+                ) : (
+                  <div className="flex flex-col items-start gap-0">
+                    {profile.posts.map((post: any, index: number) => {
+                      const postId = post.id || post.post_id;
+                      return (
+                        <Card
+                          key={postId || `${post.title}-${index}`}
+                          imageType="post"
+                          imageSrc={post.image_url || post.thumbnail_url}
+                          avatarSrc={getAvatarUrl(u.avatar?.thumbnail_path || u.avatar?.file_path)}
+                          avatarAlt={u.nickname || 'Author'}
+                          userName={(u.nickname || 'User').toUpperCase()}
+                          userDate={formatPostDate(post.created_at)}
+                          title={post.title}
+                          content={post.content}
+                          href={postId ? `/post/${postId}` : undefined}
+                          imagePriority={index === 0}
+                          likeCount={post.like_count || 0}
+                          commentCount={post.comment_count || 0}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
             {activeTab === 'Events' && <p>Events content...</p>}
             {activeTab === 'Reactions' && <p>Reactions content...</p>}
             {activeTab === 'Groups' && <p>Groups content...</p>}

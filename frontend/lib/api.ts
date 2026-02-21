@@ -67,6 +67,17 @@ export interface GroupChatMessage {
   created_at: string;
 }
 
+export interface SearchEventItem {
+  id: string;
+  group_id: string;
+  group_title: string;
+  creator_id: string;
+  title: string;
+  description?: string | null;
+  event_time: string;
+  created_at: string;
+}
+
 export interface FollowRelationship {
   follower_id: string;
   followee_id: string;
@@ -425,6 +436,17 @@ export async function getForumUsers(): Promise<ForumUser[]> {
 }
 
 /**
+ * Get all public users (excluding current user) for global search.
+ * GET /api/v1/users/public
+ */
+export async function getPublicUsersForSearch(): Promise<ForumUser[]> {
+  const response = await fetchAPI<{ users?: ForumUser[] }>('/api/v1/users/public', {
+    method: 'GET',
+  });
+  return Array.isArray(response?.users) ? response.users : [];
+}
+
+/**
  * Get all direct conversations for the current user.
  * GET /api/v1/chat/conversations
  */
@@ -554,6 +576,44 @@ export async function getPostById(postId: string): Promise<any> {
  */
 export async function getFeed(): Promise<any[]> {
   return fetchAPI<any[]>('/api/v1/feed', { method: 'GET' });
+}
+
+/**
+ * Load all public (non-private) feed posts for global search by paginating /feed.
+ * It filters to visibility=public client-side and deduplicates by post id.
+ */
+export async function getAllPublicPostsForSearch(): Promise<any[]> {
+  const uniquePosts = new Map<string, any>();
+  let nextCursor: string | undefined;
+
+  for (let i = 0; i < 50; i++) {
+    const params = new URLSearchParams({ limit: '50' });
+    if (nextCursor) {
+      params.set('cursor', nextCursor);
+    }
+
+    const page = await fetchAPI<any>(`/api/v1/feed?${params.toString()}`, { method: 'GET' });
+    const posts = Array.isArray(page) ? page : (page?.posts ?? []);
+
+    for (const post of posts) {
+      const visibility = String(post?.visibility ?? '').toLowerCase();
+      if (visibility !== 'public') {
+        continue;
+      }
+      if (post?.id && !uniquePosts.has(post.id)) {
+        uniquePosts.set(post.id, post);
+      }
+    }
+
+    const hasMore = Boolean(page?.has_more);
+    const cursorFromPage = page?.next_cursor;
+    if (!hasMore || !cursorFromPage || cursorFromPage === nextCursor) {
+      break;
+    }
+    nextCursor = cursorFromPage;
+  }
+
+  return Array.from(uniquePosts.values());
 }
 
 /**
@@ -786,6 +846,51 @@ export async function createGroupPost(groupId: string, data: { title: string; co
 export async function getGroupEvents(groupId: string): Promise<any[]> {
   const res = await fetchAPI<any>(`/api/v1/groups/events/${groupId}`, { method: 'GET' });
   return Array.isArray(res) ? res : (res?.events ?? []);
+}
+
+/**
+ * Get all events from groups the current user is a member of.
+ * This powers search and guarantees member-only event visibility.
+ */
+export async function getMemberEventsForSearch(): Promise<SearchEventItem[]> {
+  const groups = await getMyGroups();
+  if (!Array.isArray(groups) || groups.length === 0) {
+    return [];
+  }
+
+  const eventsByGroup = await Promise.all(
+    groups.map(async (group: any) => {
+      const groupID = group?.id;
+      if (!groupID) {
+        return [];
+      }
+
+      try {
+        const events = await getGroupEvents(groupID);
+        return events.map((event: any) => ({
+          ...event,
+          group_title: group?.title || '',
+        }));
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  const uniqueEvents = new Map<string, SearchEventItem>();
+  for (const eventList of eventsByGroup) {
+    for (const event of eventList) {
+      if (event?.id && !uniqueEvents.has(event.id)) {
+        uniqueEvents.set(event.id, event as SearchEventItem);
+      }
+    }
+  }
+
+  return Array.from(uniqueEvents.values()).sort((a, b) => {
+    const ta = new Date(a.event_time).getTime();
+    const tb = new Date(b.event_time).getTime();
+    return tb - ta;
+  });
 }
 
 export async function createGroupEvent(groupId: string, data: { title: string; description: string; event_time: string }): Promise<any> {

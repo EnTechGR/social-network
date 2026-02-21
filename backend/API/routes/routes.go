@@ -136,6 +136,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// User profile endpoint (handles both GET and PUT via method switching in handler)
 	apiMux.Handle("/api/v1/user/profile", protected(http.HandlerFunc(userHandler.GetProfile)))
 	apiMux.Handle("/api/v1/user/privacy", protected(http.HandlerFunc(userHandler.TogglePrivacy)))
+	apiMux.Handle("/api/v1/users/public", protected(http.HandlerFunc(userHandler.GetPublicUsers)))
 	apiMux.Handle("/api/v1/users/", protected(http.HandlerFunc(userHandler.GetUserProfile)))
 
 	apiMux.Handle("/api/v1/follow", protected(http.HandlerFunc(followHandler.FollowPublicUser)))

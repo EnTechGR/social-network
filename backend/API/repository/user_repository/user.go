@@ -367,6 +367,53 @@ func (r *UserRepository) GetByEmailOrNickname(login string) (*models.User, error
 	return &user, nil
 }
 
+// GetPublicUsers returns all public profiles, excluding the current user.
+func (r *UserRepository) GetPublicUsers(currentUserID string) ([]models.User, error) {
+	rows, err := r.DB.Query(
+		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth,
+		        about_me, gender, is_private, created_at
+		 FROM user
+		 WHERE is_private = 0
+		   AND user_id != ?
+		 ORDER BY nickname ASC`,
+		currentUserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var u models.User
+		var createdAt sql.NullTime
+
+		if err := rows.Scan(
+			&u.ID,
+			&u.Nickname,
+			&u.Email,
+			&u.FirstName,
+			&u.LastName,
+			&u.DateOfBirth,
+			&u.AboutMe,
+			&u.Gender,
+			&u.IsPrivate,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+
+		u.CreatedAt = createdAt.Time
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 // GetAuthByUserID retrieves authentication data for a user
 func (r *UserRepository) GetAuthByUserID(userID string) (*models.UserAuth, error) {
 	var auth models.UserAuth
@@ -415,7 +462,7 @@ func (r *UserRepository) GetUserWithAvatar(userID string) (*models.UserWithAvata
 	// Get avatar data from v_user_avatars view
 	// ✅ FIX: Use sql.NullString to handle NULL values when user has no avatar
 	var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
-	
+
 	err = r.DB.QueryRow(
 		`SELECT image_id, file_path, thumbnail_path, mime_type, set_at 
 		FROM v_user_avatars 
@@ -628,11 +675,11 @@ func (r *UserRepository) IsFollowing(followerID, followeeID string) (bool, error
 		FROM follow_relationships 
 		WHERE follower_id = ? AND followee_id = ? AND status = 'accepted'
 	`, followerID, followeeID).Scan(&count)
-	
+
 	if err != nil {
 		return false, err
 	}
-	
+
 	return count > 0, nil
 }
 
@@ -654,7 +701,7 @@ func (r *UserRepository) GetUserPosts(userID string) ([]interface{}, error) {
 		WHERE p.user_id = ?
 		ORDER BY p.created_at DESC
 	`, userID)
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -673,7 +720,7 @@ func (r *UserRepository) GetUserPosts(userID string) ([]interface{}, error) {
 			FirstName string  `json:"first_name"`
 			LastName  string  `json:"last_name"`
 		}
-		
+
 		err := rows.Scan(
 			&post.PostID,
 			&post.UserID,
@@ -685,18 +732,18 @@ func (r *UserRepository) GetUserPosts(userID string) ([]interface{}, error) {
 			&post.FirstName,
 			&post.LastName,
 		)
-		
+
 		if err != nil {
 			return nil, err
 		}
-		
+
 		posts = append(posts, post)
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	
+
 	return posts, nil
 }
 
@@ -716,7 +763,7 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 		WHERE fr.followee_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +780,7 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			IsPrivate  bool   `json:"is_private"`
 			FollowedAt string `json:"followed_at"`
 		}
-		
+
 		err := rows.Scan(
 			&follower.UserID,
 			&follower.Nickname,
@@ -743,18 +790,18 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			&follower.IsPrivate,
 			&follower.FollowedAt,
 		)
-		
+
 		if err != nil {
 			return nil, err
 		}
-		
+
 		followers = append(followers, follower)
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	
+
 	return followers, nil
 }
 
@@ -774,7 +821,7 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 		WHERE fr.follower_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -791,7 +838,7 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			IsPrivate  bool   `json:"is_private"`
 			FollowedAt string `json:"followed_at"`
 		}
-		
+
 		err := rows.Scan(
 			&followee.UserID,
 			&followee.Nickname,
@@ -801,17 +848,17 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			&followee.IsPrivate,
 			&followee.FollowedAt,
 		)
-		
+
 		if err != nil {
 			return nil, err
 		}
-		
+
 		following = append(following, followee)
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	
+
 	return following, nil
 }

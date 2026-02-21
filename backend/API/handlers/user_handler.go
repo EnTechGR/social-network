@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"social-network/middleware"
 	"social-network/repository"
@@ -228,6 +229,65 @@ func (h *UserHandler) TogglePrivacy(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, map[string]interface{}{
 		"is_private": req.IsPrivate,
 		"message":    message,
+	}, http.StatusOK)
+}
+
+// GetPublicUsers returns all public users for global search.
+// @Summary      Get public users
+// @Description  Returns all users with public profiles, excluding the authenticated user.
+// @Tags         User Profile
+// @Security     CookieAuth
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}
+// @Failure      401  {object}  models.ErrorResponse "Unauthorized"
+// @Failure      500  {object}  models.ErrorResponse "Internal server error"
+// @Router       /api/v1/users/public [get]
+func (h *UserHandler) GetPublicUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	currentUser := middleware.GetCurrentUser(r)
+	if currentUser == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	users, err := h.UserRepo.GetPublicUsers(currentUser.ID)
+	if err != nil {
+		log.Printf("Failed to get public users: %v", err)
+		utils.ErrorResponse(w, "Failed to retrieve users", http.StatusInternalServerError)
+		return
+	}
+
+	type PublicUser struct {
+		ID          string `json:"id"`
+		Nickname    string `json:"nickname"`
+		Email       string `json:"email"`
+		FirstName   string `json:"first_name"`
+		LastName    string `json:"last_name"`
+		DateOfBirth string `json:"date_of_birth"`
+		Gender      string `json:"gender"`
+		IsOnline    bool   `json:"is_online"`
+	}
+
+	respUsers := make([]PublicUser, 0, len(users))
+	for _, u := range users {
+		respUsers = append(respUsers, PublicUser{
+			ID:          u.ID,
+			Nickname:    u.Nickname,
+			Email:       u.Email,
+			FirstName:   u.FirstName,
+			LastName:    u.LastName,
+			DateOfBirth: u.DateOfBirth.Format(time.RFC3339),
+			Gender:      u.Gender,
+			IsOnline:    false,
+		})
+	}
+
+	utils.JSONResponse(w, map[string]interface{}{
+		"users": respUsers,
 	}, http.StatusOK)
 }
 

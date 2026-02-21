@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { getForumUsers, type ForumUser, getFeed, getAllGroups } from '@/lib/api';
+import {
+  getPublicUsersForSearch,
+  type ForumUser,
+  getAllPublicPostsForSearch,
+  getAllGroups,
+  getMemberEventsForSearch,
+  type SearchEventItem,
+} from '@/lib/api';
 import Tabs from './Tabs';
 
 const SEARCH_TABS = ['Posts', 'Events', 'Users', 'Groups'];
@@ -44,6 +51,20 @@ interface Group {
 interface SearchSuggestionsProps {
   query?: string;
   onClose?: () => void;
+}
+
+function formatEventDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function GroupSuggestion({
@@ -115,6 +136,38 @@ function PostSuggestion({
   );
 }
 
+function EventSuggestion({
+  event,
+  isLast,
+  onClose,
+}: {
+  event: SearchEventItem;
+  isLast: boolean;
+  onClose?: () => void;
+}) {
+  const descriptionPreview = event.description
+    ? (event.description.length > 100 ? `${event.description.slice(0, 100)}...` : event.description)
+    : 'No description';
+
+  return (
+    <Link
+      href={`/event/${event.id}`}
+      onClick={onClose}
+      className={[
+        'flex w-full flex-col gap-2 bg-parea-white px-6 py-4 no-underline transition-colors duration-200 hover:bg-parea-yellow',
+        isLast ? '' : 'border-b border-parea-border',
+      ].join(' ')}
+    >
+      <span className="font-sans text-base font-semibold text-parea-black">{event.title}</span>
+      <p className="font-sans text-sm text-parea-black/70">{descriptionPreview}</p>
+      <div className="flex items-center gap-4 font-mono text-xs text-parea-black/50">
+        <span>📅 {formatEventDate(event.event_time)}</span>
+        <span>• Group: {event.group_title || 'Group'}</span>
+      </div>
+    </Link>
+  );
+}
+
 function UserSuggestion({
   user,
   isLast,
@@ -156,6 +209,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
   const [users, setUsers] = useState<ForumUser[]>([]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [events, setEvents] = useState<SearchEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -167,18 +221,18 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       setError(null);
 
       try {
-        const [loadedUsers, feedData, groupsData] = await Promise.all([
-          getForumUsers(),
-          getFeed(),
+        const [loadedUsers, loadedPosts, groupsData, memberEvents] = await Promise.all([
+          getPublicUsersForSearch(),
+          getAllPublicPostsForSearch(),
           getAllGroups(),
+          getMemberEventsForSearch(),
         ]);
-        
+
         if (mounted) {
           setUsers(loadedUsers);
-          // Handle both array and object responses from getFeed
-          const loadedPosts = Array.isArray(feedData) ? feedData : ((feedData as any)?.posts || []);
           setPosts(loadedPosts);
           setGroups(groupsData);
+          setEvents(memberEvents);
         }
       } catch (err) {
         if (mounted) {
@@ -240,15 +294,51 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
     );
   }, [query, groups]);
 
+  const filteredEvents = useMemo(() => {
+    const value = query.trim().toLowerCase();
+
+    if (!value) {
+      return events;
+    }
+
+    return events.filter((event) =>
+      [event.title, event.description || '', event.group_title]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(value))
+    );
+  }, [query, events]);
+
   return (
     <div className="w-full overflow-hidden rounded-xl border border-parea-border bg-parea-white shadow-lg">
       <div className="border-b border-parea-border px-6 py-4">
         <Tabs tabs={SEARCH_TABS} defaultTab="Users" onTabChange={setActiveTab} />
       </div>
 
-      {activeTab === 'Events' && (
+      {/* Events Tab */}
+      {activeTab === 'Events' && isLoading && (
+        <div className="px-6 py-8 font-sans text-sm text-parea-black/70">Loading events...</div>
+      )}
+
+      {activeTab === 'Events' && !isLoading && error && (
+        <div className="px-6 py-8 font-sans text-sm text-red-600">{error}</div>
+      )}
+
+      {activeTab === 'Events' && !isLoading && !error && filteredEvents.length === 0 && (
         <div className="px-6 py-8 font-sans text-sm text-parea-black/70">
-          The Posts, Users, and Groups tabs are wired to live data. Events tab is not connected yet.
+          No events found in groups you are a member of.
+        </div>
+      )}
+
+      {activeTab === 'Events' && !isLoading && !error && filteredEvents.length > 0 && (
+        <div className="max-h-[420px] overflow-y-auto">
+          {filteredEvents.map((event, index) => (
+            <EventSuggestion
+              key={event.id}
+              event={event}
+              isLast={index === filteredEvents.length - 1}
+              onClose={onClose}
+            />
+          ))}
         </div>
       )}
 

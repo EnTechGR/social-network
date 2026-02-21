@@ -1,58 +1,71 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import IconButton from './IconButtons';
 import { Search } from 'lucide-react';
 import Button from './Button';
 import Image from 'next/image';
+import { getAvatarUrl } from '@/lib/api';
+
+export interface FollowerUser {
+  user_id: string;
+  nickname?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  avatar?: {
+    file_path?: string;
+    thumbnail_path?: string;
+  };
+}
 
 interface FollowersModalProps {
   isOpen: boolean;
   onClose: () => void;
   heading?: 'Followers' | 'Following' | 'Members';
   preview?: boolean;
+  users?: FollowerUser[];
+  onRemoveFollower?: (userId: string) => Promise<void>;
+  onUnfollow?: (userId: string) => Promise<void>;
+  isActionLoading?: string | null;
 }
 
-export default function FollowersModal({ isOpen, onClose, heading = 'Followers', preview = false }: FollowersModalProps) {
+export default function FollowersModal({ 
+  isOpen, 
+  onClose, 
+  heading = 'Followers', 
+  preview = false,
+  users = [],
+  onRemoveFollower,
+  onUnfollow,
+  isActionLoading = null,
+}: FollowersModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
-  // State for follow/following toggle (only needed when heading === 'Following')
-  const [followingStates, setFollowingStates] = useState<Record<number, boolean>>({
-    1: true,
-    2: true,
-    3: true,
-    4: true,
-    5: true,
-    6: true,
-    7: true,
-    8: true,
-    9: true,
-    10: true,
-  });
 
-  const mockUsers = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Bob Johnson' },
-    { id: 4, name: 'Alice Brown' },
-    { id: 5, name: 'Charlie Davis' },
-    { id: 6, name: 'Diana Wilson' },
-    { id: 7, name: 'Ethan Martinez' },
-    { id: 8, name: 'Fiona Garcia' },
-    { id: 9, name: 'George Taylor' },
-    { id: 10, name: 'Hannah Anderson' },
-  ];
+  const formatUserName = (user: FollowerUser): string => {
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+    return fullName || user.nickname || user.email || user.user_id;
+  };
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const query = searchQuery.toLowerCase();
+    return users.filter((user) => {
+      const name = formatUserName(user).toLowerCase();
+      return name.includes(query);
+    });
+  }, [users, searchQuery]);
+
+  const handleAction = async (userId: string) => {
+    if (heading === 'Followers' && onRemoveFollower) {
+      await onRemoveFollower(userId);
+    } else if (heading === 'Following' && onUnfollow) {
+      await onUnfollow(userId);
+    }
+  };
 
   if (!isOpen && !preview) return null;
-
-  const handleFollowToggle = (userId: number) => {
-    setFollowingStates((prev) => ({
-      ...prev,
-      [userId]: !prev[userId],
-    }));
-    // TODO: Call API to follow/unfollow user
-  };
 
   const modalContent = (
     <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
@@ -172,89 +185,89 @@ export default function FollowersModal({ isOpen, onClose, heading = 'Followers',
               pb-32
             "
           >
-            {mockUsers.map((user) => (
-              <div
-                key={user.id}
-                className="
-                  flex
-                  h-14
-                  p-2
-                  items-center
-                  gap-2
-                  self-stretch
-                "
-              >
-                {/* Avatar Image */}
-                <div
-                  className="
-                    w-12
-                    h-12
-                    rounded-full
-                    flex-shrink-0
-                    aspect-square
-                    bg-parea-grey
-                    bg-center
-                    bg-cover
-                    bg-no-repeat
-                  "
-                  style={{
-                    backgroundImage: 'url(/test-avatar.png)',
-                  }}
-                />
-
-                {/* Profile Info */}
-                <div
-                  className="
-                    flex
-                    flex-col
-                    items-start
-                    flex-1
-                  "
-                >
-                  <p
+            {filteredUsers.length === 0 ? (
+              <p className="text-regular text-parea-black py-4">
+                {searchQuery ? 'No users found.' : `No ${heading.toLowerCase()} yet.`}
+              </p>
+            ) : (
+              filteredUsers.map((user) => {
+                const avatarUrl = getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path);
+                
+                return (
+                  <div
+                    key={user.user_id}
                     className="
-                      text-black
-                      font-mono
-                      text-[15px]
-                      font-medium
-                      uppercase
-                      tracking-[-0.15px]
+                      flex
+                      h-14
+                      p-2
+                      items-center
+                      gap-2
+                      self-stretch
                     "
                   >
-                    {user.name}
-                  </p>
-                </div>
+                    {/* Avatar Image */}
+                    <div
+                      className="
+                        w-12
+                        h-12
+                        rounded-full
+                        flex-shrink-0
+                        aspect-square
+                        bg-parea-grey
+                        bg-center
+                        bg-cover
+                        bg-no-repeat
+                      "
+                      style={{
+                        backgroundImage: `url(${avatarUrl})`,
+                      }}
+                    />
 
-                {/* Action Button - Conditional rendering based on heading prop */}
-                {heading === 'Followers' ? (
-                  // Case 1: Followers modal - Show "Remove" button
-                  <Button
-                    variant="tertiary"
-                    onClick={() => {
-                      // TODO: Handle remove follower action
-                      console.log('Remove follower:', user.id);
-                    }}
-                  >
-                    Remove
-                  </Button>
-                ) : heading === 'Following' ? (
-                  // Case 2: Following modal - Show follow/following toggle button
-                  <Button
-                    variant="tertiary"
-                    isActive={followingStates[user.id]}
-                    onActiveChange={() => handleFollowToggle(user.id)}
-                    activeText="FOLLOW"
-                    inactiveText="FOLLOWING"
-                    onClick={() => {
-                      // onClick is handled by onActiveChange
-                    }}
-                  />
-                ) : (
-                  // Case 3: Members modal - No button (null)
-                  null
-                )}
-              </div>
-            ))}
+                    {/* Profile Info */}
+                    <div
+                      className="
+                        flex
+                        flex-col
+                        items-start
+                        flex-1
+                      "
+                    >
+                      <p
+                        className="
+                          text-black
+                          font-mono
+                          text-[15px]
+                          font-medium
+                          uppercase
+                          tracking-[-0.15px]
+                        "
+                      >
+                        {formatUserName(user)}
+                      </p>
+                    </div>
+
+                    {/* Action Button - Conditional rendering based on heading prop */}
+                    {heading === 'Followers' && onRemoveFollower ? (
+                      <Button
+                        variant="tertiary"
+                        onClick={() => handleAction(user.user_id)}
+                        disabled={isActionLoading === user.user_id}
+                      >
+                        {isActionLoading === user.user_id ? 'Removing...' : 'Remove'}
+                      </Button>
+                    ) : heading === 'Following' && onUnfollow ? (
+                      <Button
+                        variant="tertiary"
+                        onClick={() => handleAction(user.user_id)}
+                        disabled={isActionLoading === user.user_id}
+                      >
+                        {isActionLoading === user.user_id ? 'Unfollowing...' : 'Unfollow'}
+                      </Button>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Fade Effect Overlay */}

@@ -54,7 +54,7 @@ function formatNotificationText(notification: NotificationItem): string {
     case 'follow_request':
       return `${actor} sent you a follow request`;
     case 'follow_accept':
-      return `${actor} accepted your follow request`;
+      return `${actor} is now following you`;
     case 'comment':
     case 'post_comment':
       return `${actor} commented on your post`;

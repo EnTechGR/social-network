@@ -16,6 +16,7 @@ import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import CreateGroupModal from '@/components/ui/CreateGroupModal';
+import FollowersModal from '@/components/ui/FollowersModal';
 import {
   getProfile,
   updatePrivacy,
@@ -85,6 +86,8 @@ export default function ProfilePage() {
   const [followActionUserId, setFollowActionUserId] = useState<string | null>(null);
   const [showFollowersList, setShowFollowersList] = useState(false);
   const [showFollowingList, setShowFollowingList] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [directoryById, setDirectoryById] = useState<Record<string, RelationUser>>({});
 
   const formatRelationName = (entry: RelationUser | undefined): string => {
@@ -335,13 +338,11 @@ export default function ProfilePage() {
   };
 
   const handleFollowersClick = () => {
-    setShowFollowersList((prev) => !prev);
-    setShowFollowingList(false);
+    setShowFollowersModal(true);
   };
 
   const handleFollowingClick = () => {
-    setShowFollowingList((prev) => !prev);
-    setShowFollowersList(false);
+    setShowFollowingModal(true);
   };
 
   const handleAvatarUpload = async (file: File) => {
@@ -416,56 +417,6 @@ export default function ProfilePage() {
             </ul>
           )}
         </section>
-
-        {showFollowersList && (
-          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
-            <h2 className="text-small font-medium uppercase text-parea-black">Followers ({followers.length})</h2>
-            {followers.length === 0 ? (
-              <p className="mt-3 text-regular text-parea-black">No followers yet.</p>
-            ) : (
-              <ul className="mt-3 flex flex-col gap-3">
-                {followers.map((entry) => (
-                  <li key={entry.user_id} className="flex flex-wrap items-center gap-2">
-                    <span className="text-regular text-parea-black">{formatRelationName(entry)}</span>
-                    <button
-                      type="button"
-                      onClick={() => { void handleRemoveFollower(entry.user_id); }}
-                      disabled={followActionUserId === entry.user_id}
-                      className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
-        {showFollowingList && (
-          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
-            <h2 className="text-small font-medium uppercase text-parea-black">Following ({following.length})</h2>
-            {following.length === 0 ? (
-              <p className="mt-3 text-regular text-parea-black">You are not following anyone yet.</p>
-            ) : (
-              <ul className="mt-3 flex flex-col gap-3">
-                {following.map((entry) => (
-                  <li key={entry.user_id} className="flex flex-wrap items-center gap-2">
-                    <span className="text-regular text-parea-black">{formatRelationName(entry)}</span>
-                    <button
-                      type="button"
-                      onClick={() => { void handleUnfollow(entry.user_id); }}
-                      disabled={followActionUserId === entry.user_id}
-                      className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Unfollow
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
 
         {/* Placeholder for tabs and content below */}
         <div className="mt-8">
@@ -550,6 +501,24 @@ export default function ProfilePage() {
           }}
         />
       )}
+
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        heading="Followers"
+        users={followers}
+        onRemoveFollower={handleRemoveFollower}
+        isActionLoading={followActionUserId}
+      />
+
+      <FollowersModal
+        isOpen={showFollowingModal}
+        onClose={() => setShowFollowingModal(false)}
+        heading="Following"
+        users={following}
+        onUnfollow={handleUnfollow}
+        isActionLoading={followActionUserId}
+      />
     </main>
   );
 }

@@ -6,6 +6,7 @@ import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
 import Card from '@/components/ui/Card';
+import FollowersModal from '@/components/ui/FollowersModal';
 import { getUserProfile, getAvatarUrl, followUser, getProfile, unfollowUser } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
@@ -37,6 +38,8 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState(false);
   const [showFollowingList, setShowFollowingList] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -196,13 +199,11 @@ export default function UserProfilePage() {
   };
 
   const handleFollowersClick = () => {
-    setShowFollowersList((prev) => !prev);
-    setShowFollowingList(false);
+    setShowFollowersModal(true);
   };
 
   const handleFollowingClick = () => {
-    setShowFollowingList((prev) => !prev);
-    setShowFollowersList(false);
+    setShowFollowingModal(true);
   };
 
   return (
@@ -237,44 +238,6 @@ export default function UserProfilePage() {
               <p className="text-regular text-parea-black">{followError}</p>
             )}
           </div>
-        )}
-
-        {showFollowersList && (
-          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
-            <h2 className="text-small font-medium uppercase text-parea-black">
-              Followers ({Array.isArray(profile.followers) ? profile.followers.length : 0})
-            </h2>
-            {!Array.isArray(profile.followers) || profile.followers.length === 0 ? (
-              <p className="mt-3 text-regular text-parea-black">No followers yet.</p>
-            ) : (
-              <ul className="mt-3 flex flex-col gap-2">
-                {profile.followers.map((entry: any) => (
-                  <li key={entry?.user_id ?? entry?.id} className="text-regular text-parea-black">
-                    {formatRelationName(entry)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
-        {showFollowingList && (
-          <section className="mt-4 rounded border border-parea-black bg-parea-white p-4">
-            <h2 className="text-small font-medium uppercase text-parea-black">
-              Following ({Array.isArray(profile.following) ? profile.following.length : 0})
-            </h2>
-            {!Array.isArray(profile.following) || profile.following.length === 0 ? (
-              <p className="mt-3 text-regular text-parea-black">Not following anyone yet.</p>
-            ) : (
-              <ul className="mt-3 flex flex-col gap-2">
-                {profile.following.map((entry: any) => (
-                  <li key={entry?.user_id ?? entry?.id} className="text-regular text-parea-black">
-                    {formatRelationName(entry)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         )}
 
         <div className="mt-8">
@@ -319,6 +282,20 @@ export default function UserProfilePage() {
             {activeTab === 'Groups' && <p>Groups content...</p>}
           </div>
         </div>
+
+        <FollowersModal
+          isOpen={showFollowersModal}
+          onClose={() => setShowFollowersModal(false)}
+          heading="Followers"
+          users={Array.isArray(profile.followers) ? profile.followers : []}
+        />
+
+        <FollowersModal
+          isOpen={showFollowingModal}
+          onClose={() => setShowFollowingModal(false)}
+          heading="Following"
+          users={Array.isArray(profile.following) ? profile.following : []}
+        />
       </div>
     </main>
   );

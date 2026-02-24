@@ -56,7 +56,7 @@ export const Card: React.FC<CardProps> = ({
         alt="Card image"
         priority={imagePriority}
       />
-      <div className="flex
+        <div className="flex
         px-8
         flex-col
         justify-between
@@ -75,7 +75,7 @@ export const Card: React.FC<CardProps> = ({
             {content ?? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'}
           </p>
         </div>
-        <div className="flex justify-between items-center w-full mt-4">
+        <div className="flex justify-between items-center w-full self-stretch mt-4">
           <CardAvatar
             src={avatarSrc}
             alt={avatarAlt}
@@ -83,7 +83,6 @@ export const Card: React.FC<CardProps> = ({
             subtitle={userDate}
           />
           <ReactionHolder
-            likeCount={likeCount}
             commentCount={commentCount}
           />
         </div>
@@ -93,7 +92,10 @@ export const Card: React.FC<CardProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className="block no-underline text-inherit hover:opacity-95 transition-opacity">
+      <Link
+        href={href}
+        className="block w-full self-stretch no-underline text-inherit hover:opacity-95 transition-opacity"
+      >
         {inner}
       </Link>
     );

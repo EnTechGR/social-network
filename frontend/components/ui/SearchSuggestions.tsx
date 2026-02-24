@@ -11,6 +11,7 @@ import {
   type SearchEventItem,
 } from '@/lib/api';
 import Tabs from './Tabs';
+import { MessageCircle } from 'lucide-react';
 
 const SEARCH_TABS = ['Posts', 'Events', 'Users', 'Groups'];
 
@@ -129,8 +130,10 @@ function PostSuggestion({
       )}
       <p className="font-sans text-sm text-parea-black/70">{contentPreview}</p>
       <div className="flex items-center gap-4 font-mono text-xs text-parea-black/50">
-        <span>❤️ {post.like_count}</span>
-        <span>💬 {post.comment_count}</span>
+        <span className="flex items-center gap-1">
+          <MessageCircle className="w-4 h-4" />
+          {post.comment_count}
+        </span>
       </div>
     </Link>
   );

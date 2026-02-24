@@ -74,7 +74,7 @@ export function PostDetailFrame({
             boxShadow: '8px 8px 0 0 var(--parea-black)',
           }}
         >
-          {/* Top row: avatar (left) + like/comment (right); on mobile reactions under avatar */}
+          {/* Top row: avatar (left) + comments (right); on mobile reactions under avatar */}
           <div className="flex flex-col gap-4 w-full px-8 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <CardAvatar
               src={avatarSrc}
@@ -82,7 +82,7 @@ export function PostDetailFrame({
               name={userName}
               subtitle={userDate}
             />
-            <ReactionHolder likeCount={likeCount} commentCount={commentCount} />
+            <ReactionHolder commentCount={commentCount} />
           </div>
 
           {/* Image container: flex-1, padding 0 32px 8px 32px, justify-end items-end */}
@@ -103,7 +103,7 @@ export function PostDetailFrame({
               name={userName}
               subtitle={userDate}
             />
-            <ReactionHolder likeCount={likeCount} commentCount={commentCount} />
+            <ReactionHolder commentCount={commentCount} />
           </div>
         </div>
       )}

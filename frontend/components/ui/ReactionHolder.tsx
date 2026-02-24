@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Heart, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 export interface ReactionHolderProps {
   likeCount?: number;
@@ -13,10 +13,10 @@ export interface ReactionHolderProps {
 }
 
 export function ReactionHolder({
-  likeCount = 0,
+  likeCount = 0, // kept for API compatibility, not rendered
   commentCount = 0,
   showCommentIcon = true,
-  onLikeClick,
+  onLikeClick, // kept for API compatibility, not used
   onCommentClick,
   className = '',
 }: ReactionHolderProps) {
@@ -26,24 +26,6 @@ export function ReactionHolder({
       role="group"
       aria-label="Reactions"
     >
-      <span className="flex items-center gap-2 text-sm font-body">
-        {onLikeClick ? (
-          <button
-            type="button"
-            onClick={onLikeClick}
-            className="flex items-center gap-2 p-0 border-0 bg-transparent cursor-pointer text-foreground hover:opacity-80"
-            aria-label={`${likeCount} likes`}
-          >
-            <Heart className="w-6 h-6 shrink-0" strokeWidth={1.5} />
-            {likeCount}
-          </button>
-        ) : (
-          <>
-            <Heart className="w-6 h-6 shrink-0" strokeWidth={1.5} />
-            {likeCount}
-          </>
-        )}
-      </span>
       {showCommentIcon && (
         <span className="flex items-center gap-2 text-sm font-body">
           {onCommentClick ? (
@@ -69,3 +51,4 @@ export function ReactionHolder({
 }
 
 export default ReactionHolder;
+

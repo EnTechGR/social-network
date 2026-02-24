@@ -270,7 +270,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
               text="NEXT"
               onClick={handleNext}
               aria-label="Next step"
-              disabled={isSubmitting || followers.length === 0}
+              disabled={isSubmitting || !title.trim() || !details.trim()}
             />
           ) : (
             <Button 

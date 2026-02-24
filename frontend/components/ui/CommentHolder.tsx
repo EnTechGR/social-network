@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from 'react';
 import { CardAvatar } from './CardAvatar';
-import ReactionHolder from './ReactionHolder';
 import Button from './Button';
 
 export interface CommentItem {
@@ -134,38 +133,31 @@ export function CommentHolder({
             className="flex flex-col items-start self-stretch pt-4 pb-8 border-b border-dashed"
             style={{ borderColor: 'rgba(18, 18, 20, 0.20)' }}
           >
-            {/* Inner div of comment: flex col, gap 16px */}
-            <div className="flex flex-col items-end gap-4 self-stretch">
-              {/* First row: avatar */}
-              <div className="flex items-start self-stretch">
-                <CardAvatar
-                  src={comment.avatarSrc}
-                  alt={comment.avatarAlt}
-                  name={comment.userName}
-                  subtitle={comment.userDate}
-                />
-              </div>
-              {/* Second row: comment text (left) + reaction (right) */}
-              <div className="flex justify-between items-start gap-4 self-stretch">
-                <div className="flex-1 min-w-0">
-                  <p className="text-foreground font-body text-regular font-normal leading-relaxed">
-                    {comment.text}
-                  </p>
-                  {comment.imageSrc && (
-                    <img
-                      src={comment.imageSrc}
-                      alt="Comment attachment"
-                      className="mt-3 max-h-56 w-auto max-w-full rounded border border-parea-black/20 object-contain"
-                    />
-                  )}
+              {/* Inner div of comment: avatar + text */}
+              <div className="flex flex-col items-start gap-4 self-stretch">
+                <div className="flex items-start self-stretch">
+                  <CardAvatar
+                    src={comment.avatarSrc}
+                    alt={comment.avatarAlt}
+                    name={comment.userName}
+                    subtitle={comment.userDate}
+                  />
                 </div>
-                <ReactionHolder
-                  likeCount={comment.likeCount ?? 0}
-                  commentCount={0}
-                  showCommentIcon={false}
-                />
+                <div className="flex self-stretch">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground font-body text-regular font-normal leading-relaxed">
+                      {comment.text}
+                    </p>
+                    {comment.imageSrc && (
+                      <img
+                        src={comment.imageSrc}
+                        alt="Comment attachment"
+                        className="mt-3 max-h-56 w-auto max-w-full rounded border border-parea-black/20 object-contain"
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
           </div>
         ))}
       </div>

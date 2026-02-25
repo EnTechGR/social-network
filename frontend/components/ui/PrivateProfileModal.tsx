@@ -26,6 +26,10 @@ export default function PrivateProfileModal({
   errorMessage = null,
 }: PrivateProfileModalProps) {
   const [requestSent, setRequestSent] = useState(false);
+  const normalizedAvatar = avatarSrc?.trim();
+  const avatarToShow = normalizedAvatar && normalizedAvatar.length > 0
+    ? normalizedAvatar
+    : '/user-avatar-default.png';
 
   const handleClose = useCallback(() => {
     setRequestSent(false);
@@ -112,9 +116,7 @@ export default function PrivateProfileModal({
             border-parea-black
           "
           style={{
-            background: avatarSrc
-              ? `url(${avatarSrc}) lightgray 50% / cover no-repeat`
-              : 'lightgray',
+            background: `url(${avatarToShow}) lightgray 50% / cover no-repeat`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}

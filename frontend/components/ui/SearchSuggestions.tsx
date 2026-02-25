@@ -225,7 +225,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
 
       try {
         const [loadedUsers, loadedPosts, groupsData, memberEvents] = await Promise.all([
-          getPublicUsersForSearch(),
+                getPublicUsersForSearch(),
           getAllPublicPostsForSearch(),
           getAllGroups(),
           getMemberEventsForSearch(),

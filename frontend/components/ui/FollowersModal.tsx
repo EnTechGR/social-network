@@ -5,6 +5,7 @@ import IconButton from './IconButtons';
 import { Search } from 'lucide-react';
 import Button from './Button';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getAvatarUrl } from '@/lib/api';
 
 export interface FollowerUser {
@@ -17,6 +18,10 @@ export interface FollowerUser {
     file_path?: string;
     thumbnail_path?: string;
   };
+  avatar_path?: string;
+  avatar_thumbnail_path?: string;
+  avatar_url?: string;
+  avatar_thumb_url?: string;
 }
 
 interface FollowersModalProps {
@@ -48,6 +53,17 @@ export default function FollowersModal({
   const formatUserName = (user: FollowerUser): string => {
     const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
     return fullName || user.nickname || user.email || user.user_id;
+  };
+
+  const resolveAvatarPath = (user: FollowerUser): string | undefined => {
+    return (
+      user.avatar?.thumbnail_path ||
+      user.avatar?.file_path ||
+      user.avatar_thumbnail_path ||
+      user.avatar_path ||
+      user.avatar_thumb_url ||
+      user.avatar_url
+    );
   };
 
   const filteredUsers = useMemo(() => {
@@ -199,7 +215,7 @@ export default function FollowersModal({
               </p>
             ) : (
               filteredUsers.map((user) => {
-                const avatarUrl = getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path);
+                const avatarUrl = getAvatarUrl(resolveAvatarPath(user));
 
                 return (
                   <div
@@ -240,18 +256,38 @@ export default function FollowersModal({
                         flex-1
                       "
                     >
-                      <p
-                        className="
-                          text-black
-                          font-mono
-                          text-[15px]
-                          font-medium
-                          uppercase
-                          tracking-[-0.15px]
-                        "
-                      >
-                        {formatUserName(user)}
-                      </p>
+                      {heading === 'Followers' || heading === 'Following' ? (
+                        <Link
+                          href={`/profile/${user.user_id}`}
+                          onClick={onClose}
+                          className="
+                            text-black
+                            font-mono
+                            text-[15px]
+                            font-medium
+                            uppercase
+                            tracking-[-0.15px]
+                            no-underline
+                            hover:opacity-70
+                            transition-opacity
+                          "
+                        >
+                          {formatUserName(user)}
+                        </Link>
+                      ) : (
+                        <p
+                          className="
+                            text-black
+                            font-mono
+                            text-[15px]
+                            font-medium
+                            uppercase
+                            tracking-[-0.15px]
+                          "
+                        >
+                          {formatUserName(user)}
+                        </p>
+                      )}
                     </div>
 
                     {/* Action Button - Conditional rendering based on heading prop */}

@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface CardAvatarProps {
   src?: string;
@@ -19,12 +20,13 @@ export const CardAvatar: React.FC<CardAvatarProps> = ({
       items-end
       gap-4
       self-stretch">
-      <div className="w-12 h-12 rounded-full shrink-0 aspect-square overflow-hidden bg-parea-grey">
+      <div className="relative w-12 h-12 rounded-full shrink-0 aspect-square overflow-hidden bg-parea-grey">
         {src ? (
-          <img
+          <Image
             src={src}
             alt={alt}
-            className="w-full h-full object-cover object-center"
+            fill
+            className="object-cover object-center"
           />
         ) : null}
       </div>

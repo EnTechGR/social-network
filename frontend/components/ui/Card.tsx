@@ -22,8 +22,6 @@ interface CardProps {
   href?: string;
   /** Set for first card in feed to fix LCP (loading="eager") */
   imagePriority?: boolean;
-  /** Like count for the post */
-  likeCount?: number;
   /** Comment count for the post */
   commentCount?: number;
 }
@@ -41,14 +39,13 @@ export const Card: React.FC<CardProps> = ({
   content,
   href,
   imagePriority,
-  likeCount = 0,
   commentCount = 0,
 }) => {
   const inner = (
     <div className="flex
       w-full
-      max-w-[917px]
-      min-h-[206px]
+      max-w-229
+      min-h-52
       pb-8
       items-center
       gap-4

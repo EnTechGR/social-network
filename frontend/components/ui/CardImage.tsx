@@ -36,7 +36,7 @@ export const CardImage: React.FC<CardImageProps> = ({
           src={imagePath}
           alt={alt}
           fill
-          className="object-cover rounded-[4px] object-center"
+          className="object-cover rounded-sm object-center"
           sizes="300px"
           priority={priority}
         />

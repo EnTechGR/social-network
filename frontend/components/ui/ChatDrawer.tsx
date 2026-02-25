@@ -102,15 +102,6 @@ function normalizeGroupMessage(data: unknown): GroupChatMessage | null {
   return payload as GroupChatMessage;
 }
 
-function formatTime(value: string): string {
-  if (!value) return '';
-  try {
-    return new Date(value).toLocaleString();
-  } catch {
-    return value;
-  }
-}
-
 export default function ChatDrawer() {
   const [activeTab, setActiveTab] = useState<ChatTab>('DIRECT CHATS');
   const [currentUserId, setCurrentUserId] = useState('');
@@ -124,12 +115,10 @@ export default function ChatDrawer() {
 
   const [directMessages, setDirectMessages] = useState<DirectChatMessage[]>([]);
   const [groupMessages, setGroupMessages] = useState<GroupChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState('');
-
   const [isLoadingList, setIsLoadingList] = useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
+  const [, setChatError] = useState<string | null>(null);
   const [chatModalOpen, setChatModalOpen] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -374,7 +363,6 @@ export default function ChatDrawer() {
     setChatError(null);
     setSelectedGroup(null);
     setSelectedDirectUser({ id: userID, nickname });
-    setInputValue('');
     try {
       const messages = await getChatConversation(userID, 100, 0);
       setDirectMessages(sortByCreatedAtAsc(messages));
@@ -397,7 +385,6 @@ export default function ChatDrawer() {
     setChatError(null);
     setSelectedDirectUser(null);
     setSelectedGroup(group);
-    setInputValue('');
     try {
       const messages = await getGroupChatMessages(group.id, 200, 0);
       setGroupMessages(sortByCreatedAtAsc(messages));
@@ -425,48 +412,8 @@ export default function ChatDrawer() {
     }
   }, [isSending, mergeDirectMessage, selectedDirectUser, touchConversation]);
 
-  const handleSend = useCallback(async () => {
-    const content = inputValue.trim();
-    if (!content || isSending) return;
 
-    setIsSending(true);
-    setChatError(null);
-
-    try {
-      if (activeTab === 'DIRECT CHATS' && selectedDirectUser) {
-        const message = await sendChatMessage(selectedDirectUser.id, content);
-        mergeDirectMessage(message);
-        touchConversation(message);
-      } else if (activeTab === 'GROUP CHATS' && selectedGroup) {
-        const message = await sendGroupChatMessage(selectedGroup.id, content);
-        mergeGroupMessage(message);
-      }
-      setInputValue('');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to send message';
-      setChatError(message);
-    } finally {
-      setIsSending(false);
-    }
-  }, [
-    activeTab,
-    inputValue,
-    isSending,
-    mergeDirectMessage,
-    mergeGroupMessage,
-    selectedDirectUser,
-    selectedGroup,
-    touchConversation,
-  ]);
-
-  const onInputKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      void handleSend();
-    }
-  }, [handleSend]);
-
-  const chatModalMessages = useMemo(() => {
+const chatModalMessages = useMemo(() => {
     return directMessages.map((msg) => ({
       id: msg.message_id,
       text: msg.content,

@@ -78,6 +78,25 @@ export default function SignUpPage() {
       return;
     }
 
+    if (dateOfBirth.length !== 10) {
+      setError('Please enter a valid date of birth');
+      return;
+    }
+
+    const [month, day, year] = dateOfBirth.split('/').map(Number);
+    const parsed = new Date(year, month - 1, day);
+    const today = new Date();
+    if (
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day ||
+      year < 1900 ||
+      parsed > today
+    ) {
+      setError('Please enter a valid date of birth');
+      return;
+    }
+
     if (!isValidEmail(email)) {
       setError('Please enter a valid email address');
       return;
@@ -213,12 +232,7 @@ export default function SignUpPage() {
               <IconButton
                 variant="arrow-right"
                 text="NEXT"
-                onClick={(e) => {
-                  if (e) {
-                    e.preventDefault();
-                    handleStep1Submit(e as any);
-                  }
-                }}
+                type="submit"
                 aria-label="Next"
               />
             </div>
@@ -309,7 +323,7 @@ function SignUpStep2({
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
-              placeholder="USERNAME (OPTIONAL)"
+              placeholder="USERNAME"
               value={nickname}
               onChange={setNickname}
             />
@@ -360,12 +374,7 @@ function SignUpStep2({
               <IconButton
                 variant="arrow-right"
                 text="CREATE ACCOUNT"
-                onClick={() => {
-                  const form = document.querySelector('form');
-                  if (form) {
-                    handleSubmit(new Event('submit') as any);
-                  }
-                }}
+                type="submit"
                 disabled={isLoading}
                 aria-label="Create account"
               />

@@ -31,14 +31,13 @@ interface ChatModalProps {
 }
 
 const mockMessages: Message[] = [
-  { id: '1', text: 'Hey there!', sender: 'other', avatarUrl: '/test-avatar.png' },
+  { id: '1', text: 'Hey there!', sender: 'other' },
   {
     id: '2',
     text: 'Wanted to thank you for help yesterday! You are so kind and I thought I should reach you out to tell how I am appreciated.',
     sender: 'other',
-    avatarUrl: '/test-avatar.png',
   },
-  { id: '3', text: 'Ohh come on! Anyone would the same!', sender: 'self', avatarUrl: '/test-avatar.png' },
+  { id: '3', text: 'Ohh come on! Anyone would the same!', sender: 'self' },
 ];
 
 export default function ChatModal({
@@ -46,8 +45,8 @@ export default function ChatModal({
   onClose,
   preview = false,
   userName,
-  userAvatar = '/test-avatar.png',
-  selfAvatar = '/test-avatar.png',
+  userAvatar = '/user-avatar-default.png',
+  selfAvatar = '/user-avatar-default.png',
   initialMessages = mockMessages,
   controlledMessages,
   onSendMessage,

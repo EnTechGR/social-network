@@ -1,6 +1,7 @@
- 'use client';
+'use client';
 
 import React, { useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { CardAvatar } from './CardAvatar';
 import Button from './Button';
@@ -69,7 +70,7 @@ export function CommentHolder({
       <div className="flex flex-col items-start self-stretch pb-8">
         {/* Comment box: 80px height, 32px padding, border, rounded */}
         <div
-          className="flex w-full min-h-[80px] gap-4 items-center self-stretch rounded border p-8"
+          className="flex w-full min-h-20 gap-4 items-center self-stretch rounded border p-8"
           style={{
             borderColor: 'var(--parea-border)',
             backgroundColor: 'var(--white)',
@@ -115,8 +116,8 @@ export function CommentHolder({
         </div>
         {commentImagePreview && (
           <div className="mt-3 flex items-center gap-2 rounded border border-parea-black/30 bg-parea-white px-3 py-2">
-            <img src={commentImagePreview} alt={commentImageName || 'Comment image'} className="h-10 w-10 rounded object-cover" />
-            <span className="max-w-[220px] truncate text-small text-parea-black">{commentImageName || 'Attached image'}</span>
+            <Image src={commentImagePreview} alt={commentImageName || 'Comment image'} width={40} height={40} className="rounded object-cover" />
+            <span className="max-w-55 truncate text-small text-parea-black">{commentImageName || 'Attached image'}</span>
             <button
               type="button"
               onClick={onCommentImageRemove}
@@ -136,45 +137,48 @@ export function CommentHolder({
             className="flex flex-col items-start self-stretch pt-4 pb-8 border-b border-dashed"
             style={{ borderColor: 'rgba(18, 18, 20, 0.20)' }}
           >
-              {/* Inner div of comment: avatar + text */}
-              <div className="flex flex-col items-start gap-4 self-stretch">
-                <div className="flex items-start self-stretch">
-                  {comment.userId ? (
-                    <Link
-                      href={`/profile/${comment.userId}`}
-                      className="no-underline text-inherit hover:opacity-90 transition-opacity"
-                    >
-                      <CardAvatar
-                        src={comment.avatarSrc}
-                        alt={comment.avatarAlt}
-                        name={comment.userName}
-                        subtitle={comment.userDate}
-                      />
-                    </Link>
-                  ) : (
+            {/* Inner div of comment: avatar + text */}
+            <div className="flex flex-col items-start gap-4 self-stretch">
+              <div className="flex items-start self-stretch">
+                {comment.userId ? (
+                  <Link
+                    href={`/profile/${comment.userId}`}
+                    className="no-underline text-inherit hover:opacity-90 transition-opacity"
+                  >
                     <CardAvatar
                       src={comment.avatarSrc}
                       alt={comment.avatarAlt}
                       name={comment.userName}
                       subtitle={comment.userDate}
                     />
+                  </Link>
+                ) : (
+                  <CardAvatar
+                    src={comment.avatarSrc}
+                    alt={comment.avatarAlt}
+                    name={comment.userName}
+                    subtitle={comment.userDate}
+                  />
+                )}
+              </div>
+              <div className="flex self-stretch">
+                <div className="flex-1 min-w-0">
+                  <p className="text-foreground font-body text-regular font-normal leading-relaxed">
+                    {comment.text}
+                  </p>
+                  {comment.imageSrc && (
+                    <Image
+                      src={comment.imageSrc}
+                      alt="Comment attachment"
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="mt-3 max-h-56 w-auto max-w-full rounded border border-parea-black/20 object-contain"
+                    />
                   )}
                 </div>
-                <div className="flex self-stretch">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-foreground font-body text-regular font-normal leading-relaxed">
-                      {comment.text}
-                    </p>
-                    {comment.imageSrc && (
-                      <img
-                        src={comment.imageSrc}
-                        alt="Comment attachment"
-                        className="mt-3 max-h-56 w-auto max-w-full rounded border border-parea-black/20 object-contain"
-                      />
-                    )}
-                  </div>
-                </div>
               </div>
+            </div>
           </div>
         ))}
       </div>

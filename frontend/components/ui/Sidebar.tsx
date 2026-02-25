@@ -51,6 +51,32 @@ function buildWebSocketURL(): string {
   }
 }
 
+function getNotificationHref(notification: NotificationItem): string | null {
+  const { type, post_id, from_user_id, group_id } = notification;
+  switch (type) {
+    case 'follow_request':
+    case 'follow_accept':
+      return from_user_id ? `/profile/${from_user_id}` : null;
+    case 'comment':
+    case 'post_comment':
+    case 'edit_comment':
+    case 'delete_comment':
+    case 'like':
+    case 'dislike':
+    case 'love':
+    case 'post_reaction':
+    case 'comment_reaction':
+      return post_id ? `/post/${post_id}` : null;
+    case 'group_invite':
+    case 'group_join_request':
+    case 'group_join_decision':
+    case 'group_event':
+      return group_id ? `/group/${group_id}` : null;
+    default:
+      return null;
+  }
+}
+
 function formatNotificationText(notification: NotificationItem): string {
   const actor = notification.nickname || 'Someone';
 
@@ -427,13 +453,15 @@ export default function Sidebar() {
           <div className="w-10 shrink-0 flex items-center justify-center">
             <SidebarToggle isOpen={isOpen || !!activeDrawer} onClick={handleToggle} />
           </div>
-          <Image
-            src="/logo-light.svg"
-            alt="Parea Logo"
-            width={80}
-            height={32}
-            className={`h-8 w-auto shrink-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-          />
+          <Link href="/feed">
+            <Image
+              src="/logo-light.svg"
+              alt="Parea Logo"
+              width={80}
+              height={32}
+              className={`h-8 w-auto shrink-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+            />
+          </Link>
         </div>
 
         {/* Menu items */}
@@ -671,20 +699,37 @@ export default function Sidebar() {
                       </span>
                     </div>
                   ) : (
-                    notifications.map((notification) => (
+                    notifications.map((notification) => {
+                      const href = getNotificationHref(notification);
+                      return (
                       <div
                         key={notification.id}
                         className={`flex py-2 px-4 items-center gap-4 self-stretch rounded-lg transition-colors ${notification.read ? 'bg-parea-white' : 'bg-parea-yellow/30'
                           }`}
                       >
-                        <div className="flex items-start flex-1">
-                          <span
-                            className="text-parea-black text-sm font-medium leading-[150%]"
-                            style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                        {href ? (
+                          <Link
+                            href={href}
+                            onClick={() => { setActiveDrawer(null); setIsOpen(false); }}
+                            className="flex items-start flex-1 no-underline hover:opacity-70 transition-opacity"
                           >
-                            {formatNotificationText(notification)}
-                          </span>
-                        </div>
+                            <span
+                              className="text-parea-black text-sm font-medium leading-[150%]"
+                              style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                            >
+                              {formatNotificationText(notification)}
+                            </span>
+                          </Link>
+                        ) : (
+                          <div className="flex items-start flex-1">
+                            <span
+                              className="text-parea-black text-sm font-medium leading-[150%]"
+                              style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                            >
+                              {formatNotificationText(notification)}
+                            </span>
+                          </div>
+                        )}
                         {notification.type === 'follow_request' && (
                           <div className="flex items-center gap-2">
                             <button
@@ -718,7 +763,8 @@ export default function Sidebar() {
                           </svg>
                         </button>
                       </div>
-                    ))
+                    );
+                    })
                   )}
                 </div>
               </div>

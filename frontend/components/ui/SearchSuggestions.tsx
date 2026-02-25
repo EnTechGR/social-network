@@ -77,7 +77,7 @@ function GroupSuggestion({
   isLast: boolean;
   onClose?: () => void;
 }) {
-  const descriptionPreview = group.description 
+  const descriptionPreview = group.description
     ? (group.description.length > 80 ? group.description.substring(0, 80) + '...' : group.description)
     : 'No description';
 
@@ -217,7 +217,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
 
       try {
         const [loadedUsers, loadedPosts, groupsData, memberEvents] = await Promise.all([
-                getPublicUsersForSearch(),
+          getPublicUsersForSearch(),
           getAllPublicPostsForSearch(),
           getAllGroups(),
           getMemberEventsForSearch(),
@@ -325,7 +325,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       )}
 
       {activeTab === 'Events' && !isLoading && !error && filteredEvents.length > 0 && (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-105 overflow-y-auto">
           {filteredEvents.map((event, index) => (
             <EventSuggestion
               key={event.id}
@@ -351,7 +351,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       )}
 
       {activeTab === 'Posts' && !isLoading && !error && filteredPosts.length > 0 && (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-105 overflow-y-auto">
           {filteredPosts.map((post, index) => (
             <PostSuggestion
               key={post.id}
@@ -377,7 +377,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       )}
 
       {activeTab === 'Groups' && !isLoading && !error && filteredGroups.length > 0 && (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-105 overflow-y-auto">
           {filteredGroups.map((group, index) => (
             <GroupSuggestion
               key={group.id}
@@ -403,7 +403,7 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
       )}
 
       {activeTab === 'Users' && !isLoading && !error && filteredUsers.length > 0 && (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-105 overflow-y-auto">
           {filteredUsers.map((user, index) => (
             <UserSuggestion
               key={user.id}

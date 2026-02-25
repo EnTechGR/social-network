@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const publicRoutes = ['/login', '/signup'];
 
-const skipAuth = true; // Set to false to enable auth
+const skipAuth = false;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

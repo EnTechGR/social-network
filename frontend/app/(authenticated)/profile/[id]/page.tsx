@@ -32,11 +32,6 @@ function formatPostDate(isoDate: string): string {
   }
 }
 
-function formatRelationName(entry: any): string {
-  const fullName = [entry?.first_name, entry?.last_name].filter(Boolean).join(' ').trim();
-  return fullName || entry?.nickname || entry?.email || entry?.user_id || 'Unknown user';
-}
-
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
@@ -49,8 +44,6 @@ export default function UserProfilePage() {
   const [followError, setFollowError] = useState<string | null>(null);
   const [followRequested, setFollowRequested] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [showFollowersList, setShowFollowersList] = useState(false);
-  const [showFollowingList, setShowFollowingList] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [postImagesById, setPostImagesById] = useState<Record<string, string | undefined>>({});
   const [showFollowingModal, setShowFollowingModal] = useState(false);
@@ -58,6 +51,7 @@ export default function UserProfilePage() {
   const [chatMessages, setChatMessages] = useState<DirectChatMessage[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
+  const [selfAvatarUrl, setSelfAvatarUrl] = useState('/user-avatar-default.png');
 
   useEffect(() => {
     if (!id) return;
@@ -75,6 +69,7 @@ export default function UserProfilePage() {
         if (cancelled) return;
         setProfile(data);
         if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
+        setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
         if (data.privateProfile) setShowPrivateModal(true);
         if (!data.privateProfile && !data.is_own_profile && me?.id) {
           const followerIds = Array.isArray(data.followers)
@@ -340,7 +335,7 @@ export default function UserProfilePage() {
                 disabled={isSubmittingFollow}
                 onClick={() => {
                   if (isFollowing) void handleUnfollow();
-                  else void requestFollow().catch(() => {});
+                  else void requestFollow().catch(() => { });
                 }}
               >
                 <span style={{ display: 'block', textAlign: 'center', width: '5rem' }}>
@@ -354,48 +349,50 @@ export default function UserProfilePage() {
         </div>
 
         <div className="mt-6 max-w-311.5 w-full">
-            {activeTab === 'Posts' && (
-              <>
-                {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
-                  <p className="text-regular text-parea-black">No posts yet.</p>
-                ) : (
-                  <div className="flex flex-col items-start gap-0">
-                    {profile.posts.map((post: any, index: number) => {
-                      const postId = post.id || post.post_id;
-                      const enrichedImage = postId ? postImagesById[postId] : undefined;
-                      const rawImagePath = enrichedImage || post.image_url || post.thumbnail_url;
-                      const imageSrc = getPostImageUrl(rawImagePath);
-                      return (
-                        <Card
-                          key={postId || `${post.title}-${index}`}
-                          imageType="post"
-                          imageSrc={imageSrc}
-                          avatarSrc={getAvatarUrl(u.avatar?.thumbnail_path || u.avatar?.file_path)}
-                          avatarAlt={u.nickname || 'Author'}
-                          userName={(u.nickname || 'User').toUpperCase()}
-                          userDate={formatPostDate(post.created_at)}
-                          title={post.title}
-                          content={post.content}
-                          href={postId ? `/post/${postId}` : undefined}
-                          imagePriority={index === 0}
-                          likeCount={post.like_count || 0}
-                          commentCount={post.comment_count || 0}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-            {activeTab === 'Events' && <p>Events content...</p>}
-            {activeTab === 'Reactions' && <p>Reactions content...</p>}
-            {activeTab === 'Groups' && <p>Groups content...</p>}
+          {activeTab === 'Posts' && (
+            <>
+              {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
+                <p className="text-regular text-parea-black">No posts yet.</p>
+              ) : (
+                <div className="flex flex-col items-start gap-0">
+                  {profile.posts.map((post: any, index: number) => {
+                    const postId = post.id || post.post_id;
+                    const enrichedImage = postId ? postImagesById[postId] : undefined;
+                    const rawImagePath = enrichedImage || post.image_url || post.thumbnail_url;
+                    const imageSrc = getPostImageUrl(rawImagePath);
+                    return (
+                      <Card
+                        key={postId || `${post.title}-${index}`}
+                        imageType="post"
+                        imageSrc={imageSrc}
+                        avatarSrc={getAvatarUrl(u.avatar?.thumbnail_path || u.avatar?.file_path)}
+                        avatarAlt={u.nickname || 'Author'}
+                        userName={(u.nickname || 'User').toUpperCase()}
+                        userDate={formatPostDate(post.created_at)}
+                        title={post.title}
+                        content={post.content}
+                        href={postId ? `/post/${postId}` : undefined}
+                        imagePriority={index === 0}
+                        likeCount={post.like_count || 0}
+                        commentCount={post.comment_count || 0}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+          {activeTab === 'Events' && <p>Events content...</p>}
+          {activeTab === 'Reactions' && <p>Reactions content...</p>}
+          {activeTab === 'Groups' && <p>Groups content...</p>}
         </div>
 
         <ChatModal
           isOpen={chatModalOpen}
           onClose={() => setChatModalOpen(false)}
           userName={userForWrap.name}
+          userAvatar={userForWrap.avatarUrl}
+          selfAvatar={selfAvatarUrl}
           controlledMessages={chatMessages.map((m) => ({
             id: m.message_id,
             text: m.content,

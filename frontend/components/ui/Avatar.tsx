@@ -103,10 +103,11 @@ export default function Avatar({
       <div className="absolute inset-0">{renderContent()}</div>
       {/* Frame overlay only when no custom image (placeholder state) */}
       {isPlaceholderNoImage && (
-        <img
+        <Image
           src="/avatar.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          fill
+          className="object-contain pointer-events-none"
           aria-hidden
         />
       )}

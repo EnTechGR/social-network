@@ -23,6 +23,7 @@ import {
   denyGroupRequest,
   getGroupChatMessages,
   sendGroupChatMessage,
+  getPostImageUrl,
   type GroupChatMessage,
 } from '@/lib/api';
 
@@ -568,21 +569,26 @@ export default function GroupDetailPage() {
                 )}
                 {!postsLoading && posts.length > 0 && (
                   <div className="flex flex-col items-start gap-0">
-                    {posts.map((post, index) => (
-                      <Card
-                        key={post.id}
-                        imageType="post"
-                        imageSrc={post.image_url || post.thumbnail_url}
-                        avatarSrc="/user-avatar-default.png"
-                        avatarAlt={post.nickname ?? 'Author'}
-                        userName={(post.nickname ?? 'User').toUpperCase()}
-                        userDate={formatDate(post.created_at)}
-                        title={post.title}
-                        content={post.content}
-                        href={`/post/${post.id}`}
-                        imagePriority={index === 0}
-                      />
-                    ))}
+                    {posts.map((post, index) => {
+                      const rawImagePath = post.thumbnail_url || post.image_url;
+                      const imageUrl = getPostImageUrl(rawImagePath);
+
+                      return (
+                        <Card
+                          key={post.id}
+                          imageType="post"
+                          imageSrc={imageUrl}
+                          avatarSrc="/user-avatar-default.png"
+                          avatarAlt={post.nickname ?? 'Author'}
+                          userName={(post.nickname ?? 'User').toUpperCase()}
+                          userDate={formatDate(post.created_at)}
+                          title={post.title}
+                          content={post.content}
+                          href={`/post/${post.id}`}
+                          imagePriority={index === 0}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </>

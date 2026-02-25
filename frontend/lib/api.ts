@@ -563,6 +563,30 @@ export function getAvatarUrl(avatarPath: string | undefined): string {
 }
 
 /**
+ * Build a fully-qualified image URL for post images.
+ * Handles plain filenames, /uploads/*, /static/*, or already absolute URLs.
+ */
+export function getPostImageUrl(imagePath: string | undefined): string | undefined {
+  if (!imagePath) return undefined;
+
+  // Already absolute (e.g. from feed API)
+  if (/^https?:\/\//i.test(imagePath)) {
+    return imagePath;
+  }
+
+  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // Paths that already include /static should be treated as API-relative
+  if (imagePath.startsWith('/static/')) {
+    return `${base}${imagePath}`;
+  }
+
+  // Normalise common backend-relative variants under /static/uploads
+  const cleaned = imagePath.replace(/^\/?uploads\//, '');
+  return `${base}/static/${cleaned}`;
+}
+
+/**
  * Get current user's posts (includes comments; can 500 if comment load fails).
  * GET /api/v1/user/posts
  */

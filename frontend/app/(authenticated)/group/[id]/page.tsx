@@ -388,6 +388,28 @@ export default function GroupDetailPage() {
     chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
   }, [chatMessages, activeTab]);
 
+  const [membersModalUsers, setMembersModalUsers] = useState<FollowerUser[]>([]);
+
+  useEffect(() => {
+    if (!showMembersModal || !groupId) return;
+    let cancelled = false;
+    getGroupMembers(groupId)
+      .then((list) => {
+        if (cancelled) return;
+        setMembersModalUsers(
+          (Array.isArray(list) ? list : []).map((m: any) => ({
+            user_id: m.user_id,
+            nickname: m.nickname,
+            first_name: m.first_name,
+            last_name: m.last_name,
+            email: m.email,
+          }))
+        );
+      })
+      .catch(() => { if (!cancelled) setMembersModalUsers([]); });
+    return () => { cancelled = true; };
+  }, [showMembersModal, groupId]);
+
   const handleLeaveGroup = () => {
     alert('Leaving groups is not available in this build yet.');
   };
@@ -546,7 +568,7 @@ export default function GroupDetailPage() {
           onJoin={handleJoin}
           onInvite={handleInvite}
           onLeaveGroup={handleLeaveGroup}
-          onMembersClick={handleMembersClick}
+          onMembersClick={isMember ? handleMembersClick : undefined}
         />
 
         {!isMember && (
@@ -807,13 +829,7 @@ export default function GroupDetailPage() {
         isOpen={showMembersModal}
         onClose={() => setShowMembersModal(false)}
         heading="Members"
-        users={members.map((m: any) => ({
-          user_id: m.user_id,
-          nickname: m.nickname,
-          first_name: m.first_name,
-          last_name: m.last_name,
-          email: m.email,
-        }))}
+        users={membersModalUsers}
       />
     </main>
   );

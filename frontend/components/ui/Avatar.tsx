@@ -69,10 +69,13 @@ export default function Avatar({
       );
     }
 
-    // Default image only for type user/group (not for type 'image')
-    const defaultSrc = type === 'group'
-      ? '/group-avatar-default.png'
-      : '/user-avatar-default.png';
+    // Groups should not render a default avatar image when no source is provided.
+    if (type === 'group') {
+      return null;
+    }
+
+    // Default image for user avatars when no source exists.
+    const defaultSrc = '/user-avatar-default.png';
 
     return (
       <Image

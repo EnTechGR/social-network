@@ -5,7 +5,7 @@ import { CardAvatar } from './CardAvatar';
 import ReactionHolder from './ReactionHolder';
 
 interface CardProps {
-  imageType: 'post' | 'event';
+  imageType: 'post';
   imageSrc?: string;
   hideImage?: boolean;
   avatarSrc: string;

@@ -455,7 +455,7 @@ export default function ComponentsPage() {
             userDate="Jan 20, 2026"
           />
           <Card
-            imageType="event"
+            imageType="post"
             imageSrc="/eventCardImage.png"
             avatarSrc="/test-avatar.png"
             avatarAlt="Event creator"
@@ -470,7 +470,7 @@ export default function ComponentsPage() {
             userDate="Jan 22, 2026"
           />
           <Card
-            imageType="event"
+            imageType="post"
             avatarSrc="/test-avatar.png"
             avatarAlt="User"
             userName="Default Event"

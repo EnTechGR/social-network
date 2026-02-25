@@ -619,26 +619,35 @@ export default function GroupDetailPage() {
         )}
 
         <div>
-          <Tabs
-            tabs={['Posts', 'Events', 'Chat']}
-            defaultTab="Posts"
-            onTabChange={(tab) => setActiveTab(tab)}
-          />
+          <div className="flex items-center justify-between gap-6">
+            <Tabs
+              tabs={['Posts', 'Events', 'Chat']}
+              defaultTab="Posts"
+              onTabChange={(tab) => setActiveTab(tab)}
+            />
+            {isMember && activeTab === 'Posts' && (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => setCreatePostOpen(true)}
+              >
+                Create Post
+              </Button>
+            )}
+            {isMember && activeTab === 'Events' && (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => setCreateEventOpen(true)}
+              >
+                Create Event
+              </Button>
+            )}
+          </div>
 
           <div className="mt-6">
             {activeTab === 'Posts' && (
               <>
-                {isMember && (
-                  <div className="mb-4">
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      onClick={() => setCreatePostOpen(true)}
-                    >
-                      Create Post
-                    </Button>
-                  </div>
-                )}
                 {postsLoading && <p className="text-regular text-parea-black">Loading posts...</p>}
                 {!postsLoading && posts.length === 0 && (
                   <p className="text-regular text-parea-black">No posts yet.</p>
@@ -650,7 +659,7 @@ export default function GroupDetailPage() {
                       const rawImagePath = meta.imageUrl || post.thumbnail_url || post.image_url;
                       const imageUrl = getPostImageUrl(rawImagePath);
 
-                      const avatarSrc = meta.avatarUrl || '/user-avatar-default.png';
+                      const avatarSrc = meta.avatarUrl || '';
                       const avatarAlt = post.nickname ?? 'Author';
                       const userName = (post.nickname ?? 'User').toUpperCase();
 
@@ -677,17 +686,6 @@ export default function GroupDetailPage() {
 
             {activeTab === 'Events' && (
               <>
-                {isMember && (
-                  <div className="mb-4">
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      onClick={() => setCreateEventOpen(true)}
-                    >
-                      Create Event
-                    </Button>
-                  </div>
-                )}
                 {eventsLoading && <p className="text-regular text-parea-black">Loading events...</p>}
                 {!eventsLoading && events.length === 0 && (
                   <p className="text-regular text-parea-black">No events yet.</p>
@@ -697,9 +695,9 @@ export default function GroupDetailPage() {
                     {events.map((ev) => (
                       <Card
                         key={ev.id ?? ev.event_id}
-                        imageType="event"
+                        imageType="post"
                         hideImage
-                        avatarSrc="/user-avatar-default.png"
+                        avatarSrc=""
                         avatarAlt={ev.creator_nickname ?? 'Creator'}
                         userName={(ev.creator_nickname ?? 'User').toUpperCase()}
                         userDate={formatDate(ev.event_time ?? ev.created_at)}

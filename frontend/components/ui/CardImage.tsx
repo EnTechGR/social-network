@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 
 interface CardImageProps {
-  type: 'post' | 'event';
+  type: 'post';
   src?: string;
   alt?: string;
   /** Set true for the first card in a feed (above the fold) to fix LCP */
@@ -18,7 +18,7 @@ export const CardImage: React.FC<CardImageProps> = ({
   const getImagePath = (): string => {
     if (src) return src;
     if (type === 'post') return '/postDefaultImage.png';
-    return '/eventDefaultImage.png';
+    return '/postDefaultImage.png';
   };
 
   const imagePath = getImagePath();

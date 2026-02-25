@@ -10,7 +10,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
@@ -527,11 +526,18 @@ export default function ProfilePage() {
 
         {/* Placeholder for tabs and content below */}
         <div className="mt-8">
-          <Tabs
-            tabs={['Posts', 'Events', 'Reactions', 'Groups']}
-            defaultTab="Posts"
-            onTabChange={(tab) => setActiveTab(tab)}
-          />
+          <div className="flex items-center justify-between gap-6">
+            <Tabs
+              tabs={['Posts', 'Events', 'Reactions', 'Groups']}
+              defaultTab="Posts"
+              onTabChange={(tab) => setActiveTab(tab)}
+            />
+            {activeTab === 'Groups' && (
+              <Button variant="primary" size="lg" onClick={() => setCreateGroupOpen(true)}>
+                Create Group
+              </Button>
+            )}
+          </div>
 
           {/* Tab content */}
           <div className="mt-6">
@@ -581,26 +587,35 @@ export default function ProfilePage() {
             {activeTab === 'Reactions' && <p className="text-regular text-parea-black">Reactions content...</p>}
             {activeTab === 'Groups' && (
               <>
-                <div className="mb-4">
-                  <Button variant="primary" size="lg" onClick={() => setCreateGroupOpen(true)}>
-                    Create Group
-                  </Button>
-                </div>
                 {groupsLoading && <p className="text-regular text-parea-black">Loading groups...</p>}
                 {!groupsLoading && groupsError && <p className="text-regular text-parea-black">{groupsError}</p>}
                 {!groupsLoading && !groupsError && myGroups.length === 0 && (
                   <p className="text-regular text-parea-black">No groups yet.</p>
                 )}
                 {!groupsLoading && !groupsError && myGroups.length > 0 && (
-                  <ul className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-4">
                     {myGroups.map((g) => (
-                      <li key={g.id}>
-                        <Link href={`/group/${g.id}`} className="text-regular text-parea-black underline hover:no-underline">
+                      <div
+                        key={g.id}
+                        onClick={() => router.push(`/group/${g.id}`)}
+                        className="border border-parea-black p-6 bg-white cursor-pointer hover:shadow-[4px_4px_0_0_#000] transition-shadow"
+                      >
+                        <h3 className="text-2xl font-bold text-parea-black mb-2">
                           {g.title ?? g.name ?? 'Group'}
-                        </Link>
-                      </li>
+                        </h3>
+                        {g.description && (
+                          <p className="text-regular text-parea-black/70 mb-3">
+                            {g.description}
+                          </p>
+                        )}
+                        <div className="flex gap-4 text-sm text-parea-black/60">
+                          <span>{g.member_count || 0} members</span>
+                          <span>•</span>
+                          <span>Created by {g.owner_nickname || 'Unknown'}</span>
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </>
             )}

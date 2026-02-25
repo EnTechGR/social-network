@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface CardAvatarProps {
-  src: string;
+  src?: string;
   alt: string;
   name: string;
   subtitle?: string;
@@ -20,11 +20,13 @@ export const CardAvatar: React.FC<CardAvatarProps> = ({
       gap-4
       self-stretch">
       <div className="w-12 h-12 rounded-full shrink-0 aspect-square overflow-hidden bg-parea-grey">
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-full object-cover object-center"
-        />
+        {src ? (
+          <img
+            src={src}
+            alt={alt}
+            className="w-full h-full object-cover object-center"
+          />
+        ) : null}
       </div>
       <div className="flex
         flex-col

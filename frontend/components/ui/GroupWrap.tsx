@@ -10,7 +10,6 @@
 
 import { useEffect, useState } from 'react';
 import Button from './Button';
-import Avatar from './Avatar';
 
 interface GroupWrapProps {
   /** Group data to display */
@@ -136,14 +135,6 @@ export default function GroupWrap({
     >
       {/* Column 1: Image + Name/Description */}
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-11 flex-1 self-stretch">
-        {/* Group Image */}
-        <Avatar
-            type={group.imageUrl ? 'image' : 'group'}
-            src={group.imageUrl}
-            alt={`${group.name}`}
-            size="xl"
-        />
-
         {/* Name and Description */}
         <div className="flex flex-col justify-center items-start gap-3 flex-1 self-stretch">
           <h2 className="label-lg uppercase text-parea-black">

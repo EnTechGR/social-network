@@ -26,6 +26,13 @@ build/
 *.test
 *.tsbuildinfo
 
+# Backend runtime artifacts (SQLite DBs, uploads)
+database/
+backend/API/cmd/database/
+backend/API/database/
+backend/API/uploads/
+backend/API/cmd/uploads/
+
 # IDE
 .vscode/
 .idea/

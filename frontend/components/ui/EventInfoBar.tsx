@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import Button from './Button';
 import DropdownButton from './DropdownButton';
 
 export type RsvpOption = 'RSVP' | 'GOING' | 'NOT GOING' | 'MAYBE';
 
 export interface EventInfoBarProps {
-  location?: string;
   goingCount?: number;
   date?: string;
   time?: string;
@@ -23,7 +22,6 @@ const labelClass = 'label text-foreground';
 const RSVP_OPTIONS: RsvpOption[] = ['RSVP', 'GOING', 'NOT GOING', 'MAYBE'];
 
 export function EventInfoBar({
-  location,
   goingCount = 0,
   date,
   time,
@@ -47,12 +45,6 @@ export function EventInfoBar({
     >
       {/* Div holding event info: wraps with consistent gap; row layout only at md+ */}
       <div className="flex flex-wrap items-end gap-x-6 gap-y-3 md:gap-x-12 md:gap-y-0">
-        {location != null && (
-          <div className="flex items-start gap-1">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-foreground" strokeWidth={1.5} />
-            <span className={labelClass}>{location}</span>
-          </div>
-        )}
         <div className="flex items-start gap-1">
           <span
             className="text-foreground font-bold leading-relaxed uppercase tracking-[-0.15px]"

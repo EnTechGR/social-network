@@ -8,7 +8,6 @@ import EventInfoBar, { type RsvpOption } from './EventInfoBar';
 export interface EventDetailFrameProps {
   title: string;
   eventText?: string;
-  location?: string;
   goingCount?: number;
   date?: string;
   time?: string;
@@ -20,7 +19,6 @@ export interface EventDetailFrameProps {
 export function EventDetailFrame({
   title,
   eventText,
-  location,
   goingCount = 0,
   date,
   time,
@@ -48,7 +46,7 @@ export function EventDetailFrame({
 
       {/* Frame: event info bar */}
       <div
-        className="flex flex-col items-start self-stretch rounded border overflow-hidden"
+        className="flex flex-col items-start self-stretch rounded border overflow-visible"
         style={{
           borderColor: 'var(--parea-border)',
           boxShadow: '8px 8px 0 0 var(--parea-black)',
@@ -56,7 +54,6 @@ export function EventDetailFrame({
       >
         {/* Holder div: event info bar instead of avatar + reactions */}
         <EventInfoBar
-          location={location}
           goingCount={goingCount}
           date={date}
           time={time}
@@ -64,19 +61,14 @@ export function EventDetailFrame({
           onRsvpSelect={onRsvpSelect}
           onInviteClick={onInviteClick}
         />
-
-      </div>
-
-      {/* Details wrap: event text below info bar */}
-      {(eventText != null && eventText !== '') && (
-        <div className="flex flex-col items-start self-stretch px-8">
-          <div className="flex flex-col items-start self-stretch">
-            <p className="text-foreground font-body text-regular font-normal leading-relaxed self-stretch">
+        {(eventText != null && eventText !== '') && (
+          <div className="w-full px-8 pb-6">
+            <p className="text-foreground font-body text-regular font-normal leading-relaxed">
               {eventText}
             </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

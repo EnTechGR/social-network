@@ -157,6 +157,7 @@ export default function FeedPage() {
                         avatarAlt={post.author_nickname || 'User'}
                         userName={(post.author_nickname || 'User').toUpperCase()}
                         userDate={formatPostDate(post.created_at)}
+                        userHref={`/profile/${post.author_id}`}
                         title={post.title}
                         content={post.content}
                         href={`/post/${post.id}`}

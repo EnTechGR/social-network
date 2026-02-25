@@ -1,11 +1,14 @@
-'use client';
+ 'use client';
 
 import React, { useRef, useState } from 'react';
+import Link from 'next/link';
 import { CardAvatar } from './CardAvatar';
 import Button from './Button';
 
 export interface CommentItem {
   id: string;
+  /** ID of the user who authored the comment (for profile link) */
+  userId?: string;
   avatarSrc: string;
   avatarAlt: string;
   userName: string;
@@ -136,12 +139,26 @@ export function CommentHolder({
               {/* Inner div of comment: avatar + text */}
               <div className="flex flex-col items-start gap-4 self-stretch">
                 <div className="flex items-start self-stretch">
-                  <CardAvatar
-                    src={comment.avatarSrc}
-                    alt={comment.avatarAlt}
-                    name={comment.userName}
-                    subtitle={comment.userDate}
-                  />
+                  {comment.userId ? (
+                    <Link
+                      href={`/profile/${comment.userId}`}
+                      className="no-underline text-inherit hover:opacity-90 transition-opacity"
+                    >
+                      <CardAvatar
+                        src={comment.avatarSrc}
+                        alt={comment.avatarAlt}
+                        name={comment.userName}
+                        subtitle={comment.userDate}
+                      />
+                    </Link>
+                  ) : (
+                    <CardAvatar
+                      src={comment.avatarSrc}
+                      alt={comment.avatarAlt}
+                      name={comment.userName}
+                      subtitle={comment.userDate}
+                    />
+                  )}
                 </div>
                 <div className="flex self-stretch">
                   <div className="flex-1 min-w-0">

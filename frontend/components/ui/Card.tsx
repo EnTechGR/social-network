@@ -11,6 +11,8 @@ interface CardProps {
   avatarAlt: string;
   userName: string;
   userDate?: string;
+  /** Optional link to the author's profile (e.g. /profile/[id]) */
+  userHref?: string;
   /** When provided, card title (e.g. post title) */
   title?: string;
   /** When provided, card body (e.g. post content) */
@@ -32,6 +34,7 @@ export const Card: React.FC<CardProps> = ({
   avatarAlt,
   userName,
   userDate,
+  userHref,
   title,
   content,
   href,
@@ -76,12 +79,30 @@ export const Card: React.FC<CardProps> = ({
           </p>
         </div>
         <div className="flex justify-between items-center w-full self-stretch mt-4">
-          <CardAvatar
-            src={avatarSrc}
-            alt={avatarAlt}
-            name={userName}
-            subtitle={userDate}
-          />
+          {userHref ? (
+            <Link
+              href={userHref}
+              className="no-underline text-inherit hover:opacity-90 transition-opacity"
+              onClick={(e) => {
+                // Prevent the parent card link (href) from firing when clicking the avatar
+                e.stopPropagation();
+              }}
+            >
+              <CardAvatar
+                src={avatarSrc}
+                alt={avatarAlt}
+                name={userName}
+                subtitle={userDate}
+              />
+            </Link>
+          ) : (
+            <CardAvatar
+              src={avatarSrc}
+              alt={avatarAlt}
+              name={userName}
+              subtitle={userDate}
+            />
+          )}
           <ReactionHolder
             commentCount={commentCount}
           />

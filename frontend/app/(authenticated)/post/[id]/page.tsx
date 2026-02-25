@@ -4,7 +4,13 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PostDetailFrame from '@/components/ui/PostDetailFrame';
 import type { CommentItem } from '@/components/ui/CommentHolder';
-import { getPostById, createCommentWithImage, getCommentsByPostId } from '@/lib/api';
+import {
+  getPostById,
+  createCommentWithImage,
+  getCommentsByPostId,
+  getProfile,
+  getAvatarUrl,
+} from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -19,6 +25,7 @@ function formatPostDate(isoDate: string): string {
 function mapCommentToItem(c: any): CommentItem {
   return {
     id: c.id ?? c.comment_id ?? '',
+    userId: c.author_id,
     avatarSrc: c.author_avatar_thumb_url || c.author_avatar_url || '/user-avatar-default.png',
     avatarAlt: c.author_nickname ?? 'User',
     userName: (c.author_nickname ?? 'User').toUpperCase(),
@@ -39,6 +46,8 @@ export default function PostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [commentImage, setCommentImage] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!postId) {
@@ -88,6 +97,36 @@ export default function PostPage() {
     };
   }, [commentImagePreview]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    getProfile()
+      .then((profile: any) => {
+        if (cancelled || !profile) return;
+        if (profile.user?.id) {
+          setCurrentUserId(profile.user.id);
+        }
+        const rawPath =
+          profile.avatar?.thumbnail_path ||
+          profile.avatar?.file_path ||
+          undefined;
+        if (!rawPath) {
+          setCurrentUserAvatar(null);
+          return;
+        }
+        setCurrentUserAvatar(getAvatarUrl(rawPath));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCurrentUserAvatar(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleCommentImageSelect = (file: File) => {
     if (commentImagePreview) {
       URL.revokeObjectURL(commentImagePreview);
@@ -114,7 +153,8 @@ export default function PostPage() {
       // Add the new comment to the list
       const newComment: CommentItem = {
         id: result.comment?.id || result.comment?.comment_id || result.id || Date.now().toString(),
-        avatarSrc: '/user-avatar-default.png', // Use default avatar for current user
+        userId: currentUserId || undefined,
+        avatarSrc: currentUserAvatar || '/user-avatar-default.png',
         avatarAlt: 'You',
         userName: 'YOU',
         userDate: formatPostDate(new Date().toISOString()),
@@ -123,7 +163,7 @@ export default function PostPage() {
         imageSrc: commentImagePreview || undefined,
       };
       
-      setComments([newComment, ...comments]);
+      setComments((prev) => [newComment, ...prev]);
       setCommentText('');
       clearCommentImage();
       
@@ -171,6 +211,7 @@ export default function PostPage() {
           title={post.title ?? ''}
           avatarSrc={avatarUrl}
           avatarAlt={post.author_nickname ?? 'Author'}
+          userId={post.author_id}
           userName={(post.author_nickname ?? 'User').toUpperCase()}
           userDate={formatPostDate(post.created_at)}
           likeCount={post.like_count ?? 0}

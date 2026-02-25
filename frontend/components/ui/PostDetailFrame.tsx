@@ -12,6 +12,8 @@ export interface PostDetailFrameProps {
   avatarSrc: string;
   avatarAlt: string;
   userName: string;
+  /** ID of the post author, used for profile link */
+  userId: string;
   userDate?: string;
   likeCount?: number;
   commentCount?: number;
@@ -32,6 +34,7 @@ export function PostDetailFrame({
   avatarSrc,
   avatarAlt,
   userName,
+  userId,
   userDate,
   likeCount = 250,
   commentCount = 4,
@@ -76,12 +79,17 @@ export function PostDetailFrame({
         >
           {/* Top row: avatar (left) + comments (right); on mobile reactions under avatar */}
           <div className="flex flex-col gap-4 w-full px-8 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardAvatar
-              src={avatarSrc}
-              alt={avatarAlt}
-              name={userName}
-              subtitle={userDate}
-            />
+            <Link
+              href={`/profile/${userId}`}
+              className="no-underline text-inherit hover:opacity-90 transition-opacity"
+            >
+              <CardAvatar
+                src={avatarSrc}
+                alt={avatarAlt}
+                name={userName}
+                subtitle={userDate}
+              />
+            </Link>
             <ReactionHolder commentCount={commentCount} />
           </div>
 
@@ -97,12 +105,17 @@ export function PostDetailFrame({
       ) : (
         <div className="flex flex-col items-start self-stretch rounded border overflow-hidden p-8">
           <div className="flex flex-col gap-4 w-full sm:flex-row sm:items-center sm:justify-between">
-            <CardAvatar
-              src={avatarSrc}
-              alt={avatarAlt}
-              name={userName}
-              subtitle={userDate}
-            />
+            <Link
+              href={`/profile/${userId}`}
+              className="no-underline text-inherit hover:opacity-90 transition-opacity"
+            >
+              <CardAvatar
+                src={avatarSrc}
+                alt={avatarAlt}
+                name={userName}
+                subtitle={userDate}
+              />
+            </Link>
             <ReactionHolder commentCount={commentCount} />
           </div>
         </div>

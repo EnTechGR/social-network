@@ -172,7 +172,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
 
   // Step 1: Create Post Form
   const step1Content = (
-    <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
+    <div className="relative w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
       {/* Header */}
       <div className="relative h-17 border-b overflow-hidden bg-parea-white">
         <Image
@@ -307,7 +307,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
 
   // Step 2: Follower Selection
   const step2Content = (
-    <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
+    <div className="relative w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
       {/* Header */}
       <div className="relative h-17 border-b overflow-hidden bg-parea-white">
         <Image
@@ -420,7 +420,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
       onClick={handleClose}
     >
       <div className="absolute inset-0 bg-black/50" />
-      <div className="w-full max-w-145 px-4" onClick={(e) => e.stopPropagation()}>
+      <div className="w-145 px-4" onClick={(e) => e.stopPropagation()}>
         {modalContent}
       </div>
     </div>

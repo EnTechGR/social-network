@@ -61,8 +61,8 @@ export default function PrivateProfileModal({
     <div
       className="
         relative
-        w-[349px]
-        h-[427px]
+        w-145
+        h-107
         p-8
         flex
         flex-col
@@ -93,7 +93,7 @@ export default function PrivateProfileModal({
       <div
         className="
           flex
-          h-[362px]
+          h-90
           flex-col
           justify-center
           items-center

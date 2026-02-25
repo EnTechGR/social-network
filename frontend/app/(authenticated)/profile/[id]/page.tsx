@@ -15,7 +15,12 @@ import {
   unfollowUser,
   getPostById,
   getPostImageUrl,
+  getChatConversation,
+  sendChatMessage,
+  type DirectChatMessage,
 } from '@/lib/api';
+import Button from '@/components/ui/Button';
+import ChatModal from '@/components/ui/ChatModal';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -49,6 +54,10 @@ export default function UserProfilePage() {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [postImagesById, setPostImagesById] = useState<Record<string, string | undefined>>({});
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<DirectChatMessage[]>([]);
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [isChatSending, setIsChatSending] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -65,6 +74,7 @@ export default function UserProfilePage() {
         const [data, me] = await Promise.all([getUserProfile(id), getProfile()]);
         if (cancelled) return;
         setProfile(data);
+        if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
         if (data.privateProfile) setShowPrivateModal(true);
         if (!data.privateProfile && !data.is_own_profile && me?.id) {
           const followerIds = Array.isArray(data.followers)
@@ -194,6 +204,29 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleOpenChat = async () => {
+    setChatModalOpen(true);
+    try {
+      const messages = await getChatConversation(id, 100, 0);
+      setChatMessages(messages);
+    } catch {
+      setChatMessages([]);
+    }
+  };
+
+  const handleSendChatMessage = async (text: string) => {
+    if (isChatSending) return;
+    setIsChatSending(true);
+    try {
+      const message = await sendChatMessage(id, text);
+      setChatMessages((prev) => [...prev, message]);
+    } catch {
+      // message failed silently
+    } finally {
+      setIsChatSending(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <main className="min-h-screen bg-parea-white px-16 py-12">
@@ -283,37 +316,37 @@ export default function UserProfilePage() {
           onFollowingClick={handleFollowingClick}
         />
 
-        {!profile.is_own_profile && (
-          <div className="mt-4 flex flex-col items-start gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (isFollowing) {
-                  void handleUnfollow();
-                } else {
-                  void requestFollow().catch(() => {});
-                }
-              }}
-              disabled={isSubmittingFollow || followRequested}
-              className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isFollowing
-                ? (isSubmittingFollow ? 'Unfollowing...' : 'Unfollow')
-                : (followRequested ? 'Follow request sent' : (isSubmittingFollow ? 'Following...' : 'Follow'))}
-            </button>
-            {followError && (
-              <p className="text-regular text-parea-black">{followError}</p>
-            )}
-          </div>
-        )}
-
-        <div className="mt-8">
+        <div className="mt-8 max-w-311.5 w-full flex items-center justify-between">
           <Tabs
             tabs={['Posts', 'Events', 'Reactions', 'Groups']}
             defaultTab="Posts"
             onTabChange={(tab) => setActiveTab(tab)}
           />
-          <div className="mt-6">
+          {!profile.is_own_profile && (
+            <div className="flex items-center gap-3">
+              <Button variant="primary" size="md" onClick={() => { void handleOpenChat(); }}>
+                Chat
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                disabled={isSubmittingFollow}
+                onClick={() => {
+                  if (isFollowing) void handleUnfollow();
+                  else void requestFollow().catch(() => {});
+                }}
+              >
+                <span style={{ display: 'block', textAlign: 'center', width: '5rem' }}>
+                  {isFollowing
+                    ? (isSubmittingFollow ? 'Unfollowing...' : 'Unfollow')
+                    : (followRequested ? 'Requested' : (isSubmittingFollow ? 'Following...' : 'Follow'))}
+                </span>
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 max-w-311.5 w-full">
             {activeTab === 'Posts' && (
               <>
                 {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
@@ -350,8 +383,19 @@ export default function UserProfilePage() {
             {activeTab === 'Events' && <p>Events content...</p>}
             {activeTab === 'Reactions' && <p>Reactions content...</p>}
             {activeTab === 'Groups' && <p>Groups content...</p>}
-          </div>
         </div>
+
+        <ChatModal
+          isOpen={chatModalOpen}
+          onClose={() => setChatModalOpen(false)}
+          userName={userForWrap.name}
+          controlledMessages={chatMessages.map((m) => ({
+            id: m.message_id,
+            text: m.content,
+            sender: m.sender_id === currentUserId ? 'self' : 'other',
+          }))}
+          onSendMessage={(text) => { void handleSendChatMessage(text); }}
+        />
 
         <FollowersModal
           isOpen={showFollowersModal}

@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
+import ChatModal from './ChatModal';
 import Tabs from './Tabs';
 import {
   getChatConversation,
@@ -128,6 +130,7 @@ export default function ChatDrawer() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -407,6 +410,21 @@ export default function ChatDrawer() {
     }
   }, []);
 
+  const sendDirectMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isSending || !selectedDirectUser) return;
+    setIsSending(true);
+    setChatError(null);
+    try {
+      const message = await sendChatMessage(selectedDirectUser.id, content);
+      mergeDirectMessage(message);
+      touchConversation(message);
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : 'Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
+  }, [isSending, mergeDirectMessage, selectedDirectUser, touchConversation]);
+
   const handleSend = useCallback(async () => {
     const content = inputValue.trim();
     if (!content || isSending) return;
@@ -448,249 +466,157 @@ export default function ChatDrawer() {
     }
   }, [handleSend]);
 
+  const chatModalMessages = useMemo(() => {
+    return directMessages.map((msg) => ({
+      id: msg.message_id,
+      text: msg.content,
+      sender: (msg.sender_id === currentUserId ? 'self' : 'other') as 'self' | 'other',
+    }));
+  }, [directMessages, currentUserId]);
+
+  const groupChatModalMessages = useMemo(() => {
+    return groupMessages.map((msg) => ({
+      id: msg.message_id,
+      text: msg.content,
+      sender: (msg.sender_id === currentUserId ? 'self' : 'other') as 'self' | 'other',
+    }));
+  }, [groupMessages, currentUserId]);
+
+  const sendGroupMessage = useCallback(async (content: string) => {
+    if (!content.trim() || !selectedGroup) return;
+    try {
+      const message = await sendGroupChatMessage(selectedGroup.id, content);
+      mergeGroupMessage(message);
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : 'Failed to send message');
+    }
+  }, [selectedGroup, mergeGroupMessage]);
+
+  const handleCloseChatModal = useCallback(() => {
+    setChatModalOpen(false);
+    setSelectedDirectUser(null);
+    setDirectMessages([]);
+  }, []);
+
+  const handleOpenConversation = useCallback((userId: string, nickname: string) => {
+    void openDirectConversation(userId, nickname);
+    setChatModalOpen(true);
+  }, [openDirectConversation]);
+
   return (
     <>
-      <div className="flex pt-5 px-2 pb-3 justify-center items-center self-stretch">
+      {/* Tab toggle */}
+      <div className="flex items-center justify-center pt-5 pb-3 px-2 w-full shrink-0">
         <Tabs
           tabs={['DIRECT CHATS', 'GROUP CHATS']}
           defaultTab="DIRECT CHATS"
           onTabChange={(tab) => {
-            const nextTab = (tab === 'GROUP CHATS' ? 'GROUP CHATS' : 'DIRECT CHATS') as ChatTab;
-            setActiveTab(nextTab);
-            setInputValue('');
+            setActiveTab(tab as ChatTab);
             setChatError(null);
           }}
           className="w-full justify-center"
         />
       </div>
 
-      {chatError && (
-        <div className="mx-4 mb-3 rounded border border-parea-black bg-parea-yellow/30 px-3 py-2 text-xs text-parea-black">
-          {chatError}
-        </div>
-      )}
-
-      {activeTab === 'DIRECT CHATS' ? (
-        selectedDirectUser ? (
-          <div className="flex flex-1 flex-col self-stretch overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-parea-black px-4 py-3">
-              <button
-                type="button"
-                className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90"
-                onClick={() => {
-                  setSelectedDirectUser(null);
-                  setDirectMessages([]);
-                  setInputValue('');
-                }}
-              >
-                Back
-              </button>
-              <span className="text-sm font-medium uppercase text-parea-black">
-                {selectedDirectUser.nickname}
-              </span>
-            </div>
-
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto px-4 py-3">
-              {isLoadingMessages ? (
-                <p className="text-sm text-parea-black">Loading conversation...</p>
-              ) : directMessages.length === 0 ? (
-                <p className="text-sm text-parea-black">No messages yet.</p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {directMessages.map((message) => {
-                    const isMine = message.sender_id === currentUserId;
-                    return (
-                      <div
-                        key={message.message_id}
-                        className={`max-w-[85%] rounded border border-parea-black px-3 py-2 text-sm ${
-                          isMine ? 'ml-auto bg-parea-yellow/40' : 'mr-auto bg-parea-white'
-                        }`}
-                      >
-                        {!isMine && (
-                          <p className="text-[11px] uppercase text-parea-black/70">{message.sender_name}</p>
-                        )}
-                        <p className="whitespace-pre-wrap break-words text-parea-black">{message.content}</p>
-                        <p className="mt-1 text-[10px] text-parea-black/60">{formatTime(message.created_at)}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-parea-black px-4 py-3">
-              <div className="flex gap-2">
-                <input
-                  value={inputValue}
-                  onChange={(event) => setInputValue(event.target.value)}
-                  onKeyDown={onInputKeyDown}
-                  placeholder="Type a message..."
-                  className="w-full rounded border border-parea-black bg-parea-white px-3 py-2 text-sm text-parea-black focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleSend();
-                  }}
-                  disabled={isSending || inputValue.trim().length === 0}
-                  className="rounded border border-parea-black bg-parea-yellow px-3 py-2 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col self-stretch overflow-y-auto px-4 pb-4">
-            {isLoadingList ? (
-              <p className="text-sm text-parea-black">Loading chats...</p>
-            ) : (
-              <>
-                <p className="mb-2 text-xs font-semibold uppercase text-parea-black/70">Conversations</p>
-                {conversations.length === 0 ? (
-                  <p className="mb-4 text-sm text-parea-black">No conversations yet.</p>
-                ) : (
-                  <div className="mb-4 flex flex-col gap-2">
-                    {conversations.map((conversation) => (
-                      <button
-                        key={conversation.user_id}
-                        type="button"
-                        onClick={() => {
-                          void openDirectConversation(conversation.user_id, conversation.nickname || 'User');
-                        }}
-                        className="flex items-center justify-between rounded border border-parea-black bg-parea-white px-3 py-2 text-left hover:bg-parea-yellow/20"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold uppercase text-parea-black">
-                            {conversation.nickname || 'User'}
-                          </p>
-                          <p className="truncate text-[11px] text-parea-black/70">{conversation.last_message}</p>
-                        </div>
-                        {conversation.unread_count > 0 && (
-                          <span className="ml-2 rounded-full border border-parea-black bg-parea-yellow px-2 py-0.5 text-[10px] font-semibold text-parea-black">
-                            {conversation.unread_count}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <p className="mb-2 text-xs font-semibold uppercase text-parea-black/70">Start New Chat</p>
-                {newChatCandidates.length === 0 ? (
-                  <p className="text-sm text-parea-black">No available users.</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {newChatCandidates.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => {
-                          void openDirectConversation(user.id, user.nickname || 'User');
-                        }}
-                        className="rounded border border-parea-black bg-parea-white px-3 py-2 text-left text-xs font-semibold uppercase text-parea-black hover:bg-parea-yellow/20"
-                      >
-                        {user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
+      {/* List */}
+      <div className="flex flex-col items-start pt-2 w-full overflow-y-auto flex-1">
+        {isLoadingList ? (
+          <p className="px-4 py-3 text-sm text-parea-black">Loading...</p>
+        ) : activeTab === 'DIRECT CHATS' ? (
+          <>
+            {conversations.length === 0 && newChatCandidates.length === 0 && (
+              <p className="px-4 py-3 font-mono text-sm uppercase tracking-[-0.16px] text-parea-black/50">
+                No chats yet
+              </p>
             )}
-          </div>
-        )
-      ) : (
-        selectedGroup ? (
-          <div className="flex flex-1 flex-col self-stretch overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-parea-black px-4 py-3">
+            {conversations.map((conversation) => (
               <button
+                key={conversation.user_id}
                 type="button"
-                className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90"
-                onClick={() => {
-                  setSelectedGroup(null);
-                  setGroupMessages([]);
-                  setInputValue('');
-                }}
+                onClick={() => handleOpenConversation(conversation.user_id, conversation.nickname || 'User')}
+                className="flex h-14 items-center justify-between px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
               >
-                Back
-              </button>
-              <span className="text-sm font-medium uppercase text-parea-black">{selectedGroup.title}</span>
-            </div>
-
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto px-4 py-3">
-              {isLoadingMessages ? (
-                <p className="text-sm text-parea-black">Loading group room...</p>
-              ) : groupMessages.length === 0 ? (
-                <p className="text-sm text-parea-black">No group messages yet.</p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {groupMessages.map((message) => {
-                    const isMine = message.sender_id === currentUserId;
-                    return (
-                      <div
-                        key={message.message_id}
-                        className={`max-w-[85%] rounded border border-parea-black px-3 py-2 text-sm ${
-                          isMine ? 'ml-auto bg-parea-yellow/40' : 'mr-auto bg-parea-white'
-                        }`}
-                      >
-                        {!isMine && (
-                          <p className="text-[11px] uppercase text-parea-black/70">{message.sender_name}</p>
-                        )}
-                        <p className="whitespace-pre-wrap break-words text-parea-black">{message.content}</p>
-                        <p className="mt-1 text-[10px] text-parea-black/60">{formatTime(message.created_at)}</p>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-1 gap-2 items-center min-w-0">
+                  <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
+                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                  </div>
+                  <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
+                    {conversation.nickname || 'User'}
+                  </p>
                 </div>
-              )}
-            </div>
-
-            <div className="border-t border-parea-black px-4 py-3">
-              <div className="flex gap-2">
-                <input
-                  value={inputValue}
-                  onChange={(event) => setInputValue(event.target.value)}
-                  onKeyDown={onInputKeyDown}
-                  placeholder="Type a message..."
-                  className="w-full rounded border border-parea-black bg-parea-white px-3 py-2 text-sm text-parea-black focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleSend();
-                  }}
-                  disabled={isSending || inputValue.trim().length === 0}
-                  className="rounded border border-parea-black bg-parea-yellow px-3 py-2 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
+                {conversation.unread_count > 0 && (
+                  <div className="bg-parea-yellow border border-parea-black flex items-center justify-center px-2 rounded-full shrink-0 ml-2">
+                    <span className="font-mono text-base font-medium uppercase tracking-[-0.16px] leading-relaxed">
+                      {conversation.unread_count}
+                    </span>
+                  </div>
+                )}
+              </button>
+            ))}
+            {newChatCandidates.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => handleOpenConversation(user.id, user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User')}
+                className="flex h-14 items-center px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
+              >
+                <div className="flex flex-1 gap-2 items-center min-w-0">
+                  <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
+                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                  </div>
+                  <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
+                    {user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User'}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </>
         ) : (
-          <div className="flex flex-1 flex-col self-stretch overflow-y-auto px-4 pb-4">
-            {isLoadingList ? (
-              <p className="text-sm text-parea-black">Loading groups...</p>
-            ) : myGroups.length === 0 ? (
-              <p className="text-sm text-parea-black">You are not a member of any groups yet.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {myGroups.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => {
-                      void openGroupConversation(group);
-                    }}
-                    className="rounded border border-parea-black bg-parea-white px-3 py-2 text-left text-xs font-semibold uppercase text-parea-black hover:bg-parea-yellow/20"
-                  >
+          <>
+            {myGroups.length === 0 && (
+              <p className="px-4 py-3 font-mono text-sm uppercase tracking-[-0.16px] text-parea-black/50">
+                No group chats yet
+              </p>
+            )}
+            {myGroups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => { void openGroupConversation(group); setChatModalOpen(true); }}
+                className="flex h-14 items-center px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
+              >
+                <div className="flex flex-1 gap-2 items-center min-w-0">
+                  <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
+                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                  </div>
+                  <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
                     {group.title}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )
+                  </p>
+                </div>
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Chat modal */}
+      {selectedDirectUser && (
+        <ChatModal
+          isOpen={chatModalOpen}
+          onClose={handleCloseChatModal}
+          userName={selectedDirectUser.nickname}
+          controlledMessages={chatModalMessages}
+          onSendMessage={(text) => { void sendDirectMessage(text); }}
+        />
+      )}
+      {selectedGroup && (
+        <ChatModal
+          isOpen={chatModalOpen}
+          onClose={() => { setChatModalOpen(false); setSelectedGroup(null); setGroupMessages([]); }}
+          userName={selectedGroup.title}
+          controlledMessages={groupChatModalMessages}
+          onSendMessage={(text) => { void sendGroupMessage(text); }}
+        />
       )}
     </>
   );

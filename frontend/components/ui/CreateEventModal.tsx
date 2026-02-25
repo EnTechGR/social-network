@@ -73,7 +73,7 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
       onClick={handleClose}
     >
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000] mx-4" onClick={(e) => e.stopPropagation()}>
+      <div className="relative w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]" onClick={(e) => e.stopPropagation()}>
         <div className="relative h-17 border-b overflow-hidden bg-parea-white">
           <Image
             src="/modal-header-pattern.svg"

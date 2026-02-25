@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import IconButton from './IconButtons';
 import Image from 'next/image';
 
@@ -23,6 +24,10 @@ interface ChatModalProps {
   selfAvatar?: string;
   /** Initial messages for demo/preview */
   initialMessages?: Message[];
+  /** Controlled messages — when provided, these are displayed instead of internal state */
+  controlledMessages?: Message[];
+  /** Called when user sends a message — when provided, real send is used instead of internal mock */
+  onSendMessage?: (text: string) => void;
 }
 
 const mockMessages: Message[] = [
@@ -44,10 +49,14 @@ export default function ChatModal({
   userAvatar = '/test-avatar.png',
   selfAvatar = '/test-avatar.png',
   initialMessages = mockMessages,
+  controlledMessages,
+  onSendMessage,
 }: ChatModalProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [internalMessages, setInternalMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const messages = controlledMessages ?? internalMessages;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,15 +66,19 @@ export default function ChatModal({
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: inputValue.trim(),
-        sender: 'self',
-        avatarUrl: selfAvatar,
-      },
-    ]);
+    if (onSendMessage) {
+      onSendMessage(inputValue.trim());
+    } else {
+      setInternalMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: inputValue.trim(),
+          sender: 'self',
+          avatarUrl: selfAvatar,
+        },
+      ]);
+    }
     setInputValue('');
   };
 
@@ -81,7 +94,7 @@ export default function ChatModal({
   };
 
   const modalContent = (
-    <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000] flex flex-col h-[600px]">
+    <div className="relative w-95 bg-white border border-parea-black shadow-[8px_8px_0_0_#000] flex flex-col h-120">
       {/* ===== HEADER ===== */}
       <div className="relative flex items-center justify-between px-8 h-17 border-b border-parea-black overflow-hidden bg-parea-white shrink-0">
         <Image
@@ -112,14 +125,14 @@ export default function ChatModal({
             >
               {/* Other user avatar (left) */}
               {!isSelf && (
-                <div className="w-[49px] h-[49px] rounded-full overflow-hidden relative shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden relative shrink-0">
                   <Image src={avatar} alt="User" fill className="object-cover" />
                 </div>
               )}
 
               {/* Bubble */}
               <div
-                className={`relative w-[300px] p-4 border border-[#ccc] ${
+                className={`relative w-75 p-2 border border-[#ccc] ${
                   isSelf ? 'bg-parea-yellow/50' : 'bg-white'
                 }`}
               >
@@ -133,7 +146,7 @@ export default function ChatModal({
                 {/* Sharktooth pointer */}
                 {isSelf ? (
                   <div
-                    className="absolute top-[13px] -right-[10px] w-0 h-0"
+                    className="absolute top-3 -right-3 w-0 h-0"
                     style={{
                       borderTop: '6px solid transparent',
                       borderBottom: '6px solid transparent',
@@ -141,7 +154,7 @@ export default function ChatModal({
                     }}
                   >
                     <div
-                      className="absolute top-[-5px] left-[-11px] w-0 h-0"
+                      className="absolute -top-1 -left-3 w-0 h-0"
                       style={{
                         borderTop: '5px solid transparent',
                         borderBottom: '5px solid transparent',
@@ -151,7 +164,7 @@ export default function ChatModal({
                   </div>
                 ) : (
                   <div
-                    className="absolute top-[13px] -left-[10px] w-0 h-0"
+                    className="absolute top-3 -left-3 w-0 h-0"
                     style={{
                       borderTop: '6px solid transparent',
                       borderBottom: '6px solid transparent',
@@ -159,7 +172,7 @@ export default function ChatModal({
                     }}
                   >
                     <div
-                      className="absolute top-[-5px] -right-[-2px] w-0 h-0"
+                      className="absolute -top-1 right-1 w-0 h-0"
                       style={{
                         borderTop: '5px solid transparent',
                         borderBottom: '5px solid transparent',
@@ -172,7 +185,7 @@ export default function ChatModal({
 
               {/* Self avatar (right) */}
               {isSelf && (
-                <div className="w-[49px] h-[49px] rounded-full overflow-hidden relative shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden relative shrink-0">
                   <Image src={avatar} alt="You" fill className="object-cover" />
                 </div>
               )}
@@ -206,15 +219,12 @@ export default function ChatModal({
     return modalContent;
   }
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={handleClose}
-    >
-      <div className="absolute inset-0 bg-black/50" />
-      <div onClick={(e) => e.stopPropagation()}>
-        {modalContent}
-      </div>
-    </div>
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed bottom-4 right-4 z-9999">
+      {modalContent}
+    </div>,
+    document.body,
   );
 }

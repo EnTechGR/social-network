@@ -173,8 +173,18 @@ export default function EventPage() {
       await inviteToGroup(groupId, userId);
       setInviteCandidates((prev) => prev.filter((u) => u.user_id !== userId));
     } catch (err: any) {
+      const message = err?.message || 'Failed to invite user';
+      const normalized = String(message).toLowerCase();
+
+      // Backend correctly blocks duplicate pending invites; handle it as a non-fatal state.
+      if (normalized.includes('pending invite')) {
+        setInviteCandidates((prev) => prev.filter((u) => u.user_id !== userId));
+        alert('This user already has a pending invite.');
+        return;
+      }
+
       console.error('Failed to invite user:', err);
-      alert(err?.message || 'Failed to invite user');
+      alert(message);
     } finally {
       setInviteLoading(null);
     }

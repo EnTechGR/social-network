@@ -7,7 +7,7 @@ import Button from './Button';
 import Link from 'next/link';
 import Image from 'next/image';
 import CreatePostModal from './CreatePostModal';
-import { getForumUsers } from '@/lib/api';
+import { getProfile, getUserProfile, getAvatarUrl } from '@/lib/api';
 
 // --- SearchInputWithDropdown component ---
 function SearchInputWithDropdown() {
@@ -82,22 +82,44 @@ export const Navbar = () => {
   useEffect(() => {
     let cancelled = false;
 
-    getForumUsers()
-      .then((users) => {
+    getProfile()
+      .then(async (me) => {
         if (cancelled) return;
-        const mapped = users.map((user) => {
-          const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-          return {
-            id: user.id,
-            name: fullName || user.nickname || user.email || user.id,
-            avatarUrl: undefined,
-          };
-        });
+        const profileId = me?.id;
+        if (!profileId) {
+          setSelectableUsers([]);
+          return;
+        }
+
+        const profile = await getUserProfile(profileId);
+        if (cancelled) return;
+        if (profile.privateProfile) {
+          setSelectableUsers([]);
+          return;
+        }
+
+        const followers = Array.isArray(profile.followers) ? profile.followers : [];
+        const mapped: Array<{ id: string; name: string; avatarUrl?: string }> = [];
+        for (const follower of followers as any[]) {
+          const id = follower?.user_id || follower?.id;
+          if (!id) continue;
+          const fullName = [follower?.first_name, follower?.last_name].filter(Boolean).join(' ').trim();
+          const avatarPath =
+            follower?.avatar?.thumbnail_path ||
+            follower?.avatar?.file_path ||
+            follower?.avatar_thumbnail_path ||
+            follower?.avatar_path;
+          mapped.push({
+            id,
+            name: fullName || follower?.nickname || follower?.email || id,
+            avatarUrl: avatarPath ? getAvatarUrl(avatarPath) : undefined,
+          });
+        }
         setSelectableUsers(mapped);
       })
       .catch((err) => {
         if (!cancelled) {
-          console.warn('Failed to load selectable users for private posts:', err);
+          console.warn('Failed to load followers for private post audience:', err);
           setSelectableUsers([]);
         }
       });

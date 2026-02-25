@@ -98,9 +98,16 @@ export function PostDetailFrame({
             <img
               src={imageSrc}
               alt="Post"
-              className="max-w-full max-h-full w-full h-full object-cover object-bottom rounded-[4px]"
+              className="max-w-full w-full h-full max-h-[75vh] object-contain object-center rounded-[4px] bg-parea-grey/20"
             />
           </div>
+          {(postText != null && postText !== '') && (
+            <div className="w-full px-8 pb-6">
+              <p className="text-foreground font-body text-regular font-normal leading-relaxed">
+                {postText}
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-start self-stretch rounded border overflow-hidden p-8">
@@ -118,17 +125,13 @@ export function PostDetailFrame({
             </Link>
             <ReactionHolder commentCount={commentCount} />
           </div>
-        </div>
-      )}
-
-      {/* Details wrap: post text below image holder */}
-      {(postText != null && postText !== '') && (
-        <div className="flex flex-col items-start self-stretch px-8">
-          <div className="flex flex-col items-start self-stretch">
-            <p className="text-foreground font-body text-regular font-normal leading-relaxed self-stretch">
-              {postText}
-            </p>
-          </div>
+          {(postText != null && postText !== '') && (
+            <div className="w-full pt-6">
+              <p className="text-foreground font-body text-regular font-normal leading-relaxed">
+                {postText}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

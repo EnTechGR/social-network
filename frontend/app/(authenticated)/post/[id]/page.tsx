@@ -202,7 +202,7 @@ export default function PostPage() {
   // Backend returns FeedPost structure with different field names
   const avatarUrl = post.author_avatar_thumb_url || post.author_avatar_url || '/user-avatar-default.png';
   const postImage = post.images?.[0];
-  const imageSrc = postImage?.thumbnail_url || postImage?.url;
+  const imageSrc = postImage?.url || postImage?.thumbnail_url;
 
   return (
     <div className="min-h-screen bg-parea-white px-16 py-12">

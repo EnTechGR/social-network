@@ -65,6 +65,26 @@ type RelationUser = {
   email?: string;
 };
 
+function toRelationUserFromProfilePayload(profilePayload: any, fallbackUserID: string): RelationUser {
+  if (profilePayload?.privateProfile) {
+    return {
+      user_id: fallbackUserID,
+      nickname: profilePayload.nickname,
+      first_name: profilePayload.first_name,
+      last_name: profilePayload.last_name,
+    };
+  }
+
+  const user = profilePayload?.user ?? {};
+  return {
+    user_id: user.id || fallbackUserID,
+    nickname: user.nickname,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+  };
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<ProfileUser | null>(null);
@@ -118,13 +138,20 @@ export default function ProfilePage() {
     setFollowDataError(null);
 
     try {
-      const [profileView, requests, users] = await Promise.all([
+      const [profileResult, requestsResult, usersResult] = await Promise.allSettled([
         getUserProfile(userId),
         getFollowRequests(),
         getForumUsers(),
       ]);
 
-      if (!profileView.privateProfile) {
+      const profileView =
+        profileResult.status === 'fulfilled' ? profileResult.value : null;
+      const requests =
+        requestsResult.status === 'fulfilled' ? requestsResult.value : { pending: [], accepted: [] };
+      const users =
+        usersResult.status === 'fulfilled' ? usersResult.value : [];
+
+      if (profileView && !profileView.privateProfile) {
         const followerList = Array.isArray(profileView.followers) ? profileView.followers as RelationUser[] : [];
         const followingList = Array.isArray(profileView.following) ? profileView.following as RelationUser[] : [];
 
@@ -139,9 +166,13 @@ export default function ProfilePage() {
             followingCount: profileView.counts.following,
           };
         });
+      } else if (profileResult.status === 'rejected') {
+        // Keep existing lists/counts when profile relationship fetch fails.
+        console.warn('Failed to refresh relation lists from profile endpoint:', profileResult.reason);
       }
 
       setPendingRequests(Array.isArray(requests.pending) ? requests.pending : []);
+      const pendingRequestList = Array.isArray(requests.pending) ? requests.pending : [];
 
       const byId = (users || []).reduce<Record<string, RelationUser>>((acc, item) => {
         acc[item.id] = {
@@ -153,7 +184,34 @@ export default function ProfilePage() {
         };
         return acc;
       }, {});
+
+      // Pending follow requests only include IDs, so load sender profile snippets
+      // to avoid showing raw UUIDs in the UI.
+      const missingPendingSenderIDs = Array.from(
+        new Set(
+          pendingRequestList
+            .map((request) => request?.follower_id)
+            .filter((id): id is string => Boolean(id) && !byId[id]),
+        ),
+      );
+
+      if (missingPendingSenderIDs.length > 0) {
+        const pendingSenderProfiles = await Promise.allSettled(
+          missingPendingSenderIDs.map((senderID) => getUserProfile(senderID)),
+        );
+
+        pendingSenderProfiles.forEach((result, index) => {
+          if (result.status !== 'fulfilled') return;
+          const senderID = missingPendingSenderIDs[index];
+          byId[senderID] = toRelationUserFromProfilePayload(result.value, senderID);
+        });
+      }
+
       setDirectoryById(byId);
+
+      if (requestsResult.status === 'rejected') {
+        setFollowDataError('Some follow data could not be loaded. Please refresh.');
+      }
     } catch (err: any) {
       setFollowDataError(err?.message ?? 'Failed to load follower data');
     } finally {

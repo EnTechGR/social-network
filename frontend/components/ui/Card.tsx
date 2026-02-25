@@ -79,7 +79,7 @@ export const Card: React.FC<CardProps> = ({
           </p>
         </div>
         <div className="flex justify-between items-center w-full self-stretch mt-4">
-          {userHref ? (
+          {userHref && !href ? (
             <Link
               href={userHref}
               className="no-underline text-inherit hover:opacity-90 transition-opacity"

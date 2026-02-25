@@ -7,6 +7,7 @@ import ReactionHolder from './ReactionHolder';
 interface CardProps {
   imageType: 'post' | 'event';
   imageSrc?: string;
+  hideImage?: boolean;
   avatarSrc: string;
   avatarAlt: string;
   userName: string;
@@ -30,6 +31,7 @@ interface CardProps {
 export const Card: React.FC<CardProps> = ({
   imageType,
   imageSrc,
+  hideImage = false,
   avatarSrc,
   avatarAlt,
   userName,
@@ -53,19 +55,21 @@ export const Card: React.FC<CardProps> = ({
       border-b
       border-dashed
       border-black/20">
-      <CardImage
-        type={imageType}
-        src={imageSrc}
-        alt="Card image"
-        priority={imagePriority}
-      />
-        <div className="flex
-        px-8
+      {!hideImage && (
+        <CardImage
+          type={imageType}
+          src={imageSrc}
+          alt="Card image"
+          priority={imagePriority}
+        />
+      )}
+        <div className={`flex
+        ${hideImage ? 'px-0' : 'px-8'}
         flex-col
         justify-between
         items-start
         flex-1
-        self-stretch">
+        self-stretch`}>
         <div className="flex
           flex-col
           items-start

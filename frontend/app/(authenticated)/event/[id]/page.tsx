@@ -207,7 +207,6 @@ export default function EventPage() {
       <div className="w-full">
         <EventDetailFrame
           title={eventData.title ?? 'Event'}
-          imageSrc="/eventDefaultImage.png"
           location={eventData.group_title || 'GROUP EVENT'}
           goingCount={goingCount}
           date={date}

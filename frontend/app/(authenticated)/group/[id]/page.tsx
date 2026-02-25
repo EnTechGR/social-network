@@ -698,6 +698,7 @@ export default function GroupDetailPage() {
                       <Card
                         key={ev.id ?? ev.event_id}
                         imageType="event"
+                        hideImage
                         avatarSrc="/user-avatar-default.png"
                         avatarAlt={ev.creator_nickname ?? 'Creator'}
                         userName={(ev.creator_nickname ?? 'User').toUpperCase()}

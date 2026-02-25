@@ -7,7 +7,6 @@ import EventInfoBar, { type RsvpOption } from './EventInfoBar';
 
 export interface EventDetailFrameProps {
   title: string;
-  imageSrc?: string;
   eventText?: string;
   location?: string;
   goingCount?: number;
@@ -20,7 +19,6 @@ export interface EventDetailFrameProps {
 
 export function EventDetailFrame({
   title,
-  imageSrc = '/test-event.png',
   eventText,
   location,
   goingCount = 0,
@@ -48,11 +46,10 @@ export function EventDetailFrame({
         </h2>
       </div>
 
-      {/* Frame: event info bar + image container (same outer styling as post) */}
+      {/* Frame: event info bar */}
       <div
         className="flex flex-col items-start self-stretch rounded border overflow-hidden"
         style={{
-          height: 590,
           borderColor: 'var(--parea-border)',
           boxShadow: '8px 8px 0 0 var(--parea-black)',
         }}
@@ -68,17 +65,9 @@ export function EventDetailFrame({
           onInviteClick={onInviteClick}
         />
 
-        {/* Image container: same as post - flex-1, padding 0 32px 8px 32px, justify-end items-end */}
-        <div className="flex flex-1 min-h-0 self-stretch px-8 pb-2 justify-end items-end gap-4">
-          <img
-            src={imageSrc}
-            alt="Event"
-            className="max-w-full max-h-full w-full h-full object-cover object-bottom rounded-[4px]"
-          />
-        </div>
       </div>
 
-      {/* Details wrap: event text below image holder (no comments) */}
+      {/* Details wrap: event text below info bar */}
       {(eventText != null && eventText !== '') && (
         <div className="flex flex-col items-start self-stretch px-8">
           <div className="flex flex-col items-start self-stretch">

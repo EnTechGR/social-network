@@ -195,14 +195,6 @@ function UserSuggestion({
         <span className="truncate font-sans text-base font-semibold text-parea-black">{fullName}</span>
         <span className="truncate font-mono text-xs uppercase tracking-wide text-parea-black/60">@{user.nickname}</span>
       </div>
-      <span
-        className={[
-          'rounded-full border px-2 py-1 font-mono text-[10px] uppercase tracking-wide',
-          user.is_online ? 'border-green-700 text-green-700' : 'border-parea-border text-parea-black/60',
-        ].join(' ')}
-      >
-        {user.is_online ? 'Online' : 'Offline'}
-      </span>
     </Link>
   );
 }

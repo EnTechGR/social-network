@@ -253,6 +253,12 @@ export default function UserProfilePage() {
 
   if (profile.privateProfile) {
     const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.nickname || 'User';
+    const privateProfileAvatarPath =
+      (profile as any)?.avatar?.thumbnail_path ||
+      (profile as any)?.avatar?.file_path ||
+      (profile as any)?.user?.avatar?.thumbnail_path ||
+      (profile as any)?.user?.avatar?.file_path;
+    const privateProfileAvatarSrc = privateProfileAvatarPath ? getAvatarUrl(privateProfileAvatarPath) : undefined;
     return (
       <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-7xl mx-auto">
@@ -273,6 +279,7 @@ export default function UserProfilePage() {
           isOpen={showPrivateModal}
           onClose={() => setShowPrivateModal(false)}
           userName={name}
+          avatarSrc={privateProfileAvatarSrc}
           onSendRequest={requestFollow}
           isSubmitting={isSubmittingFollow}
           errorMessage={followError}

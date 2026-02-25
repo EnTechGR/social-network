@@ -104,6 +104,10 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
       };
 
   try {
+    const normalizedEndpoint = endpoint.toLowerCase();
+    const isLoginOrRegister =
+      normalizedEndpoint === '/api/v1/login' || normalizedEndpoint === '/api/v1/register';
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
@@ -112,11 +116,19 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
     if (!response.ok) {
       const location = (response.headers.get('location') || '').toLowerCase();
+
+      // If a user hits guest-only endpoints while already authenticated,
+      // the backend redirects with 303. Treat this differently from "please log in".
+      if (isLoginOrRegister && response.status === 303) {
+        throw new Error('Already authenticated');
+      }
+
       if (
-        response.status === 401 ||
-        response.status === 403 ||
-        response.status === 303 ||
-        location.includes('/login')
+        !isLoginOrRegister &&
+        (response.status === 401 ||
+          response.status === 403 ||
+          response.status === 303 ||
+          location.includes('/login'))
       ) {
         throw new Error('Authentication required');
       }
@@ -147,6 +159,10 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     if (!contentType?.includes('application/json')) {
       if (response.redirected && response.url.toLowerCase().includes('/login')) {
         throw new Error('Authentication required');
+      }
+      // Auth endpoints should always return JSON; if they don't, surface a helpful error.
+      if (isLoginOrRegister) {
+        throw new Error('Unexpected response from server during authentication');
       }
       return undefined as T;
     }

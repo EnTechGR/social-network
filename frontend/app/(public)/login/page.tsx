@@ -42,7 +42,12 @@ export default function LoginPage() {
       }
       router.push('/feed');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password. Please try again.');
+      const message = err?.message || '';
+      if (message === 'Already authenticated') {
+        router.replace('/feed');
+        return;
+      }
+      setError(message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -58,8 +58,8 @@ export default function FeedPage() {
         .then((data: any) => {
           if (cancelled) return;
           // The API returns { posts: [...] }
-          const feedPosts = data?.posts || data || [];
-          setPosts(feedPosts);
+          const feedPosts = data?.posts ?? data ?? [];
+          setPosts(Array.isArray(feedPosts) ? feedPosts : []);
         })
         .catch((err: any) => {
           if (cancelled) return;

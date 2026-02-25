@@ -5,6 +5,7 @@ import Button from './Button';
 import IconButton from './IconButtons';
 import Image from 'next/image';
 import { createGroupEvent } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface CreateEventModalProps {
 }
 
 export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }: CreateEventModalProps) {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventTime, setEventTime] = useState('');
@@ -39,13 +41,25 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
     setError(null);
     setIsSubmitting(true);
     try {
-      await createGroupEvent(groupId, {
+      const result = await createGroupEvent(groupId, {
         title: title.trim(),
         description: description.trim(),
         event_time: new Date(eventTime).toISOString(),
       });
+
+      const newEventId =
+        result?.id ??
+        result?.event_id ??
+        result?.event?.id ??
+        result?.event?.event_id;
+
       handleClose();
-      onSuccess?.();
+
+      if (newEventId) {
+        router.push(`/event/${newEventId}`);
+      } else {
+        onSuccess?.();
+      }
     } catch (err: any) {
       setError(err?.message ?? 'Failed to create event.');
     } finally {

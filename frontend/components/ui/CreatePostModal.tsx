@@ -8,6 +8,7 @@ import DropdownButton from './DropdownButton';
 import { ImagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { createPost, createGroupPost } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 const VISIBILITY_OPTIONS = ['PUBLIC', 'FOLLOWERS', 'PRIVATE'] as const;
 
@@ -42,6 +43,7 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -118,20 +120,27 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
       setError('Title and details are required');
       return;
     }
-
+  
     setIsSubmitting(true);
     setError(null);
-
+  
     try {
       if (isGroupPost && groupId) {
-        await createGroupPost(groupId, {
+        const result = await createGroupPost(groupId, {
           title: title.trim(),
           content: details.trim(),
           image: uploadedImage?.file,
         });
+  
+        const newPostId = result?.post?.id || result?.id;
         resetModal();
         onClose();
-        onSuccess?.();
+  
+        if (newPostId) {
+          router.push(`/post/${newPostId}`);
+        } else {
+          onSuccess?.(); // optional fallback
+        }
       } else {
         const postData = {
           title: title.trim(),
@@ -140,13 +149,22 @@ export default function CreatePostModal({ isOpen, onClose, preview = false, foll
           image: uploadedImage?.file,
           allowedUserIds: visibility === 'PRIVATE' ? Array.from(selectedFollowers) : undefined,
         };
-        await createPost(postData);
+
+        const result = await createPost(postData);
+        const newPostId = result?.post?.id || result?.id;
+
         resetModal();
         onClose();
+
+        if (newPostId) {
+          router.push(`/post/${newPostId}`);
+        } else {
+          // optional: router.push('/feed');
+        }
       }
     } catch (err: any) {
       console.error('Failed to create post:', err);
-      setError(err.message || 'Failed to create post. Please try again.');
+      setError(err?.message || 'Failed to create post. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

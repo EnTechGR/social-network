@@ -24,6 +24,7 @@ import {
   getGroupChatMessages,
   sendGroupChatMessage,
   getPostImageUrl,
+  getPostById,
   type GroupChatMessage,
 } from '@/lib/api';
 
@@ -109,6 +110,7 @@ export default function GroupDetailPage() {
   const [chatSending, setChatSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; avatarUrl?: string }>>({});
 
   useEffect(() => {
     if (!groupId) {
@@ -191,6 +193,57 @@ export default function GroupDetailPage() {
       });
     return () => { cancelled = true; };
   }, [groupId, isMember]);
+
+  // Enrich group posts with the same image and avatar data used by the main feed
+  // by loading each post's full detail once the list is available.
+  useEffect(() => {
+    if (!isMember || posts.length === 0) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const uniqueIds = Array.from(new Set((posts ?? []).map((p: any) => p.id).filter(Boolean)));
+        if (uniqueIds.length === 0) {
+          if (!cancelled) setPostMetaById({});
+          return;
+        }
+
+        const entries = await Promise.all(
+          uniqueIds.map(async (postId) => {
+            try {
+              const detail = await getPostById(postId);
+
+              // Feed detail already returns fully-qualified avatar and image URLs,
+              // so we can use them directly without further transformation.
+              const avatarUrl =
+                detail?.author_avatar_thumb_url || detail?.author_avatar_url || undefined;
+
+              const firstImage = detail?.images?.[0];
+              const imageUrl = firstImage?.thumbnail_url || firstImage?.url || undefined;
+
+              return [postId, { avatarUrl, imageUrl }] as const;
+            } catch {
+              return [postId, { avatarUrl: undefined, imageUrl: undefined }] as const;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        const map: Record<string, { imageUrl?: string; avatarUrl?: string }> = {};
+        for (const [id, meta] of entries) {
+          map[id] = meta;
+        }
+        setPostMetaById(map);
+      } catch {
+        if (!cancelled) setPostMetaById({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isMember, posts]);
 
   useEffect(() => {
     if (!groupId || !isMember) return;
@@ -570,17 +623,22 @@ export default function GroupDetailPage() {
                 {!postsLoading && posts.length > 0 && (
                   <div className="flex flex-col items-start gap-0">
                     {posts.map((post, index) => {
-                      const rawImagePath = post.thumbnail_url || post.image_url;
+                      const meta = postMetaById[post.id] || {};
+                      const rawImagePath = meta.imageUrl || post.thumbnail_url || post.image_url;
                       const imageUrl = getPostImageUrl(rawImagePath);
+
+                      const avatarSrc = meta.avatarUrl || '/user-avatar-default.png';
+                      const avatarAlt = post.nickname ?? 'Author';
+                      const userName = (post.nickname ?? 'User').toUpperCase();
 
                       return (
                         <Card
                           key={post.id}
                           imageType="post"
                           imageSrc={imageUrl}
-                          avatarSrc="/user-avatar-default.png"
-                          avatarAlt={post.nickname ?? 'Author'}
-                          userName={(post.nickname ?? 'User').toUpperCase()}
+                          avatarSrc={avatarSrc}
+                          avatarAlt={avatarAlt}
+                          userName={userName}
                           userDate={formatDate(post.created_at)}
                           title={post.title}
                           content={post.content}
@@ -661,7 +719,7 @@ export default function GroupDetailPage() {
                                     {message.sender_name}
                                   </p>
                                 )}
-                                <p className="whitespace-pre-wrap break-words text-regular text-parea-black">
+                                <p className="whitespace-pre-wrap wrap-break-word text-regular text-parea-black">
                                   {message.content}
                                 </p>
                                 <p className="mt-1 text-[10px] text-parea-black/60">

@@ -24,6 +24,8 @@ import {
   getAvatarUrl,
   getPostImageUrl,
   getPostsByUserId,
+  getFeed,
+  getMyPosts,
   getMyGroups,
   getUserProfile,
   getFollowRequests,
@@ -75,6 +77,7 @@ export default function ProfilePage() {
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
+  const [feedImagesByPostId, setFeedImagesByPostId] = useState<Record<string, string | undefined>>({});
   const [myGroups, setMyGroups] = useState<any[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsError, setGroupsError] = useState<string | null>(null);
@@ -241,14 +244,28 @@ export default function ProfilePage() {
     let cancelled = false;
     setPostsLoading(true);
     setPostsError(null);
-    getPostsByUserId(currentUserId)
+
+    // Load enriched "my posts" view first
+    getMyPosts()
       .then((data) => {
-        if (!cancelled) setMyPosts(Array.isArray(data) ? data : []);
+        if (cancelled) return;
+        setMyPosts(Array.isArray(data) ? data : []);
       })
-      .catch((err) => {
-        if (!cancelled) {
-          setPostsError(err?.message ?? 'Failed to load posts');
-          setMyPosts([]);
+      .catch(async (err) => {
+        if (cancelled) return;
+
+        // Fallback to simpler posts-by-user endpoint if enriched view fails
+        console.warn('Failed to load full my-posts payload, falling back to basic posts list:', err);
+        try {
+          const basic = await getPostsByUserId(currentUserId);
+          if (!cancelled) {
+            setMyPosts(Array.isArray(basic) ? basic : []);
+          }
+        } catch (fallbackErr: any) {
+          if (!cancelled) {
+            setPostsError(fallbackErr?.message ?? err?.message ?? 'Failed to load posts');
+            setMyPosts([]);
+          }
         }
       })
       .finally(() => {
@@ -256,6 +273,37 @@ export default function ProfilePage() {
       });
     return () => { cancelled = true; };
   }, [activeTab, currentUserId]);
+
+  // Also pull the current feed once to reuse the exact same image URLs
+  // the feed page sees (source of truth for post images).
+  useEffect(() => {
+    if (activeTab !== 'Posts') return;
+    let cancelled = false;
+
+    getFeed()
+      .then((data: any) => {
+        if (cancelled) return;
+        const posts = Array.isArray(data) ? data : (data?.posts ?? []);
+        const map: Record<string, string> = {};
+
+        posts.forEach((post: any) => {
+          const firstImage = post?.images?.[0];
+          const url = firstImage?.thumbnail_url || firstImage?.url;
+          if (post?.id && url) {
+            map[post.id] = url;
+          }
+        });
+
+        setFeedImagesByPostId(map);
+      })
+      .catch(() => {
+        if (!cancelled) setFeedImagesByPostId({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
 
   function formatPostDate(isoDate: string): string {
     if (!isoDate) return '';
@@ -443,17 +491,22 @@ export default function ProfilePage() {
                 {!postsLoading && !postsError && myPosts.length > 0 && (
                   <div className="flex flex-col items-start gap-0">
                     {myPosts.map((post, index) => {
-                      const rawImagePath = post.thumbnail_url || post.image_url;
+                      const feedImage = feedImagesByPostId[post.id];
+                      const rawImagePath = feedImage || post.thumbnail_url || post.image_url;
                       const imageUrl = getPostImageUrl(rawImagePath);
+
+                      const avatarSrc = user?.avatarUrl || '/user-avatar-default.png';
+                      const avatarLabel = user?.username || post.nickname || 'Author';
+                      const displayName = (user?.username || post.nickname || 'User').toUpperCase();
 
                       return (
                         <Card
                           key={post.id}
                           imageType="post"
                           imageSrc={imageUrl}
-                          avatarSrc="/user-avatar-default.png"
-                          avatarAlt={post.nickname ?? 'Author'}
-                          userName={(post.nickname ?? 'User').toUpperCase()}
+                          avatarSrc={avatarSrc}
+                          avatarAlt={avatarLabel}
+                          userName={displayName}
                           userDate={formatPostDate(post.created_at)}
                           title={post.title}
                           content={post.content}

@@ -7,7 +7,15 @@ import Tabs from '@/components/ui/Tabs';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
 import Card from '@/components/ui/Card';
 import FollowersModal from '@/components/ui/FollowersModal';
-import { getUserProfile, getAvatarUrl, followUser, getProfile, unfollowUser } from '@/lib/api';
+import {
+  getUserProfile,
+  getAvatarUrl,
+  followUser,
+  getProfile,
+  unfollowUser,
+  getPostById,
+  getPostImageUrl,
+} from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -39,6 +47,7 @@ export default function UserProfilePage() {
   const [showFollowersList, setShowFollowersList] = useState(false);
   const [showFollowingList, setShowFollowingList] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [postImagesById, setPostImagesById] = useState<Record<string, string | undefined>>({});
   const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   useEffect(() => {
@@ -74,6 +83,64 @@ export default function UserProfilePage() {
     load();
     return () => { cancelled = true; };
   }, [id]);
+
+  // Enrich this user's posts with the same image URLs used by the main feed,
+  // by fetching each post's full detail once profile.posts is available.
+  useEffect(() => {
+    if (!profile || profile.privateProfile) return;
+    const posts = Array.isArray(profile.posts) ? profile.posts : [];
+    if (posts.length === 0) {
+      setPostImagesById({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const uniqueIds = Array.from(
+          new Set(
+            posts
+              .map((p: any) => p.id || p.post_id)
+              .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+          ),
+        );
+
+        if (uniqueIds.length === 0) {
+          if (!cancelled) setPostImagesById({});
+          return;
+        }
+
+        const entries = await Promise.all(
+          uniqueIds.map(async (postId) => {
+            try {
+              const detail = await getPostById(postId);
+              const firstImage = detail?.images?.[0];
+              const rawUrl = firstImage?.thumbnail_url || firstImage?.url || undefined;
+              const imageUrl = getPostImageUrl(rawUrl);
+              return [postId, imageUrl] as const;
+            } catch {
+              return [postId, undefined] as const;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        const map: Record<string, string | undefined> = {};
+        for (const [postId, imageUrl] of entries) {
+          map[postId] = imageUrl;
+        }
+        setPostImagesById(map);
+      } catch {
+        if (!cancelled) setPostImagesById({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile]);
 
   const requestFollow = async () => {
     if (!id || followRequested || isFollowing) return;
@@ -255,11 +322,14 @@ export default function UserProfilePage() {
                   <div className="flex flex-col items-start gap-0">
                     {profile.posts.map((post: any, index: number) => {
                       const postId = post.id || post.post_id;
+                      const enrichedImage = postId ? postImagesById[postId] : undefined;
+                      const rawImagePath = enrichedImage || post.image_url || post.thumbnail_url;
+                      const imageSrc = getPostImageUrl(rawImagePath);
                       return (
                         <Card
                           key={postId || `${post.title}-${index}`}
                           imageType="post"
-                          imageSrc={post.image_url || post.thumbnail_url}
+                          imageSrc={imageSrc}
                           avatarSrc={getAvatarUrl(u.avatar?.thumbnail_path || u.avatar?.file_path)}
                           avatarAlt={u.nickname || 'Author'}
                           userName={(u.nickname || 'User').toUpperCase()}

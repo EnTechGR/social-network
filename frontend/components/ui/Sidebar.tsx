@@ -13,6 +13,7 @@ import {
   getProfile,
   getAvatarUrl,
   getNotifications,
+  getChatConversations,
   hideNotification,
   acceptFollowRequest,
   declineFollowRequest,
@@ -101,6 +102,7 @@ export default function Sidebar() {
   const [followRequestActionError, setFollowRequestActionError] = useState<string | null>(null);
   const [groupInvites, setGroupInvites] = useState<any[]>([]);
   const [isLoadingGroupInvites, setIsLoadingGroupInvites] = useState(false);
+  const [hasUnreadChats, setHasUnreadChats] = useState(false);
   const [groupInviteActionId, setGroupInviteActionId] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -109,6 +111,7 @@ export default function Sidebar() {
   const unreadCount = notifications.reduce((count, notification) => {
     return notification.read ? count : count + 1;
   }, 0);
+  const hasUnreadNotifications = unreadCount > 0 || groupInvites.length > 0;
 
   const loadNotifications = useCallback(async () => {
     setIsLoadingNotifications(true);
@@ -146,6 +149,22 @@ export default function Sidebar() {
     }
   }, []);
 
+  const loadUnreadChats = useCallback(async () => {
+    try {
+      const conversations = await getChatConversations();
+      const unreadMessages = conversations.reduce((count, conversation) => {
+        return count + (conversation.unread_count || 0);
+      }, 0);
+      setHasUnreadChats(unreadMessages > 0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message !== 'Authentication required') {
+        console.error('Failed to fetch chat unread status:', error);
+      }
+      setHasUnreadChats(false);
+    }
+  }, []);
+
   useEffect(() => {
     getProfile()
       .then((p) => {
@@ -158,7 +177,16 @@ export default function Sidebar() {
   useEffect(() => {
     void loadNotifications();
     void loadGroupInvites();
-  }, [loadNotifications, loadGroupInvites]);
+    void loadUnreadChats();
+  }, [loadNotifications, loadGroupInvites, loadUnreadChats]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      void loadUnreadChats();
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [loadUnreadChats]);
 
   useEffect(() => {
     let isUnmounted = false;
@@ -418,12 +446,17 @@ export default function Sidebar() {
               className="flex items-center gap-2 py-2 self-stretch rounded-lg transition-colors group cursor-pointer"
             >
               <div className="w-10 shrink-0 flex items-center justify-center">
+                <div className="relative">
                 <MessageCircle
                   className={`w-6 h-6 shrink-0 transition-colors ${activeDrawer === 'chat'
                     ? 'text-parea-yellow'
                     : 'text-parea-white group-hover:text-parea-yellow'
                     }`}
                 />
+                  {hasUnreadChats && (
+                    <span className="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-parea-yellow" />
+                  )}
+                </div>
               </div>
               <span className={`text-parea-white font-mono text-sm font-medium uppercase tracking-wide group-hover:text-parea-yellow transition-opacity duration-300 whitespace-nowrap ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
                 Chats
@@ -437,12 +470,17 @@ export default function Sidebar() {
             >
               <div className="flex items-center gap-2">
                 <div className="w-10 shrink-0 flex items-center justify-center">
+                  <div className="relative">
                   <Bell
                     className={`w-6 h-6 shrink-0 transition-colors ${activeDrawer === 'notifications'
                       ? 'text-parea-yellow'
                       : 'text-parea-white group-hover:text-parea-yellow'
                       }`}
                   />
+                    {hasUnreadNotifications && (
+                      <span className="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-parea-yellow" />
+                    )}
+                  </div>
                 </div>
                 <span className={`text-parea-white font-mono text-sm font-medium uppercase tracking-wide group-hover:text-parea-yellow transition-opacity duration-300 whitespace-nowrap ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
                   Notifications

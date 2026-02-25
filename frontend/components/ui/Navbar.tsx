@@ -5,6 +5,7 @@ import SearchSuggestions from './SearchSuggestions';
 import { useEffect, useRef, useState } from 'react';
 import Button from './Button';
 import Link from 'next/link';
+import Image from 'next/image';
 import CreatePostModal from './CreatePostModal';
 import { getForumUsers } from '@/lib/api';
 
@@ -43,7 +44,7 @@ function SearchInputWithDropdown() {
           font-mono
           text-[15px]
           font-medium
-          leading-[1.5]
+          leading-relaxed
           tracking-[-0.15px]
           uppercase
           placeholder:text-black/60
@@ -60,7 +61,7 @@ function SearchInputWithDropdown() {
             left-0
             top-[calc(100%+14px)]
             z-50
-            w-[620px]
+            w-155
             max-w-[90vw]
           "
         >
@@ -108,8 +109,8 @@ export const Navbar = () => {
 
   return (
     <>
-    <nav
-      className="
+      <nav
+        className="
         w-full
         border-b
         border-parea-black
@@ -119,12 +120,12 @@ export const Navbar = () => {
         items-center
         p-0
       "
-    >
-      <div
-        className="
+      >
+        <div
+          className="
           w-full
-          max-w-[1349px]
-          h-[72px]
+          max-w-337
+          h-18
           flex
           flex-row
           items-center
@@ -132,29 +133,26 @@ export const Navbar = () => {
           px-16
           box-border
         "
-      >
-        {/* Logo */}
-        <div className="
+        >
+          {/* Logo */}
+          <Link href="/feed" className="
           flex
-          w-[115px]
+          w-28.75
           justify-center
           items-center
           gap-[5.61px]
         ">
-          <img src="/logo.svg" alt="Logo" className="
-            h-8
-            w-auto
-          " />
-        </div>
+            <Image src="/logo.svg" alt="Logo" width={115} height={32} className="h-8 w-auto" />
+          </Link>
 
-        {/* Search */}
-        <div
-          className="
+          {/* Search */}
+          <div
+            className="
             relative
             hidden
             md:flex
-            w-[299px]
-            h-[47px]
+            w-75
+            h-input
             px-3
             py-2
             items-center
@@ -165,89 +163,89 @@ export const Navbar = () => {
             bg-parea-white
             ml-8
           "
-        >
-          <div className="
+          >
+            <div className="
             w-6
             h-6
-            flex-shrink-0
+            shrink-0
             flex
             items-center
             justify-center
           ">
-            <Search className="w-6 h-6 text-parea-black/70" />
+              <Search className="w-6 h-6 text-parea-black/70" />
+            </div>
+            {/* Search input with focus/blur handlers */}
+            <SearchInputWithDropdown />
           </div>
-          {/* Search input with focus/blur handlers */}
-          <SearchInputWithDropdown />
-        </div>
 
-        {/* Links and Button */}
-        <div className="
+          {/* Links and Button */}
+          <div className="
           flex
           items-center
-          gap-[30px]
+          gap-8
           ml-auto
         ">
-          <Link href="/feed" className="no-underline">
-            <div className="
+            <Link href="/feed" className="no-underline">
+              <div className="
               flex
               justify-center
               items-center
               gap-1
               cursor-pointer
             ">
-              <span className="
+                <span className="
                 text-parea-black
                 font-mono
                 text-[15px]
                 font-medium
-                leading-[1.5]
+                leading-relaxed
                 tracking-[-0.15px]
                 uppercase
               ">
-                Feed
-              </span>
-            </div>
-          </Link>
+                  Feed
+                </span>
+              </div>
+            </Link>
 
-          <Link href="/profile" className="no-underline">
-            <div className="
+            <Link href="/profile" className="no-underline">
+              <div className="
               flex
               justify-center
               items-center
               gap-1
               cursor-pointer
             ">
-              <span className="
+                <span className="
                 text-parea-black
                 font-mono
                 text-[15px]
                 font-medium
-                leading-[1.5]
+                leading-relaxed
                 tracking-[-0.15px]
                 uppercase
               ">
-                Profile
-              </span>
-            </div>
-          </Link>
+                  Profile
+                </span>
+              </div>
+            </Link>
 
-          <Button 
-            variant="primary" 
-            size="lg" 
-            className="cursor-pointer"
-            onClick={() => setIsCreatePostOpen(true)}
-          >
-            Create Post
-          </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="cursor-pointer"
+              onClick={() => setIsCreatePostOpen(true)}
+            >
+              Create Post
+            </Button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
 
-    <CreatePostModal 
-      isOpen={isCreatePostOpen}
-      onClose={() => setIsCreatePostOpen(false)}
-      followers={selectableUsers}
-    />
+      <CreatePostModal
+        isOpen={isCreatePostOpen}
+        onClose={() => setIsCreatePostOpen(false)}
+        followers={selectableUsers}
+      />
     </>
   );
 };

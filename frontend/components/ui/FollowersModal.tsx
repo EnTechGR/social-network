@@ -31,10 +31,10 @@ interface FollowersModalProps {
   isActionLoading?: string | null;
 }
 
-export default function FollowersModal({ 
-  isOpen, 
-  onClose, 
-  heading = 'Followers', 
+export default function FollowersModal({
+  isOpen,
+  onClose,
+  heading = 'Followers',
   preview = false,
   users = [],
   onRemoveFollower,
@@ -72,7 +72,7 @@ export default function FollowersModal({
   if (!isOpen && !preview) return null;
 
   const modalContent = (
-    <div className="relative w-full max-w-145 bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
+    <div className="relative w-145 h-172 flex flex-col bg-white border border-parea-black shadow-[8px_8px_0_0_#000]">
       {/* Header */}
       <div className="relative h-17 border-b border-parea-black overflow-hidden bg-parea-white">
         <Image
@@ -99,12 +99,14 @@ export default function FollowersModal({
             self-stretch
             p-8
             overflow-hidden
+            flex-1
+            min-h-0
         "
       >
         {/* Heading - displays the prop value: "Followers", "Following", or "Members" */}
         <h4
           className="
-            text-[32px]
+            text-h4
             font-bold
             leading-[130%]
             text-black
@@ -121,6 +123,8 @@ export default function FollowersModal({
             items-start
             gap-8
             self-stretch
+            flex-1
+            min-h-0
           "
         >
           {/* Search Container */}
@@ -148,7 +152,7 @@ export default function FollowersModal({
                 bg-parea-white
               "
             >
-              <Search className="w-6 h-6 text-parea-black/70 flex-shrink-0" />
+              <Search className="w-6 h-6 text-parea-black/70 shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -164,7 +168,7 @@ export default function FollowersModal({
                   font-mono
                   text-[15px]
                   font-medium
-                  leading-[1.5]
+                  leading-relaxed
                   tracking-[-0.15px]
                   uppercase
                   placeholder:text-black/60
@@ -183,10 +187,10 @@ export default function FollowersModal({
               gap-2
               self-stretch
               relative
-              max-h-[400px]
+              flex-1
+              min-h-0
               overflow-y-auto
               overflow-x-hidden
-              pb-32
             "
           >
             {filteredUsers.length === 0 ? (
@@ -196,7 +200,7 @@ export default function FollowersModal({
             ) : (
               filteredUsers.map((user) => {
                 const avatarUrl = getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path);
-                
+
                 return (
                   <div
                     key={user.user_id}
@@ -215,7 +219,7 @@ export default function FollowersModal({
                         w-12
                         h-12
                         rounded-full
-                        flex-shrink-0
+                        shrink-0
                         aspect-square
                         bg-parea-grey
                         bg-center
@@ -283,21 +287,12 @@ export default function FollowersModal({
           </div>
 
           {/* Fade Effect Overlay */}
-          <div
-            className="
-              absolute
-              w-[767px]
-              h-[141px]
-              rounded-[767px]
-              bg-parea-white
-              blur-[30px]
-              pointer-events-none
-            "
-            style={{
-              left: '-128px',
-              bottom: '-32px',
-            }}
-          />
+          {filteredUsers.length > 0 && (
+            <div
+              className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+              style={{ background: 'linear-gradient(to bottom, transparent 0%, #fff 100%)' }}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -99,6 +99,7 @@ export default function GroupDetailPage() {
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [createEventOpen, setCreateEventOpen] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
   const [followers, setFollowers] = useState<FollowerUser[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
@@ -392,7 +393,7 @@ export default function GroupDetailPage() {
   };
 
   const handleMembersClick = () => {
-    // TODO: open members modal if needed
+    setShowMembersModal(true);
   };
 
   const handleInvite = async () => {
@@ -402,31 +403,31 @@ export default function GroupDetailPage() {
         alert('Unable to get your profile. Please try logging in again.');
         return;
       }
-      
+
       const userProfile = await getUserProfile(profileId);
-      
+
       if (userProfile.privateProfile) {
         alert('Unable to load followers from a private profile.');
         setFollowers([]);
         setShowInviteModal(true);
         return;
       }
-      
+
       const memberIds = new Set((members ?? []).map((m: any) => m.user_id));
       const followersList = Array.isArray(userProfile.followers) ? userProfile.followers as FollowerUser[] : [];
-      
+
       if (followersList.length === 0) {
         alert('You don\'t have any followers yet. Only your followers can be invited to this group.');
         return;
       }
-      
+
       const inviteCandidates = followersList.filter((f) => f.user_id && !memberIds.has(f.user_id));
-      
+
       if (inviteCandidates.length === 0) {
         alert('All of your followers are already members of this group.');
         return;
       }
-      
+
       setFollowers(inviteCandidates);
       setShowInviteModal(true);
     } catch (err: any) {
@@ -698,7 +699,7 @@ export default function GroupDetailPage() {
                   </p>
                 ) : (
                   <div className="flex flex-col rounded border border-parea-black bg-parea-white">
-                    <div ref={chatBoxRef} className="h-[420px] overflow-y-auto border-b border-parea-black p-4">
+                    <div ref={chatBoxRef} className="h-105 overflow-y-auto border-b border-parea-black p-4">
                       {chatLoading ? (
                         <p className="text-regular text-parea-black">Loading chat...</p>
                       ) : chatMessages.length === 0 ? (
@@ -710,9 +711,8 @@ export default function GroupDetailPage() {
                             return (
                               <div
                                 key={message.message_id}
-                                className={`max-w-[85%] rounded border border-parea-black px-3 py-2 ${
-                                  isMine ? 'ml-auto bg-parea-yellow/40' : 'mr-auto bg-parea-white'
-                                }`}
+                                className={`max-w-[85%] rounded border border-parea-black px-3 py-2 ${isMine ? 'ml-auto bg-parea-yellow/40' : 'mr-auto bg-parea-white'
+                                  }`}
                               >
                                 {!isMine && (
                                   <p className="text-[11px] uppercase text-parea-black/70">
@@ -801,6 +801,19 @@ export default function GroupDetailPage() {
         users={followers}
         onInvite={handleInviteUser}
         isActionLoading={inviteLoading}
+      />
+
+      <FollowersModal
+        isOpen={showMembersModal}
+        onClose={() => setShowMembersModal(false)}
+        heading="Members"
+        users={members.map((m: any) => ({
+          user_id: m.user_id,
+          nickname: m.nickname,
+          first_name: m.first_name,
+          last_name: m.last_name,
+          email: m.email,
+        }))}
       />
     </main>
   );

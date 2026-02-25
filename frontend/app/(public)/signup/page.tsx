@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthLayout from '@/components/auth/AuthLayout';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButtons';
 import { registerStep1 } from '@/lib/api';
 import { isValidEmail, isValidPassword } from '@/lib/validations';
@@ -22,7 +21,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [registerData, setRegisterData] = useState<any>(null);
   const [gender, setGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say' | ''>('');
 
@@ -178,9 +176,8 @@ export default function SignUpPage() {
                 id="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | 'prefer_not_to_say' | '')}
-                className={`select-chevron w-full h-input rounded-button border border-parea-black px-4 py-2 bg-parea-white text-regular focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed uppercase font-medium ${
-                  gender === '' ? 'text-[#00000099]' : 'text-parea-black'
-                }`}
+                className={`select-chevron w-full h-input rounded-button border border-parea-black px-4 py-2 bg-parea-white text-regular focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed uppercase font-medium ${gender === '' ? 'text-[#00000099]' : 'text-parea-black'
+                  }`}
                 style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
                 required
               >
@@ -222,7 +219,6 @@ export default function SignUpPage() {
                     handleStep1Submit(e as any);
                   }
                 }}
-                disabled={isLoading}
                 aria-label="Next"
               />
             </div>
@@ -262,11 +258,6 @@ function SignUpStep2({
     e.preventDefault();
     setError('');
 
-    if (!nickname) {
-      setError('Please enter a username');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -296,34 +287,31 @@ function SignUpStep2({
       <div className="flex flex-col items-center justify-center w-full px-8 py-4">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center gap-4 mb-8">
-            <h1 className="text-4xl font-bold text-parea-black text-center">
+            <h2 className="text-4xl font-bold text-parea-black">
               Sign Up
-            </h1>
-            <p className="text-regular text-parea-black text-center">
+            </h2>
+            <p className="text-regular text-parea-black">
               Find your people. Join the parea.
             </p>
           </div>
 
           {/* Avatar Display */}
-          {avatarPreview && (
-            <div className="flex justify-center mb-8">
-              <Avatar
-                type="image"
-                src={avatarPreview}
-                alt="Avatar"
-                size="profile"
-                isSelf
-              />
-            </div>
-          )}
+          <div className="flex justify-center mb-8">
+            <Avatar
+              type="image"
+              src={avatarPreview ?? undefined}
+              alt="Avatar"
+              size="profile"
+              isSelf
+            />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
-              placeholder="USERNAME"
+              placeholder="USERNAME (OPTIONAL)"
               value={nickname}
               onChange={setNickname}
-              required
             />
 
             <div className="flex flex-col gap-1.5">

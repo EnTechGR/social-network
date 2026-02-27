@@ -194,6 +194,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Group member management
 	apiMux.Handle("/api/v1/groups/members/", protected(http.HandlerFunc(groupMemberHandler.GetGroupMembers)))     // GET /api/v1/groups/{id}/members
 	apiMux.Handle("/api/v1/groups/members/remove/", protected(http.HandlerFunc(groupMemberHandler.RemoveMember))) // DELETE /api/v1/groups/{id}/members/{userId}
+	apiMux.Handle("/api/v1/groups/leave/", protected(http.HandlerFunc(groupMemberHandler.LeaveGroup)))            // POST /api/v1/groups/leave/{id}
 
 	// Group invitations
 	apiMux.Handle("/api/v1/groups/invite/", protected(http.HandlerFunc(groupInviteHandler.InviteUser)))             // POST /api/v1/groups/{id}/invite

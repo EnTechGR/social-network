@@ -980,6 +980,14 @@ export async function requestToJoinGroup(groupId: string): Promise<any> {
   });
 }
 
+export async function leaveGroup(groupId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/leave/${groupId}`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
 export async function getPendingGroupRequests(groupId: string): Promise<any[]> {
   const res = await fetchAPI<any>(`/api/v1/groups/requests/${groupId}`, { method: 'GET' });
   return Array.isArray(res?.requests) ? res.requests : [];

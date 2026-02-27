@@ -18,6 +18,7 @@ import {
   getUserProfile,
   inviteToGroup,
   requestToJoinGroup,
+  leaveGroup,
   getPendingGroupRequests,
   approveGroupRequest,
   denyGroupRequest,
@@ -410,8 +411,30 @@ export default function GroupDetailPage() {
     return () => { cancelled = true; };
   }, [showMembersModal, groupId]);
 
-  const handleLeaveGroup = () => {
-    alert('Leaving groups is not available in this build yet.');
+  const handleLeaveGroup = async () => {
+    if (!groupId || !isMember) return;
+
+    const confirmed = window.confirm('Are you sure you want to leave this group?');
+    if (!confirmed) return;
+
+    try {
+      await leaveGroup(groupId);
+      setIsMember(false);
+      setIsOwner(false);
+      setMembers([]);
+      setPendingRequests([]);
+      setPosts([]);
+      setEvents([]);
+      setChatMessages([]);
+      setActiveTab('Posts');
+      setGroup((prev: any) => {
+        if (!prev) return prev;
+        const currentCount = typeof prev.member_count === 'number' ? prev.member_count : 0;
+        return { ...prev, member_count: Math.max(0, currentCount - 1) };
+      });
+    } catch (err: any) {
+      alert(err?.message || 'Failed to leave group');
+    }
   };
 
   const handleMembersClick = () => {

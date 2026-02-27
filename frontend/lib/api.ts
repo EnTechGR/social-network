@@ -35,12 +35,31 @@ export interface ForumUser {
   last_name: string;
   date_of_birth: string;
   gender: string;
+  is_private?: boolean;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
   is_online: boolean;
 }
 
 export interface ChatConversation {
   user_id: string;
   nickname: string;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
+  avatar_path?: string;
+  avatar_thumbnail_path?: string;
+  avatar_url?: string;
+  avatar_thumb_url?: string;
   last_message: string;
   last_message_time: string;
   unread_count: number;
@@ -739,6 +758,13 @@ export async function getUserProfile(userId: string): Promise<{
   nickname?: string;
   first_name?: string;
   last_name?: string;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
 } | {
   privateProfile: false;
   user: any;
@@ -762,6 +788,7 @@ export async function getUserProfile(userId: string): Promise<{
       nickname: (data as any).nickname,
       first_name: (data as any).first_name,
       last_name: (data as any).last_name,
+      avatar: (data as any).avatar,
     };
   }
 
@@ -975,6 +1002,14 @@ export async function declineGroupInvite(inviteId: string): Promise<any> {
 export async function requestToJoinGroup(groupId: string): Promise<any> {
   const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
   return fetchAPI<any>(`/api/v1/groups/request/${groupId}`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+  });
+}
+
+export async function leaveGroup(groupId: string): Promise<any> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<any>(`/api/v1/groups/leave/${groupId}`, {
     method: 'POST',
     headers: { 'X-CSRF-Token': csrfToken || '' },
   });

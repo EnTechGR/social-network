@@ -312,14 +312,15 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// This approach is used because the base User model likely doesn't have IsOnline.
 	// Defining it locally ensures the handler explicitly controls the output structure.
 	type UserWithOnlineStatus struct {
-		ID          string    `json:"id"`
-		Nickname    string    `json:"nickname"`
-		Email       string    `json:"email"`
-		FirstName   string    `json:"first_name"`
-		LastName    string    `json:"last_name"`
-		DateOfBirth time.Time `json:"date_of_birth"`
-		Gender      string    `json:"gender"`
-		IsOnline    bool      `json:"is_online"` // Added real-time status flag
+		ID          string             `json:"id"`
+		Nickname    string             `json:"nickname"`
+		Email       string             `json:"email"`
+		FirstName   string             `json:"first_name"`
+		LastName    string             `json:"last_name"`
+		DateOfBirth time.Time          `json:"date_of_birth"`
+		Gender      string             `json:"gender"`
+		Avatar      *models.AvatarInfo `json:"avatar,omitempty"`
+		IsOnline    bool               `json:"is_online"` // Added real-time status flag
 	}
 
 	// 3. Iterate through retrieved users and add real-time status.
@@ -334,6 +335,7 @@ func (h *MessageHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 			LastName:    u.LastName,
 			DateOfBirth: u.DateOfBirth,
 			Gender:      u.Gender,
+			Avatar:      u.Avatar,
 			IsOnline:    false, // Default to false
 		}
 
@@ -551,7 +553,7 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 	// Determine retrieval mode based on the 'all' query parameter.
 	includeAll := r.URL.Query().Get("all") == "true"
 
-	var users []models.User
+	var users []models.UserWithAvatar
 	var err error
 
 	// 1. Conditional data retrieval logic.
@@ -572,14 +574,15 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 	// UserWithOnlineStatus represents a user with their live presence
 	// swagger:model UserWithOnlineStatus
 	type UserWithOnlineStatus struct {
-		ID          string    `json:"id"`
-		Nickname    string    `json:"nickname"`
-		Email       string    `json:"email"`
-		FirstName   string    `json:"first_name"`
-		LastName    string    `json:"last_name"`
-		DateOfBirth time.Time `json:"date_of_birth"`
-		Gender      string    `json:"gender"`
-		IsOnline    bool      `json:"is_online"` // Real-time presence status
+		ID          string             `json:"id"`
+		Nickname    string             `json:"nickname"`
+		Email       string             `json:"email"`
+		FirstName   string             `json:"first_name"`
+		LastName    string             `json:"last_name"`
+		DateOfBirth time.Time          `json:"date_of_birth"`
+		Gender      string             `json:"gender"`
+		Avatar      *models.AvatarInfo `json:"avatar,omitempty"`
+		IsOnline    bool               `json:"is_online"` // Real-time presence status
 	}
 
 	usersWithStatus := make([]UserWithOnlineStatus, len(users))
@@ -593,6 +596,7 @@ func (h *MessageHandler) GetUsersForChat(w http.ResponseWriter, r *http.Request)
 			LastName:    u.LastName,
 			DateOfBirth: u.DateOfBirth,
 			Gender:      u.Gender,
+			Avatar:      u.Avatar,
 			IsOnline:    false, // Default status
 		}
 

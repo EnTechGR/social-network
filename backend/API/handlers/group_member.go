@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strings"
@@ -161,6 +162,76 @@ func (h *GroupMemberHandler) RemoveMember(w http.ResponseWriter, r *http.Request
 
 	utils.JSONResponse(w, map[string]string{
 		"message": "Member removed successfully",
+	}, http.StatusOK)
+}
+
+// LeaveGroup removes the current authenticated user from a group.
+// @Summary      Leave group
+// @Description  Allows a member to leave a group. Group owner cannot leave; ownership transfer or group deletion is required.
+// @Tags         Groups
+// @Security     CookieAuth
+// @Produce      json
+// @Param        id   path      string  true  "Group ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      401  {object}  models.ErrorResponse
+// @Failure      403  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /api/v1/groups/leave/{id} [post]
+func (h *GroupMemberHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := middleware.GetCurrentUser(r)
+	if user == nil {
+		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/groups/leave/")
+	groupID = strings.TrimSpace(groupID)
+	if groupID == "" {
+		utils.ErrorResponse(w, "Group ID is required", http.StatusBadRequest)
+		return
+	}
+
+	isOwner, err := h.GroupRepo.IsUserOwner(groupID, user.ID)
+	if err != nil {
+		log.Printf("Failed to verify group ownership: %v", err)
+		utils.ErrorResponse(w, "Failed to verify permissions", http.StatusInternalServerError)
+		return
+	}
+	if isOwner {
+		utils.ErrorResponse(w, "Group owner cannot leave the group", http.StatusForbidden)
+		return
+	}
+
+	isMember, err := h.MemberRepo.IsMember(groupID, user.ID)
+	if err != nil {
+		log.Printf("Failed to verify membership: %v", err)
+		utils.ErrorResponse(w, "Failed to verify membership", http.StatusInternalServerError)
+		return
+	}
+	if !isMember {
+		utils.ErrorResponse(w, "You are not a member of this group", http.StatusNotFound)
+		return
+	}
+
+	if err := h.MemberRepo.RemoveMember(groupID, user.ID); err != nil {
+		if err == sql.ErrNoRows {
+			utils.ErrorResponse(w, "You are not a member of this group", http.StatusNotFound)
+			return
+		}
+		log.Printf("Failed to leave group: %v", err)
+		utils.ErrorResponse(w, "Failed to leave group", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONResponse(w, map[string]string{
+		"message": "Left group successfully",
 	}, http.StatusOK)
 }
 

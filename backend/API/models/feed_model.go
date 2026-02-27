@@ -23,6 +23,12 @@ type FeedImage struct {
 	// Fully-qualified URL to the 200×200 thumbnail
 	// example: http://localhost:8080/static/uploads/3fa85f64_thumb.jpg
 	ThumbnailURL string `json:"thumbnail_url"`
+	// Fully-qualified URL to a smaller responsive thumbnail (when available)
+	// example: http://localhost:8080/static/uploads/3fa85f64_thumb_sm.jpg
+	SmallThumbnailURL string `json:"small_thumbnail_url,omitempty"`
+	// Fully-qualified URL to a medium responsive thumbnail (when available)
+	// example: http://localhost:8080/static/uploads/3fa85f64_thumb_md.jpg
+	MediumThumbnailURL string `json:"medium_thumbnail_url,omitempty"`
 	// 1-based position for ordered display
 	// example: 1
 	DisplayOrder int `json:"display_order"`
@@ -150,6 +156,12 @@ type FeedComment struct {
 	// Text body of the comment; empty string when the comment has been deleted
 	// example: Great post, really helpful!
 	Content string `json:"content"`
+	// Fully-qualified URL of the first attached image (by display_order), if any
+	// example: http://localhost:8080/static/3fa85f64.jpg
+	ImageURL string `json:"image_url,omitempty"`
+	// Fully-qualified URL of the first attached thumbnail, if any
+	// example: http://localhost:8080/static/3fa85f64_thumb.jpg
+	ImageThumbnailURL string `json:"image_thumbnail_url,omitempty"`
 
 	// ── Engagement counts ────────────────────────────────────────────────────
 	// example: 5

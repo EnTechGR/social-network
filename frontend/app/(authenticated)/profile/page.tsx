@@ -24,7 +24,6 @@ import {
   getPostImageUrl,
   getPostsByUserId,
   getFeed,
-  getMyPosts,
   getMyGroups,
   getUserProfile,
   getFollowRequests,
@@ -302,27 +301,15 @@ export default function ProfilePage() {
     setPostsLoading(true);
     setPostsError(null);
 
-    // Load enriched "my posts" view first
-    getMyPosts()
+    getPostsByUserId(currentUserId)
       .then((data) => {
         if (cancelled) return;
         setMyPosts(Array.isArray(data) ? data : []);
       })
-      .catch(async (err) => {
-        if (cancelled) return;
-
-        // Fallback to simpler posts-by-user endpoint if enriched view fails
-        console.warn('Failed to load full my-posts payload, falling back to basic posts list:', err);
-        try {
-          const basic = await getPostsByUserId(currentUserId);
-          if (!cancelled) {
-            setMyPosts(Array.isArray(basic) ? basic : []);
-          }
-        } catch (fallbackErr: any) {
-          if (!cancelled) {
-            setPostsError(fallbackErr?.message ?? err?.message ?? 'Failed to load posts');
-            setMyPosts([]);
-          }
+      .catch((err: any) => {
+        if (!cancelled) {
+          setPostsError(err?.message ?? 'Failed to load posts');
+          setMyPosts([]);
         }
       })
       .finally(() => {
@@ -381,6 +368,11 @@ export default function ProfilePage() {
       console.log('Profile visibility changed to:', newValue ? 'public' : 'private');
     } catch (err: any) {
       console.error('Failed to update privacy:', err);
+      const message = err instanceof Error ? err.message : '';
+      if (message === 'Authentication required' || message.toLowerCase().includes('authentication')) {
+        clearAuth();
+        router.replace('/login');
+      }
       setIsPublic(previousValue); // Revert on error
       // You could show a toast notification here
     }

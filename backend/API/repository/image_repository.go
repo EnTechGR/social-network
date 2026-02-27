@@ -11,12 +11,24 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"social-network/models"
 	"social-network/utils"
 
 	"github.com/google/uuid"
+	xdraw "golang.org/x/image/draw"
+)
+
+const (
+	thumbnailSmallMaxWidth  uint = 320
+	thumbnailSmallMaxHeight uint = 320
+	thumbnailSmallJPEGQ          = 90
+
+	thumbnailMediumMaxWidth  uint = 640
+	thumbnailMediumMaxHeight uint = 640
+	thumbnailMediumJPEGQ          = 92
 )
 
 // ============================================================================
@@ -163,13 +175,22 @@ func (r *ImageRepository) ProcessAndSaveImage(
 		return nil, fmt.Errorf("failed to save image: %w", err)
 	}
 
-	// Generate and save thumbnail
-	thumbnailFilename := imageID + "_thumb" + ext
-	thumbnailPath := filepath.Join(r.uploadsDir, thumbnailFilename)
-	if err := r.generateThumbnail(filePath, thumbnailPath, 200, 200); err != nil {
+	// Generate and save responsive thumbnails.
+	thumbnailSmallFilename := imageID + "_thumb_sm" + ext
+	thumbnailSmallPath := filepath.Join(r.uploadsDir, thumbnailSmallFilename)
+	if err := r.generateThumbnail(filePath, thumbnailSmallPath, thumbnailSmallMaxWidth, thumbnailSmallMaxHeight, thumbnailSmallJPEGQ); err != nil {
 		// Clean up original file if thumbnail fails
 		os.Remove(filePath)
-		return nil, fmt.Errorf("failed to generate thumbnail: %w", err)
+		return nil, fmt.Errorf("failed to generate small thumbnail: %w", err)
+	}
+
+	thumbnailMediumFilename := imageID + "_thumb_md" + ext
+	thumbnailMediumPath := filepath.Join(r.uploadsDir, thumbnailMediumFilename)
+	if err := r.generateThumbnail(filePath, thumbnailMediumPath, thumbnailMediumMaxWidth, thumbnailMediumMaxHeight, thumbnailMediumJPEGQ); err != nil {
+		// Clean up original file if thumbnail fails
+		os.Remove(filePath)
+		os.Remove(thumbnailSmallPath)
+		return nil, fmt.Errorf("failed to generate medium thumbnail: %w", err)
 	}
 
 	// Create metadata object
@@ -179,7 +200,7 @@ func (r *ImageRepository) ProcessAndSaveImage(
 		Filename:         filename,
 		OriginalFilename: header.Filename,
 		FilePath:         filePath,
-		ThumbnailPath:    thumbnailPath,
+		ThumbnailPath:    thumbnailMediumPath,
 		FileSize:         header.Size,
 		MimeType:         mimeType,
 		Width:            width,
@@ -247,8 +268,7 @@ func (r *ImageRepository) UploadUserAvatar(
 	// Save to images_core
 	if err := r.SaveImageMetadata(tx, metadata); err != nil {
 		// Clean up files on DB error
-		os.Remove(metadata.FilePath)
-		os.Remove(metadata.ThumbnailPath)
+		r.cleanupFiles(r.filePathsForImageMetadata(metadata))
 		return fmt.Errorf("failed to save image metadata: %w", err)
 	}
 
@@ -261,15 +281,13 @@ func (r *ImageRepository) UploadUserAvatar(
 			set_at = excluded.set_at
 	`
 	if _, err := tx.Exec(query, userID, metadata.ImageID, time.Now()); err != nil {
-		os.Remove(metadata.FilePath)
-		os.Remove(metadata.ThumbnailPath)
+		r.cleanupFiles(r.filePathsForImageMetadata(metadata))
 		return fmt.Errorf("failed to link avatar to user: %w", err)
 	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		os.Remove(metadata.FilePath)
-		os.Remove(metadata.ThumbnailPath)
+		r.cleanupFiles(r.filePathsForImageMetadata(metadata))
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -318,7 +336,7 @@ func (r *ImageRepository) UploadPostImages(
 			r.cleanupFiles(savedFiles)
 			return err
 		}
-		savedFiles = append(savedFiles, metadata.FilePath, metadata.ThumbnailPath)
+		savedFiles = append(savedFiles, r.filePathsForImageMetadata(metadata)...)
 
 		// 1. Insert into centralized images_core table
 		if err := r.SaveImageMetadata(tx, metadata); err != nil {
@@ -375,7 +393,7 @@ func (r *ImageRepository) UploadCommentImages(
 			r.cleanupFiles(savedFiles)
 			return err
 		}
-		savedFiles = append(savedFiles, metadata.FilePath, metadata.ThumbnailPath)
+		savedFiles = append(savedFiles, r.filePathsForImageMetadata(metadata)...)
 
 		if err := r.SaveImageMetadata(tx, metadata); err != nil {
 			r.cleanupFiles(savedFiles)
@@ -569,7 +587,7 @@ func (r *ImageRepository) saveFile(src io.Reader, dst string) error {
 	return err
 }
 
-func (r *ImageRepository) generateThumbnail(srcPath, dstPath string, maxWidth, maxHeight uint) error {
+func (r *ImageRepository) generateThumbnail(srcPath, dstPath string, maxWidth, maxHeight uint, jpegQuality int) error {
 	// Open source image
 	file, err := os.Open(srcPath)
 	if err != nil {
@@ -591,7 +609,7 @@ func (r *ImageRepository) generateThumbnail(srcPath, dstPath string, maxWidth, m
 	// Calculate new dimensions maintaining aspect ratio
 	newWidth, newHeight := calculateThumbnailSize(origWidth, origHeight, int(maxWidth), int(maxHeight))
 
-	// Create thumbnail using nearest neighbor (fast, standard library only)
+	// Create thumbnail using a higher-quality scaler to avoid visibly blocky card images.
 	thumbnail := resizeImage(img, newWidth, newHeight)
 
 	// Create output file
@@ -604,15 +622,35 @@ func (r *ImageRepository) generateThumbnail(srcPath, dstPath string, maxWidth, m
 	// Encode based on original format
 	switch format {
 	case "jpeg", "jpg":
-		return jpeg.Encode(out, thumbnail, &jpeg.Options{Quality: 85})
+		return jpeg.Encode(out, thumbnail, &jpeg.Options{Quality: jpegQuality})
 	case "png":
 		return png.Encode(out, thumbnail)
 	case "gif":
 		return gif.Encode(out, thumbnail, nil)
 	default:
 		// Default to JPEG for unknown formats
-		return jpeg.Encode(out, thumbnail, &jpeg.Options{Quality: 85})
+		return jpeg.Encode(out, thumbnail, &jpeg.Options{Quality: jpegQuality})
 	}
+}
+
+func (r *ImageRepository) filePathsForImageMetadata(metadata *ImageMetadata) []string {
+	paths := []string{metadata.FilePath}
+	paths = append(paths, thumbnailVariants(metadata.ThumbnailPath)...)
+	return paths
+}
+
+func thumbnailVariants(thumbnailPath string) []string {
+	if thumbnailPath == "" {
+		return nil
+	}
+
+	variants := []string{thumbnailPath}
+
+	if strings.Contains(thumbnailPath, "_thumb_md") {
+		variants = append(variants, strings.Replace(thumbnailPath, "_thumb_md", "_thumb_sm", 1))
+	}
+
+	return variants
 }
 
 func (r *ImageRepository) cleanupFiles(filePaths []string) {
@@ -657,25 +695,10 @@ func calculateThumbnailSize(origWidth, origHeight, maxWidth, maxHeight int) (int
 	return newWidth, newHeight
 }
 
-// resizeImage performs nearest-neighbor image resizing (standard library only)
+// resizeImage performs high-quality image resizing.
 func resizeImage(src image.Image, width, height int) image.Image {
-	srcBounds := src.Bounds()
-	srcWidth := srcBounds.Dx()
-	srcHeight := srcBounds.Dy()
-
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	// Nearest neighbor resampling
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			// Map destination pixel to source pixel
-			srcX := (x * srcWidth) / width
-			srcY := (y * srcHeight) / height
-
-			// Copy pixel
-			dst.Set(x, y, src.At(srcX+srcBounds.Min.X, srcY+srcBounds.Min.Y))
-		}
-	}
+	xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), xdraw.Over, nil)
 
 	return dst
 }
@@ -722,7 +745,9 @@ func (r *ImageRepository) CleanupDeletedImages(olderThanDays int) error {
 	for _, img := range imagesToDelete {
 		// Delete files from filesystem
 		os.Remove(img.FilePath)
-		os.Remove(img.ThumbnailPath)
+		for _, thumbPath := range thumbnailVariants(img.ThumbnailPath) {
+			os.Remove(thumbPath)
+		}
 
 		// Delete from database
 		r.db.Exec(`DELETE FROM images_core WHERE image_id = ?`, img.ImageID)

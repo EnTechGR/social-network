@@ -33,6 +33,20 @@ func toStaticURL(storedPath string) string {
 	return staticBase + strings.TrimPrefix(storedPath, "uploads/")
 }
 
+func smallThumbnailPath(storedPath string) string {
+	if strings.Contains(storedPath, "_thumb_md") {
+		return strings.Replace(storedPath, "_thumb_md", "_thumb_sm", 1)
+	}
+	return ""
+}
+
+func mediumThumbnailPath(storedPath string) string {
+	if strings.Contains(storedPath, "_thumb_md") {
+		return storedPath
+	}
+	return ""
+}
+
 // ============================================================================
 // FeedRepository
 // ============================================================================
@@ -562,10 +576,12 @@ func (r *FeedRepository) batchFetchImages(postIDs []string) (map[string][]models
 			return nil, fmt.Errorf("feed: scan image row: %w", err)
 		}
 		result[postID] = append(result[postID], models.FeedImage{
-			ImageID:      imageID,
-			URL:          toStaticURL(filePath),
-			ThumbnailURL: toStaticURL(thumbPath),
-			DisplayOrder: displayOrder,
+			ImageID:            imageID,
+			URL:                toStaticURL(filePath),
+			ThumbnailURL:       toStaticURL(thumbPath),
+			SmallThumbnailURL:  toStaticURL(smallThumbnailPath(thumbPath)),
+			MediumThumbnailURL: toStaticURL(mediumThumbnailPath(thumbPath)),
+			DisplayOrder:       displayOrder,
 		})
 	}
 	if err := rows.Err(); err != nil {

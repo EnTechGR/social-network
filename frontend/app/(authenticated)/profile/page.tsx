@@ -381,6 +381,11 @@ export default function ProfilePage() {
       console.log('Profile visibility changed to:', newValue ? 'public' : 'private');
     } catch (err: any) {
       console.error('Failed to update privacy:', err);
+      const message = err instanceof Error ? err.message : '';
+      if (message === 'Authentication required' || message.toLowerCase().includes('authentication')) {
+        clearAuth();
+        router.replace('/login');
+      }
       setIsPublic(previousValue); // Revert on error
       // You could show a toast notification here
     }

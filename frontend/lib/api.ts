@@ -35,6 +35,14 @@ export interface ForumUser {
   last_name: string;
   date_of_birth: string;
   gender: string;
+  is_private?: boolean;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
   is_online: boolean;
 }
 
@@ -739,6 +747,13 @@ export async function getUserProfile(userId: string): Promise<{
   nickname?: string;
   first_name?: string;
   last_name?: string;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
 } | {
   privateProfile: false;
   user: any;
@@ -762,6 +777,7 @@ export async function getUserProfile(userId: string): Promise<{
       nickname: (data as any).nickname,
       first_name: (data as any).first_name,
       last_name: (data as any).last_name,
+      avatar: (data as any).avatar,
     };
   }
 

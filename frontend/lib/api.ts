@@ -49,6 +49,17 @@ export interface ForumUser {
 export interface ChatConversation {
   user_id: string;
   nickname: string;
+  avatar?: {
+    image_id: string;
+    file_path: string;
+    thumbnail_path: string;
+    mime_type: string;
+    set_at: string;
+  };
+  avatar_path?: string;
+  avatar_thumbnail_path?: string;
+  avatar_url?: string;
+  avatar_thumb_url?: string;
   last_message: string;
   last_message_time: string;
   unread_count: number;

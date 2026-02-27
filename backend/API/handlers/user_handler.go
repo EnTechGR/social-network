@@ -256,31 +256,46 @@ func (h *UserHandler) GetPublicUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type PublicUser struct {
-		ID          string             `json:"id"`
-		Nickname    string             `json:"nickname"`
-		Email       string             `json:"email"`
-		FirstName   string             `json:"first_name"`
-		LastName    string             `json:"last_name"`
-		DateOfBirth string             `json:"date_of_birth"`
-		Gender      string             `json:"gender"`
-		IsPrivate   bool               `json:"is_private"`
-		Avatar      *models.AvatarInfo `json:"avatar,omitempty"`
-		IsOnline    bool               `json:"is_online"`
+		ID                  string             `json:"id"`
+		Nickname            string             `json:"nickname"`
+		Email               string             `json:"email"`
+		FirstName           string             `json:"first_name"`
+		LastName            string             `json:"last_name"`
+		DateOfBirth         string             `json:"date_of_birth"`
+		Gender              string             `json:"gender"`
+		IsPrivate           bool               `json:"is_private"`
+		Avatar              *models.AvatarInfo `json:"avatar,omitempty"`
+		AvatarPath          string             `json:"avatar_path,omitempty"`
+		AvatarThumbnailPath string             `json:"avatar_thumbnail_path,omitempty"`
+		AvatarURL           string             `json:"avatar_url,omitempty"`
+		AvatarThumbURL      string             `json:"avatar_thumb_url,omitempty"`
+		IsOnline            bool               `json:"is_online"`
 	}
 
 	respUsers := make([]PublicUser, 0, len(users))
 	for _, u := range users {
+		avatarPath := ""
+		avatarThumbPath := ""
+		if u.Avatar != nil {
+			avatarPath = u.Avatar.FilePath
+			avatarThumbPath = u.Avatar.ThumbnailPath
+		}
+
 		respUsers = append(respUsers, PublicUser{
-			ID:          u.ID,
-			Nickname:    u.Nickname,
-			Email:       u.Email,
-			FirstName:   u.FirstName,
-			LastName:    u.LastName,
-			DateOfBirth: u.DateOfBirth.Format(time.RFC3339),
-			Gender:      u.Gender,
-			IsPrivate:   u.IsPrivate,
-			Avatar:      u.Avatar,
-			IsOnline:    false,
+			ID:                  u.ID,
+			Nickname:            u.Nickname,
+			Email:               u.Email,
+			FirstName:           u.FirstName,
+			LastName:            u.LastName,
+			DateOfBirth:         u.DateOfBirth.Format(time.RFC3339),
+			Gender:              u.Gender,
+			IsPrivate:           u.IsPrivate,
+			Avatar:              u.Avatar,
+			AvatarPath:          avatarPath,
+			AvatarThumbnailPath: avatarThumbPath,
+			AvatarURL:           avatarPath,
+			AvatarThumbURL:      avatarThumbPath,
+			IsOnline:            false,
 		})
 	}
 

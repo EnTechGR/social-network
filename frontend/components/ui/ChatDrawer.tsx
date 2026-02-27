@@ -8,6 +8,7 @@ import {
   getChatConversation,
   getChatConversations,
   getChatUsersForChat,
+  getAvatarUrl,
   getGroupChatMessages,
   getMyGroups,
   getProfile,
@@ -59,6 +60,21 @@ function dedupeById<T extends { message_id: string }>(items: T[]): T[] {
     byId.set(item.message_id, item);
   });
   return Array.from(byId.values());
+}
+
+function resolveConversationAvatarPath(conversation: ChatConversation): string | undefined {
+  return (
+    conversation.avatar?.thumbnail_path ||
+    conversation.avatar?.file_path ||
+    conversation.avatar_thumbnail_path ||
+    conversation.avatar_path ||
+    conversation.avatar_thumb_url ||
+    conversation.avatar_url
+  );
+}
+
+function resolveUserAvatarPath(user: ForumUser): string | undefined {
+  return user.avatar?.thumbnail_path || user.avatar?.file_path;
 }
 
 function normalizeDirectMessage(data: unknown): DirectChatMessage | null {
@@ -485,7 +501,12 @@ const chatModalMessages = useMemo(() => {
               >
                 <div className="flex flex-1 gap-2 items-center min-w-0">
                   <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
-                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                    <Image
+                      src={getAvatarUrl(resolveConversationAvatarPath(conversation))}
+                      alt=""
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
                     {conversation.nickname || 'User'}
@@ -509,7 +530,12 @@ const chatModalMessages = useMemo(() => {
               >
                 <div className="flex flex-1 gap-2 items-center min-w-0">
                   <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
-                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                    <Image
+                      src={getAvatarUrl(resolveUserAvatarPath(user))}
+                      alt=""
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
                     {user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User'}

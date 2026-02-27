@@ -774,9 +774,15 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			u.last_name,
 			u.email,
 			u.is_private,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at,
 			fr.created_at as followed_at
 		FROM follow_relationships fr
 		JOIN user u ON fr.follower_id = u.user_id
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		WHERE fr.followee_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
@@ -789,14 +795,16 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 	var followers []interface{}
 	for rows.Next() {
 		var follower struct {
-			UserID     string `json:"user_id"`
-			Nickname   string `json:"nickname"`
-			FirstName  string `json:"first_name"`
-			LastName   string `json:"last_name"`
-			Email      string `json:"email"`
-			IsPrivate  bool   `json:"is_private"`
-			FollowedAt string `json:"followed_at"`
+			UserID     string             `json:"user_id"`
+			Nickname   string             `json:"nickname"`
+			FirstName  string             `json:"first_name"`
+			LastName   string             `json:"last_name"`
+			Email      string             `json:"email"`
+			IsPrivate  bool               `json:"is_private"`
+			Avatar     *models.AvatarInfo `json:"avatar,omitempty"`
+			FollowedAt string             `json:"followed_at"`
 		}
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		err := rows.Scan(
 			&follower.UserID,
@@ -805,11 +813,26 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			&follower.LastName,
 			&follower.Email,
 			&follower.IsPrivate,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 			&follower.FollowedAt,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if imageID.Valid {
+			follower.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 
 		followers = append(followers, follower)
@@ -832,9 +855,15 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			u.last_name,
 			u.email,
 			u.is_private,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at,
 			fr.created_at as followed_at
 		FROM follow_relationships fr
 		JOIN user u ON fr.followee_id = u.user_id
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		WHERE fr.follower_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
@@ -847,14 +876,16 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 	var following []interface{}
 	for rows.Next() {
 		var followee struct {
-			UserID     string `json:"user_id"`
-			Nickname   string `json:"nickname"`
-			FirstName  string `json:"first_name"`
-			LastName   string `json:"last_name"`
-			Email      string `json:"email"`
-			IsPrivate  bool   `json:"is_private"`
-			FollowedAt string `json:"followed_at"`
+			UserID     string             `json:"user_id"`
+			Nickname   string             `json:"nickname"`
+			FirstName  string             `json:"first_name"`
+			LastName   string             `json:"last_name"`
+			Email      string             `json:"email"`
+			IsPrivate  bool               `json:"is_private"`
+			Avatar     *models.AvatarInfo `json:"avatar,omitempty"`
+			FollowedAt string             `json:"followed_at"`
 		}
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		err := rows.Scan(
 			&followee.UserID,
@@ -863,11 +894,26 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			&followee.LastName,
 			&followee.Email,
 			&followee.IsPrivate,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 			&followee.FollowedAt,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if imageID.Valid {
+			followee.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 
 		following = append(following, followee)

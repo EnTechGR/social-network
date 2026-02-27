@@ -191,6 +191,11 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 		SELECT 
 			uc.other_user_id,
 			u.nickname,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at,
 			(
 				SELECT content
 				FROM messages m2
@@ -214,6 +219,7 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 			) AS unread_count
 		FROM user_conversations uc
 		JOIN user u ON u.user_id = uc.other_user_id
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		ORDER BY last_message_time DESC
 	`, userID, userID, userID, userID, userID, userID, userID, userID)
 
@@ -226,10 +232,16 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 	for rows.Next() {
 		var conv models.Conversation
 		var lastMessage sql.NullString
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		err := rows.Scan(
 			&conv.UserID,
 			&conv.Nickname,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 			&lastMessage,
 			&conv.LastMessageTime,
 			&conv.UnreadCount,
@@ -242,6 +254,16 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 			conv.LastMessage = lastMessage.String
 		} else {
 			conv.LastMessage = ""
+		}
+
+		if imageID.Valid {
+			conv.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 
 		conv.IsOnline = false
@@ -266,10 +288,26 @@ func (r *MessageRepository) GetConversations(userID string) ([]models.Conversati
 // Returns:
 //   - []models.User: A slice of user models for users without a conversation history.
 //   - error: An error if the query fails.
-func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models.User, error) {
+func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models.UserWithAvatar, error) {
 	rows, err := r.DB.Query(`
-		SELECT u.user_id, u.nickname, u.email, u.first_name, u.last_name, u.date_of_birth, u.gender, u.created_at
+		SELECT 
+			u.user_id,
+			u.nickname,
+			u.email,
+			u.first_name,
+			u.last_name,
+			u.date_of_birth,
+			u.about_me,
+			u.gender,
+			u.is_private,
+			u.created_at,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at
 		FROM user u
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		WHERE u.user_id != ?
 		AND EXISTS (
 			SELECT 1
@@ -298,9 +336,10 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 	}
 	defer rows.Close()
 
-	var users []models.User
+	var users []models.UserWithAvatar
 	for rows.Next() {
-		var u models.User
+		var u models.UserWithAvatar
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 		err := rows.Scan(
 			&u.ID,
 			&u.Nickname,
@@ -308,11 +347,28 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 			&u.FirstName,
 			&u.LastName,
 			&u.DateOfBirth,
+			&u.AboutMe,
 			&u.Gender,
+			&u.IsPrivate,
 			&u.CreatedAt,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %v", err)
+		}
+
+		if imageID.Valid {
+			u.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 		users = append(users, u)
 	}
@@ -333,22 +389,38 @@ func (r *MessageRepository) GetUsersWithoutConversation(userID string) ([]models
 // Returns:
 //   - []models.User: A slice of all other user profiles.
 //   - error: An error if the query fails.
-func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, error) {
+func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.UserWithAvatar, error) {
 	rows, err := r.DB.Query(`
-		SELECT user_id, nickname, email, first_name, last_name, date_of_birth, gender, created_at
-		FROM user
-		WHERE user_id != ?
+		SELECT 
+			u.user_id,
+			u.nickname,
+			u.email,
+			u.first_name,
+			u.last_name,
+			u.date_of_birth,
+			u.about_me,
+			u.gender,
+			u.is_private,
+			u.created_at,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at
+		FROM user u
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
+		WHERE u.user_id != ?
 		AND EXISTS (
 			SELECT 1
 			FROM follow_relationships fr
 			WHERE fr.status = 'accepted'
 			  AND (
-				(fr.follower_id = ? AND fr.followee_id = user.user_id)
+				(fr.follower_id = ? AND fr.followee_id = u.user_id)
 				OR
-				(fr.follower_id = user.user_id AND fr.followee_id = ?)
+				(fr.follower_id = u.user_id AND fr.followee_id = ?)
 			  )
 		)
-		ORDER BY nickname ASC
+		ORDER BY u.nickname ASC
 	`, currentUserID, currentUserID, currentUserID)
 
 	if err != nil {
@@ -356,9 +428,10 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 	}
 	defer rows.Close()
 
-	var users []models.User
+	var users []models.UserWithAvatar
 	for rows.Next() {
-		var u models.User
+		var u models.UserWithAvatar
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 		err := rows.Scan(
 			&u.ID,
 			&u.Nickname,
@@ -366,11 +439,28 @@ func (r *MessageRepository) GetAllUsers(currentUserID string) ([]models.User, er
 			&u.FirstName,
 			&u.LastName,
 			&u.DateOfBirth,
+			&u.AboutMe,
 			&u.Gender,
+			&u.IsPrivate,
 			&u.CreatedAt,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %v", err)
+		}
+
+		if imageID.Valid {
+			u.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 		users = append(users, u)
 	}

@@ -150,6 +150,12 @@ type FeedComment struct {
 	// Text body of the comment; empty string when the comment has been deleted
 	// example: Great post, really helpful!
 	Content string `json:"content"`
+	// Fully-qualified URL of the first attached image (by display_order), if any
+	// example: http://localhost:8080/static/3fa85f64.jpg
+	ImageURL string `json:"image_url,omitempty"`
+	// Fully-qualified URL of the first attached thumbnail, if any
+	// example: http://localhost:8080/static/3fa85f64_thumb.jpg
+	ImageThumbnailURL string `json:"image_thumbnail_url,omitempty"`
 
 	// ── Engagement counts ────────────────────────────────────────────────────
 	// example: 5

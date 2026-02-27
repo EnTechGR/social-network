@@ -10,6 +10,7 @@ import {
   getCommentsByPostId,
   getProfile,
   getAvatarUrl,
+  getPostImageUrl,
 } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
@@ -23,6 +24,7 @@ function formatPostDate(isoDate: string): string {
 }
 
 function mapCommentToItem(c: any): CommentItem {
+  const rawCommentImage = c.image_thumbnail_url || c.image_url;
   return {
     id: c.id ?? c.comment_id ?? '',
     userId: c.author_id,
@@ -32,6 +34,7 @@ function mapCommentToItem(c: any): CommentItem {
     userDate: formatPostDate(c.created_at),
     text: c.content ?? '',
     likeCount: c.like_count ?? 0,
+    imageSrc: getPostImageUrl(rawCommentImage) || rawCommentImage || undefined,
   };
 }
 

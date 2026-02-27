@@ -346,6 +346,60 @@ func (r *ImageRepository) UploadPostImages(
 	return nil
 }
 
+// UploadCommentImages uploads and processes multiple images for a comment,
+// saving metadata to images_core and linking each image to the comment via
+// the comment_images relationship table.
+func (r *ImageRepository) UploadCommentImages(
+	files []*multipart.FileHeader,
+	commentID string,
+	userID string,
+) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	var savedFiles []string // paths for cleanup on error
+
+	for i, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			r.cleanupFiles(savedFiles)
+			return fmt.Errorf("failed to open file: %w", err)
+		}
+		defer file.Close()
+
+		metadata, err := r.ProcessAndSaveImage(file, fileHeader, userID)
+		if err != nil {
+			r.cleanupFiles(savedFiles)
+			return err
+		}
+		savedFiles = append(savedFiles, metadata.FilePath, metadata.ThumbnailPath)
+
+		if err := r.SaveImageMetadata(tx, metadata); err != nil {
+			r.cleanupFiles(savedFiles)
+			return fmt.Errorf("failed to save image metadata: %w", err)
+		}
+
+		commentImageID := uuid.New().String()
+		_, err = tx.Exec(`
+			INSERT INTO comment_images (comment_image_id, comment_id, image_id, display_order, created_at)
+			VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+		`, commentImageID, commentID, metadata.ImageID, i+1)
+		if err != nil {
+			r.cleanupFiles(savedFiles)
+			return fmt.Errorf("failed to link image %s to comment %s: %w", metadata.ImageID, commentID, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.cleanupFiles(savedFiles)
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
 
 // ============================================================================
 // IMAGE RETRIEVAL METHODS

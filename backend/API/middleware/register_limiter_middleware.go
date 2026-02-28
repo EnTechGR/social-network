@@ -52,8 +52,9 @@ func (rl *RateLimiter) Limit(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if info.successfulUntil.After(now) {
+			remaining := info.successfulUntil.Sub(now).Round(time.Second)
 			rl.mu.Unlock()
-			utils.ErrorResponse(w, "Too many registrations from this IP. Please wait "+restrict.String()+".", http.StatusTooManyRequests)
+			utils.ErrorResponse(w, "Too many registrations from this IP. Please wait "+remaining.String()+".", http.StatusTooManyRequests)
 			return
 		}
 

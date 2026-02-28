@@ -27,6 +27,14 @@ export interface NotificationsResponse {
   notifications: NotificationItem[];
 }
 
+export interface AvatarInfo {
+  image_id: string;
+  file_path: string;
+  thumbnail_path: string;
+  mime_type: string;
+  set_at: string;
+}
+
 export interface ForumUser {
   id: string;
   nickname: string;
@@ -36,6 +44,7 @@ export interface ForumUser {
   date_of_birth: string;
   gender: string;
   is_online: boolean;
+  avatar?: AvatarInfo;
 }
 
 export interface ChatConversation {
@@ -45,6 +54,7 @@ export interface ChatConversation {
   last_message_time: string;
   unread_count: number;
   is_online: boolean;
+  avatar?: AvatarInfo;
 }
 
 export interface DirectChatMessage {

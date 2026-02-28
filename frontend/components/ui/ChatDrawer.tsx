@@ -8,6 +8,7 @@ import {
   getChatConversation,
   getChatConversations,
   getChatUsersForChat,
+  getAvatarUrl,
   getGroupChatMessages,
   getMyGroups,
   getProfile,
@@ -110,7 +111,8 @@ export default function ChatDrawer() {
   const [chatUsers, setChatUsers] = useState<ForumUser[]>([]);
   const [myGroups, setMyGroups] = useState<BasicGroup[]>([]);
 
-  const [selectedDirectUser, setSelectedDirectUser] = useState<{ id: string; nickname: string } | null>(null);
+  const [selfAvatar, setSelfAvatar] = useState('');
+  const [selectedDirectUser, setSelectedDirectUser] = useState<{ id: string; nickname: string; avatar?: string } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<BasicGroup | null>(null);
 
   const [directMessages, setDirectMessages] = useState<DirectChatMessage[]>([]);
@@ -125,7 +127,7 @@ export default function ChatDrawer() {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageContainerRef = useRef<HTMLDivElement | null>(null);
   const currentUserIdRef = useRef<string>('');
-  const selectedDirectUserRef = useRef<{ id: string; nickname: string } | null>(null);
+  const selectedDirectUserRef = useRef<{ id: string; nickname: string; avatar?: string } | null>(null);
   const selectedGroupRef = useRef<BasicGroup | null>(null);
 
   const conversationUserIDs = useMemo(() => {
@@ -214,6 +216,7 @@ export default function ChatDrawer() {
       ]);
 
       setCurrentUserId(typeof profile?.id === 'string' ? profile.id : '');
+      setSelfAvatar(getAvatarUrl(profile?.avatar?.thumbnail_path || profile?.avatar?.file_path));
       setConversations(directConversations);
       setChatUsers(users);
       setMyGroups(
@@ -358,11 +361,11 @@ export default function ChatDrawer() {
     messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
   }, [directMessages, groupMessages, selectedDirectUser, selectedGroup]);
 
-  const openDirectConversation = useCallback(async (userID: string, nickname: string) => {
+  const openDirectConversation = useCallback(async (userID: string, nickname: string, avatar?: string) => {
     setIsLoadingMessages(true);
     setChatError(null);
     setSelectedGroup(null);
-    setSelectedDirectUser({ id: userID, nickname });
+    setSelectedDirectUser({ id: userID, nickname, avatar });
     try {
       const messages = await getChatConversation(userID, 100, 0);
       setDirectMessages(sortByCreatedAtAsc(messages));
@@ -445,8 +448,8 @@ const chatModalMessages = useMemo(() => {
     setDirectMessages([]);
   }, []);
 
-  const handleOpenConversation = useCallback((userId: string, nickname: string) => {
-    void openDirectConversation(userId, nickname);
+  const handleOpenConversation = useCallback((userId: string, nickname: string, avatar?: string) => {
+    void openDirectConversation(userId, nickname, avatar);
     setChatModalOpen(true);
   }, [openDirectConversation]);
 
@@ -480,12 +483,12 @@ const chatModalMessages = useMemo(() => {
               <button
                 key={conversation.user_id}
                 type="button"
-                onClick={() => handleOpenConversation(conversation.user_id, conversation.nickname || 'User')}
+                onClick={() => handleOpenConversation(conversation.user_id, conversation.nickname || 'User', getAvatarUrl(conversation.avatar?.thumbnail_path || conversation.avatar?.file_path))}
                 className="flex h-14 items-center justify-between px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
               >
                 <div className="flex flex-1 gap-2 items-center min-w-0">
                   <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
-                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                    <Image src={getAvatarUrl(conversation.avatar?.thumbnail_path || conversation.avatar?.file_path)} alt="" fill className="object-cover" />
                   </div>
                   <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
                     {conversation.nickname || 'User'}
@@ -504,15 +507,15 @@ const chatModalMessages = useMemo(() => {
               <button
                 key={user.id}
                 type="button"
-                onClick={() => handleOpenConversation(user.id, user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User')}
+                onClick={() => handleOpenConversation(user.id, user.nickname || 'User', getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path))}
                 className="flex h-14 items-center px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
               >
                 <div className="flex flex-1 gap-2 items-center min-w-0">
                   <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
-                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
+                    <Image src={getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path)} alt="" fill className="object-cover" />
                   </div>
                   <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
-                    {user.nickname || `${user.first_name} ${user.last_name}`.trim() || 'User'}
+                    {user.nickname || 'User'}
                   </p>
                 </div>
               </button>
@@ -552,6 +555,8 @@ const chatModalMessages = useMemo(() => {
           isOpen={chatModalOpen}
           onClose={handleCloseChatModal}
           userName={selectedDirectUser.nickname}
+          userAvatar={selectedDirectUser.avatar}
+          selfAvatar={selfAvatar}
           controlledMessages={chatModalMessages}
           onSendMessage={(text) => { void sendDirectMessage(text); }}
         />

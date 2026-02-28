@@ -259,10 +259,18 @@ func (h *GroupJoinRequestHandler) ApproveRequest(w http.ResponseWriter, r *http.
 	}
 
 	// Add user to group
-	if err := h.MemberRepo.AddMember(request.GroupID, request.UserID); err != nil {
-		log.Printf("Failed to add member: %v", err)
+	isMember, err := h.MemberRepo.IsMember(request.GroupID, request.UserID)
+	if err != nil {
+		log.Printf("Failed to verify member before add: %v", err)
 		utils.ErrorResponse(w, "Failed to add member to group", http.StatusInternalServerError)
 		return
+	}
+	if !isMember {
+		if err := h.MemberRepo.AddMember(request.GroupID, request.UserID); err != nil {
+			log.Printf("Failed to add member: %v", err)
+			utils.ErrorResponse(w, "Failed to add member to group", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	createAndPushNotification(h.NotificationRepo, h.Hub, request.UserID, user.ID, user.Nickname, "group_join_decision")

@@ -115,8 +115,37 @@ func (r *GroupJoinRequestRepository) GetUserRequests(userID string) ([]models.Gr
 
 // UpdateStatus updates the status of a join request (approve/deny)
 func (r *GroupJoinRequestRepository) UpdateStatus(requestID, status string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var groupID, userID string
+	err = tx.QueryRow(
+		`SELECT group_id, user_id FROM group_join_requests WHERE request_id = ?`,
+		requestID,
+	).Scan(&groupID, &userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return sql.ErrNoRows
+		}
+		return err
+	}
+
+	// Keep the newest decision by removing any previous rows with the same
+	// (group_id, user_id, status) tuple. This avoids UNIQUE conflicts when a
+	// user leaves then gets approved/denied again later.
+	if _, err := tx.Exec(
+		`DELETE FROM group_join_requests
+		 WHERE group_id = ? AND user_id = ? AND status = ? AND request_id <> ?`,
+		groupID, userID, status, requestID,
+	); err != nil {
+		return err
+	}
+
 	now := time.Now()
-	result, err := r.db.Exec(
+	result, err := tx.Exec(
 		`UPDATE group_join_requests SET status = ?, responded_at = ? WHERE request_id = ?`,
 		status, now, requestID,
 	)
@@ -131,6 +160,11 @@ func (r *GroupJoinRequestRepository) UpdateStatus(requestID, status string) erro
 	if rows == 0 {
 		return sql.ErrNoRows
 	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

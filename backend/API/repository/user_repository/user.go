@@ -367,15 +367,17 @@ func (r *UserRepository) GetByEmailOrNickname(login string) (*models.User, error
 	return &user, nil
 }
 
-// GetPublicUsers returns all public profiles, excluding the current user.
-func (r *UserRepository) GetPublicUsers(currentUserID string) ([]models.User, error) {
+// GetPublicUsers returns all profiles (public and private), excluding the current user,
+// with avatar metadata when available.
+func (r *UserRepository) GetPublicUsers(currentUserID string) ([]models.UserWithAvatar, error) {
 	rows, err := r.DB.Query(
-		`SELECT user_id, nickname, email, first_name, last_name, date_of_birth,
-		        about_me, gender, is_private, created_at
-		 FROM user
-		 WHERE is_private = 0
-		   AND user_id != ?
-		 ORDER BY nickname ASC`,
+		`SELECT u.user_id, u.nickname, u.email, u.first_name, u.last_name, u.date_of_birth,
+		        u.about_me, u.gender, u.is_private, u.created_at,
+				va.image_id, va.file_path, va.thumbnail_path, va.mime_type, va.set_at
+		 FROM user u
+		 LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
+		 WHERE u.user_id != ?
+		 ORDER BY u.nickname ASC`,
 		currentUserID,
 	)
 	if err != nil {
@@ -383,10 +385,11 @@ func (r *UserRepository) GetPublicUsers(currentUserID string) ([]models.User, er
 	}
 	defer rows.Close()
 
-	var users []models.User
+	var users []models.UserWithAvatar
 	for rows.Next() {
-		var u models.User
+		var u models.UserWithAvatar
 		var createdAt sql.NullTime
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		if err := rows.Scan(
 			&u.ID,
@@ -399,11 +402,25 @@ func (r *UserRepository) GetPublicUsers(currentUserID string) ([]models.User, er
 			&u.Gender,
 			&u.IsPrivate,
 			&createdAt,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 		); err != nil {
 			return nil, err
 		}
 
 		u.CreatedAt = createdAt.Time
+		if imageID.Valid {
+			u.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
+		}
 		users = append(users, u)
 	}
 
@@ -757,9 +774,15 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			u.last_name,
 			u.email,
 			u.is_private,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at,
 			fr.created_at as followed_at
 		FROM follow_relationships fr
 		JOIN user u ON fr.follower_id = u.user_id
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		WHERE fr.followee_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
@@ -772,14 +795,16 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 	var followers []interface{}
 	for rows.Next() {
 		var follower struct {
-			UserID     string `json:"user_id"`
-			Nickname   string `json:"nickname"`
-			FirstName  string `json:"first_name"`
-			LastName   string `json:"last_name"`
-			Email      string `json:"email"`
-			IsPrivate  bool   `json:"is_private"`
-			FollowedAt string `json:"followed_at"`
+			UserID     string             `json:"user_id"`
+			Nickname   string             `json:"nickname"`
+			FirstName  string             `json:"first_name"`
+			LastName   string             `json:"last_name"`
+			Email      string             `json:"email"`
+			IsPrivate  bool               `json:"is_private"`
+			Avatar     *models.AvatarInfo `json:"avatar,omitempty"`
+			FollowedAt string             `json:"followed_at"`
 		}
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		err := rows.Scan(
 			&follower.UserID,
@@ -788,11 +813,26 @@ func (r *UserRepository) GetFollowers(userID string) ([]interface{}, error) {
 			&follower.LastName,
 			&follower.Email,
 			&follower.IsPrivate,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 			&follower.FollowedAt,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if imageID.Valid {
+			follower.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 
 		followers = append(followers, follower)
@@ -815,9 +855,15 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			u.last_name,
 			u.email,
 			u.is_private,
+			va.image_id,
+			va.file_path,
+			va.thumbnail_path,
+			va.mime_type,
+			va.set_at,
 			fr.created_at as followed_at
 		FROM follow_relationships fr
 		JOIN user u ON fr.followee_id = u.user_id
+		LEFT JOIN v_user_avatars va ON va.user_id = u.user_id
 		WHERE fr.follower_id = ? AND fr.status = 'accepted'
 		ORDER BY fr.created_at DESC
 	`, userID)
@@ -830,14 +876,16 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 	var following []interface{}
 	for rows.Next() {
 		var followee struct {
-			UserID     string `json:"user_id"`
-			Nickname   string `json:"nickname"`
-			FirstName  string `json:"first_name"`
-			LastName   string `json:"last_name"`
-			Email      string `json:"email"`
-			IsPrivate  bool   `json:"is_private"`
-			FollowedAt string `json:"followed_at"`
+			UserID     string             `json:"user_id"`
+			Nickname   string             `json:"nickname"`
+			FirstName  string             `json:"first_name"`
+			LastName   string             `json:"last_name"`
+			Email      string             `json:"email"`
+			IsPrivate  bool               `json:"is_private"`
+			Avatar     *models.AvatarInfo `json:"avatar,omitempty"`
+			FollowedAt string             `json:"followed_at"`
 		}
+		var imageID, filePath, thumbnailPath, mimeType, setAt sql.NullString
 
 		err := rows.Scan(
 			&followee.UserID,
@@ -846,11 +894,26 @@ func (r *UserRepository) GetFollowing(userID string) ([]interface{}, error) {
 			&followee.LastName,
 			&followee.Email,
 			&followee.IsPrivate,
+			&imageID,
+			&filePath,
+			&thumbnailPath,
+			&mimeType,
+			&setAt,
 			&followee.FollowedAt,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if imageID.Valid {
+			followee.Avatar = &models.AvatarInfo{
+				ImageID:       imageID.String,
+				FilePath:      filePath.String,
+				ThumbnailPath: thumbnailPath.String,
+				MimeType:      mimeType.String,
+				SetAt:         setAt.String,
+			}
 		}
 
 		following = append(following, followee)

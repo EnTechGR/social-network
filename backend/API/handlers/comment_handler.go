@@ -142,9 +142,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(files) > 0 {
-			// Note: Using post ID for image storage since comments share the same image table
-			// This associates images with the post but tracks them via comment context
-			if err := h.ImageRepo.UploadPostImages(files, postID, user.ID); err != nil {
+			if err := h.ImageRepo.UploadCommentImages(files, created.ID, user.ID); err != nil {
 				log.Printf("Warning: Failed to upload images for comment %s: %v", created.ID, err)
 				// Don't fail the comment creation if image upload fails
 				utils.JSONResponse(w, map[string]interface{}{

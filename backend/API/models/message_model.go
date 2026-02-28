@@ -101,6 +101,8 @@ type Conversation struct {
 	// The peer user's nickname
 	// example: tech_lead
 	Nickname string `json:"nickname"`
+	// The peer user's avatar metadata when available
+	Avatar *AvatarInfo `json:"avatar,omitempty"`
 	// The last message sent in this thread
 	// example: Sounds good, see you then.
 	LastMessage string `json:"last_message"`

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"social-network/middleware"
+	"social-network/models"
 	"social-network/repository"
 	"social-network/repository/user_repository"
 	"social-network/utils"
@@ -60,8 +61,8 @@ func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get target user's basic info
-	targetUser, err := h.UserRepo.GetByID(targetUserID)
+	// Get target user's profile + avatar data
+	targetUser, err := h.UserRepo.GetUserWithAvatar(targetUserID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
 			utils.ErrorResponse(w, "User not found", http.StatusNotFound)
@@ -93,18 +94,11 @@ func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 				"first_name": targetUser.FirstName,
 				"last_name":  targetUser.LastName,
 				"is_private": targetUser.IsPrivate,
+				"avatar":     targetUser.Avatar,
 				"message":    "This profile is private. Follow to see their content.",
 			}, http.StatusForbidden)
 			return
 		}
-	}
-
-	// User has access - get full profile data
-	userWithAvatar, err := h.UserRepo.GetUserWithAvatar(targetUserID)
-	if err != nil {
-		log.Printf("Failed to get user profile: %v", err)
-		utils.ErrorResponse(w, "Failed to retrieve profile", http.StatusInternalServerError)
-		return
 	}
 
 	// Get user's posts
@@ -130,7 +124,7 @@ func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Build response
 	response := map[string]interface{}{
-		"user":      userWithAvatar,
+		"user":      targetUser,
 		"posts":     posts,
 		"followers": followers,
 		"following": following,
@@ -262,27 +256,46 @@ func (h *UserHandler) GetPublicUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type PublicUser struct {
-		ID          string `json:"id"`
-		Nickname    string `json:"nickname"`
-		Email       string `json:"email"`
-		FirstName   string `json:"first_name"`
-		LastName    string `json:"last_name"`
-		DateOfBirth string `json:"date_of_birth"`
-		Gender      string `json:"gender"`
-		IsOnline    bool   `json:"is_online"`
+		ID                  string             `json:"id"`
+		Nickname            string             `json:"nickname"`
+		Email               string             `json:"email"`
+		FirstName           string             `json:"first_name"`
+		LastName            string             `json:"last_name"`
+		DateOfBirth         string             `json:"date_of_birth"`
+		Gender              string             `json:"gender"`
+		IsPrivate           bool               `json:"is_private"`
+		Avatar              *models.AvatarInfo `json:"avatar,omitempty"`
+		AvatarPath          string             `json:"avatar_path,omitempty"`
+		AvatarThumbnailPath string             `json:"avatar_thumbnail_path,omitempty"`
+		AvatarURL           string             `json:"avatar_url,omitempty"`
+		AvatarThumbURL      string             `json:"avatar_thumb_url,omitempty"`
+		IsOnline            bool               `json:"is_online"`
 	}
 
 	respUsers := make([]PublicUser, 0, len(users))
 	for _, u := range users {
+		avatarPath := ""
+		avatarThumbPath := ""
+		if u.Avatar != nil {
+			avatarPath = u.Avatar.FilePath
+			avatarThumbPath = u.Avatar.ThumbnailPath
+		}
+
 		respUsers = append(respUsers, PublicUser{
-			ID:          u.ID,
-			Nickname:    u.Nickname,
-			Email:       u.Email,
-			FirstName:   u.FirstName,
-			LastName:    u.LastName,
-			DateOfBirth: u.DateOfBirth.Format(time.RFC3339),
-			Gender:      u.Gender,
-			IsOnline:    false,
+			ID:                  u.ID,
+			Nickname:            u.Nickname,
+			Email:               u.Email,
+			FirstName:           u.FirstName,
+			LastName:            u.LastName,
+			DateOfBirth:         u.DateOfBirth.Format(time.RFC3339),
+			Gender:              u.Gender,
+			IsPrivate:           u.IsPrivate,
+			Avatar:              u.Avatar,
+			AvatarPath:          avatarPath,
+			AvatarThumbnailPath: avatarThumbPath,
+			AvatarURL:           avatarPath,
+			AvatarThumbURL:      avatarThumbPath,
+			IsOnline:            false,
 		})
 	}
 

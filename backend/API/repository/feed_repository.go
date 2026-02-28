@@ -11,7 +11,9 @@ import (
 
 // staticBase is the URL prefix used to turn a stored file path into a
 // publicly accessible URL.  The static file server is mounted as:
-//   http.FileServer(http.Dir("./uploads")) → Handle("/static/", StripPrefix("/static/", fs))
+//
+//	http.FileServer(http.Dir("./uploads")) → Handle("/static/", StripPrefix("/static/", fs))
+//
 // so a request to /static/foo.jpg serves ./uploads/foo.jpg.
 const staticBase = "http://localhost:8080/static/"
 
@@ -29,6 +31,20 @@ func toStaticURL(storedPath string) string {
 		return ""
 	}
 	return staticBase + strings.TrimPrefix(storedPath, "uploads/")
+}
+
+func smallThumbnailPath(storedPath string) string {
+	if strings.Contains(storedPath, "_thumb_md") {
+		return strings.Replace(storedPath, "_thumb_md", "_thumb_sm", 1)
+	}
+	return ""
+}
+
+func mediumThumbnailPath(storedPath string) string {
+	if strings.Contains(storedPath, "_thumb_md") {
+		return storedPath
+	}
+	return ""
 }
 
 // ============================================================================
@@ -257,6 +273,26 @@ func (r *FeedRepository) GetCommentsByPost(postID, viewerID string) ([]models.Fe
 		    COALESCE(ic_av.file_path,      '')  AS avatar_url,
 		    COALESCE(ic_av.thumbnail_path, '')  AS avatar_thumb_url,
 		    COALESCE(c.content, '')             AS content,
+		    COALESCE((
+		        SELECT ic_c.file_path
+		        FROM   comment_images ci
+		        JOIN   images_core ic_c
+		               ON ic_c.image_id = ci.image_id
+		              AND ic_c.deleted_at IS NULL
+		        WHERE  ci.comment_id = c.comment_id
+		        ORDER BY ci.display_order ASC
+		        LIMIT 1
+		    ), '') AS image_url,
+		    COALESCE((
+		        SELECT ic_ct.thumbnail_path
+		        FROM   comment_images ci
+		        JOIN   images_core ic_ct
+		               ON ic_ct.image_id = ci.image_id
+		              AND ic_ct.deleted_at IS NULL
+		        WHERE  ci.comment_id = c.comment_id
+		        ORDER BY ci.display_order ASC
+		        LIMIT 1
+		    ), '') AS image_thumbnail_url,
 		    c.created_at,
 		    c.updated_at,
 		    (
@@ -540,10 +576,12 @@ func (r *FeedRepository) batchFetchImages(postIDs []string) (map[string][]models
 			return nil, fmt.Errorf("feed: scan image row: %w", err)
 		}
 		result[postID] = append(result[postID], models.FeedImage{
-			ImageID:      imageID,
-			URL:          toStaticURL(filePath),
-			ThumbnailURL: toStaticURL(thumbPath),
-			DisplayOrder: displayOrder,
+			ImageID:            imageID,
+			URL:                toStaticURL(filePath),
+			ThumbnailURL:       toStaticURL(thumbPath),
+			SmallThumbnailURL:  toStaticURL(smallThumbnailPath(thumbPath)),
+			MediumThumbnailURL: toStaticURL(mediumThumbnailPath(thumbPath)),
+			DisplayOrder:       displayOrder,
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -670,6 +708,8 @@ func scanFeedComment(rows *sql.Rows) (models.FeedComment, error) {
 		&c.AuthorAvatarURL,
 		&c.AuthorAvatarThumbURL,
 		&c.Content,
+		&c.ImageURL,
+		&c.ImageThumbnailURL,
 		&c.CreatedAt,
 		&c.UpdatedAt,
 		&c.LikeCount,
@@ -687,6 +727,8 @@ func scanFeedComment(rows *sql.Rows) (models.FeedComment, error) {
 
 	c.AuthorAvatarURL = toStaticURL(c.AuthorAvatarURL)
 	c.AuthorAvatarThumbURL = toStaticURL(c.AuthorAvatarThumbURL)
+	c.ImageURL = toStaticURL(c.ImageURL)
+	c.ImageThumbnailURL = toStaticURL(c.ImageThumbnailURL)
 
 	return c, nil
 }

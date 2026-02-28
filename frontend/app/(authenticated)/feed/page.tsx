@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFeed, getAllGroups, getAvatarUrl } from '@/lib/api';
+import { getFeed, getMyGroups, getGroupPosts } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 import Card from '@/components/ui/Card';
 import Tabs from '@/components/ui/Tabs';
@@ -31,6 +31,18 @@ interface FeedPost {
   viewer_reaction: number | null;
 }
 
+interface GroupPost {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  nickname: string;
+  thumbnail_url?: string;
+  image_url?: string;
+  group_id: string;
+  group_title: string;
+}
+
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
   try {
@@ -45,7 +57,7 @@ export default function FeedPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('Posts');
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groupPosts, setGroupPosts] = useState<GroupPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +69,6 @@ export default function FeedPage() {
       getFeed()
         .then((data: any) => {
           if (cancelled) return;
-          // The API returns { posts: [...] }
           const feedPosts = data?.posts ?? data ?? [];
           setPosts(Array.isArray(feedPosts) ? feedPosts : []);
         })
@@ -65,14 +76,11 @@ export default function FeedPage() {
           if (cancelled) return;
           const message = err?.message || 'Failed to load feed';
           console.error('Failed to load feed:', err);
-          
-          // Redirect to login if authentication is required
           if (message === 'Authentication required' || message.toLowerCase().includes('authentication')) {
             clearAuth();
             router.replace('/login');
             return;
           }
-          
           setError(message);
         })
         .finally(() => {
@@ -80,16 +88,37 @@ export default function FeedPage() {
         });
     } else if (activeTab === 'Groups') {
       setLoading(true);
-      getAllGroups()
-        .then((data: any[]) => {
+      getMyGroups()
+        .then(async (groups: any[]) => {
           if (cancelled) return;
-          setGroups(data);
+          if (!Array.isArray(groups) || groups.length === 0) {
+            setGroupPosts([]);
+            return;
+          }
+          const postsByGroup = await Promise.all(
+            groups.map(async (group: any) => {
+              try {
+                const posts = await getGroupPosts(group.id);
+                return (Array.isArray(posts) ? posts : []).map((post: any) => ({
+                  ...post,
+                  group_id: group.id,
+                  group_title: group.title || 'Group',
+                }));
+              } catch {
+                return [];
+              }
+            }),
+          );
+          if (cancelled) return;
+          const all = postsByGroup
+            .flat()
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          setGroupPosts(all);
         })
         .catch((err: any) => {
           if (cancelled) return;
-          const message = err?.message || 'Failed to load groups';
-          console.error('Failed to load groups:', err);
-          setError(message);
+          console.error('Failed to load group posts:', err);
+          setError(err?.message || 'Failed to load group posts');
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -101,42 +130,17 @@ export default function FeedPage() {
     };
   }, [router, activeTab]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-parea-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-parea-black mb-4">Feed</h1>
-          <Tabs tabs={['Posts', 'Groups']} defaultTab={activeTab} onTabChange={setActiveTab} />
-          <div className="mt-6">
-            <p className="text-regular text-parea-black">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-parea-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-parea-black mb-4">Feed</h1>
-          <Tabs tabs={['Posts', 'Groups']} defaultTab={activeTab} onTabChange={setActiveTab} />
-          <div className="mt-6">
-            <p className="text-regular text-parea-black">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-parea-white p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-parea-black mb-4">Feed</h1>
         <Tabs tabs={['Posts', 'Groups']} defaultTab={activeTab} onTabChange={setActiveTab} />
-        
+
         <div className="mt-6">
-          {activeTab === 'Posts' && (
+          {loading && <p className="text-regular text-parea-black">Loading...</p>}
+          {!loading && error && <p className="text-regular text-parea-black">{error}</p>}
+
+          {!loading && !error && activeTab === 'Posts' && (
             <>
               {posts.length === 0 ? (
                 <p className="text-regular text-parea-black">
@@ -147,7 +151,6 @@ export default function FeedPage() {
                   {posts.map((post, index) => {
                     const avatarUrl = post.author_avatar_thumb_url || post.author_avatar_url;
                     const imageUrl = post.images?.[0]?.thumbnail_url || post.images?.[0]?.url;
-
                     return (
                       <Card
                         key={post.id}
@@ -162,7 +165,6 @@ export default function FeedPage() {
                         content={post.content}
                         href={`/post/${post.id}`}
                         imagePriority={index === 0}
-                        likeCount={post.like_count}
                         commentCount={post.comment_count}
                       />
                     );
@@ -172,34 +174,27 @@ export default function FeedPage() {
             </>
           )}
 
-          {activeTab === 'Groups' && (
+          {!loading && !error && activeTab === 'Groups' && (
             <>
-              {groups.length === 0 ? (
+              {groupPosts.length === 0 ? (
                 <p className="text-regular text-parea-black">
-                  No groups yet. Create a group to get started.
+                  No group posts yet. Join a group or wait for members to post.
                 </p>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {groups.map((group) => (
-                    <div
-                      key={group.id}
-                      onClick={() => router.push(`/group/${group.id}`)}
-                      className="border border-parea-black p-6 bg-white cursor-pointer hover:shadow-[4px_4px_0_0_#000] transition-shadow"
-                    >
-                      <h3 className="text-2xl font-bold text-parea-black mb-2">
-                        {group.title}
-                      </h3>
-                      {group.description && (
-                        <p className="text-regular text-parea-black/70 mb-3">
-                          {group.description}
-                        </p>
-                      )}
-                      <div className="flex gap-4 text-sm text-parea-black/60">
-                        <span>{group.member_count || 0} members</span>
-                        <span>•</span>
-                        <span>Created by {group.owner_nickname || 'Unknown'}</span>
-                      </div>
-                    </div>
+                <div className="flex flex-col items-start gap-0">
+                  {groupPosts.map((post, index) => (
+                    <Card
+                      key={`${post.group_id}-${post.id}`}
+                      imageType="post"
+                      avatarSrc="/user-avatar-default.png"
+                      avatarAlt={post.nickname || 'User'}
+                      userName={(post.nickname || 'User').toUpperCase()}
+                      userDate={`${formatPostDate(post.created_at)} · ${post.group_title}`}
+                      title={post.title}
+                      content={post.content}
+                      href={`/post/${post.id}`}
+                      imagePriority={index === 0}
+                    />
                   ))}
                 </div>
               )}

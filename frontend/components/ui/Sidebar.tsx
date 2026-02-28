@@ -701,69 +701,69 @@ export default function Sidebar() {
                   ) : (
                     notifications.map((notification) => {
                       const href = getNotificationHref(notification);
-                      return (
-                      <div
-                        key={notification.id}
-                        className={`flex py-2 px-4 items-center gap-4 self-stretch rounded-lg transition-colors ${notification.read ? 'bg-parea-white' : 'bg-parea-yellow/30'
-                          }`}
-                      >
-                        {href ? (
-                          <Link
-                            href={href}
-                            onClick={() => { setActiveDrawer(null); setIsOpen(false); }}
-                            className="flex items-start flex-1 no-underline hover:opacity-70 transition-opacity"
-                          >
-                            <span
-                              className="text-parea-black text-sm font-medium leading-[150%]"
-                              style={{ fontFamily: 'var(--font-inter), sans-serif' }}
-                            >
-                              {formatNotificationText(notification)}
-                            </span>
-                          </Link>
-                        ) : (
-                          <div className="flex items-start flex-1">
-                            <span
-                              className="text-parea-black text-sm font-medium leading-[150%]"
-                              style={{ fontFamily: 'var(--font-inter), sans-serif' }}
-                            >
-                              {formatNotificationText(notification)}
-                            </span>
-                          </div>
-                        )}
-                        {notification.type === 'follow_request' && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                void handleFollowRequestAction(notification, 'accept');
-                              }}
-                              disabled={followRequestActionId === notification.id}
-                              className="rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={() => {
-                                void handleFollowRequestAction(notification, 'decline');
-                              }}
-                              disabled={followRequestActionId === notification.id}
-                              className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        )}
+                      const isFollowRequest = notification.type === 'follow_request';
+                      const dismissButton = (
                         <button
-                          onClick={() => {
-                            void handleDeleteNotification(notification.id);
-                          }}
-                          className="w-6 h-6 flex items-center justify-center hover:opacity-70 transition-opacity cursor-pointer"
+                          onClick={() => { void handleDeleteNotification(notification.id); }}
+                          className="w-6 h-6 flex items-center justify-center hover:opacity-70 transition-opacity cursor-pointer shrink-0"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                             <path d="M14.9992 8.99998L8.99922 15M8.99922 8.99998L14.9992 15M3.84922 8.61998C3.70326 7.9625 3.72567 7.27882 3.91437 6.63231C4.10308 5.98581 4.45196 5.39742 4.92868 4.9217C5.40541 4.44597 5.99453 4.09832 6.64142 3.91097C7.28832 3.72362 7.97205 3.70264 8.62922 3.84998C8.99093 3.28428 9.48922 2.81873 10.0782 2.49626C10.6671 2.17379 11.3278 2.00476 11.9992 2.00476C12.6707 2.00476 13.3313 2.17379 13.9203 2.49626C14.5092 2.81873 15.0075 3.28428 15.3692 3.84998C16.0274 3.702 16.7123 3.72288 17.3602 3.91069C18.0081 4.09849 18.598 4.44712 19.0751 4.92413C19.5521 5.40114 19.9007 5.99105 20.0885 6.63898C20.2763 7.28691 20.2972 7.97181 20.1492 8.62998C20.7149 8.99168 21.1805 9.48998 21.5029 10.0789C21.8254 10.6679 21.9944 11.3285 21.9944 12C21.9944 12.6714 21.8254 13.3321 21.5029 13.921C21.1805 14.51 20.7149 15.0083 20.1492 15.37C20.2966 16.0271 20.2756 16.7109 20.0882 17.3578C19.9009 18.0047 19.5532 18.5938 19.0775 19.0705C18.6018 19.5472 18.0134 19.8961 17.3669 20.0848C16.7204 20.2735 16.0367 20.2959 15.3792 20.15C15.018 20.7178 14.5193 21.1854 13.9293 21.5093C13.3394 21.8332 12.6772 22.003 12.0042 22.003C11.3312 22.003 10.669 21.8332 10.0791 21.5093C9.48914 21.1854 8.99045 20.7178 8.62922 20.15C7.97205 20.2973 7.28832 20.2763 6.64142 20.089C5.99453 19.9016 5.40541 19.554 4.92868 19.0783C4.45196 18.6025 4.10308 18.0141 3.91437 17.3676C3.72567 16.7211 3.70326 16.0374 3.84922 15.38C3.27917 15.0192 2.80963 14.5201 2.48426 13.9292C2.1589 13.3382 1.98828 12.6746 1.98828 12C1.98828 11.3254 2.1589 10.6617 2.48426 10.0708C2.80963 9.4798 3.27917 8.98073 3.84922 8.61998Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </button>
-                      </div>
-                    );
+                      );
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`flex flex-col py-2 px-4 gap-2 self-stretch rounded-lg transition-colors ${notification.read ? 'bg-parea-white' : 'bg-parea-yellow/30'}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {/* Text + buttons column */}
+                            <div className="flex flex-col flex-1 gap-2">
+                              {href ? (
+                                <Link
+                                  href={href}
+                                  onClick={() => { setActiveDrawer(null); setIsOpen(false); }}
+                                  className="no-underline hover:opacity-70 transition-opacity"
+                                >
+                                  <span
+                                    className="text-parea-black text-sm font-medium leading-[150%]"
+                                    style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                                  >
+                                    {formatNotificationText(notification)}
+                                  </span>
+                                </Link>
+                              ) : (
+                                <span
+                                  className="text-parea-black text-sm font-medium leading-[150%]"
+                                  style={{ fontFamily: 'var(--font-inter), sans-serif' }}
+                                >
+                                  {formatNotificationText(notification)}
+                                </span>
+                              )}
+                              {isFollowRequest && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => { void handleFollowRequestAction(notification, 'accept'); }}
+                                    disabled={followRequestActionId === notification.id}
+                                    className="flex-1 rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => { void handleFollowRequestAction(notification, 'decline'); }}
+                                    disabled={followRequestActionId === notification.id}
+                                    className="flex-1 rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            {dismissButton}
+                          </div>
+                        </div>
+                      );
                     })
                   )}
                 </div>

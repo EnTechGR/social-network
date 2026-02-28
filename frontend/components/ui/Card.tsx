@@ -83,8 +83,7 @@ export const Card: React.FC<CardProps> = ({
           {userHref ? (
             <Link
               href={userHref}
-              className="no-underline text-inherit hover:opacity-90 transition-opacity"
-              onClick={(e) => e.stopPropagation()}
+              className="relative z-10 no-underline text-inherit hover:opacity-90 transition-opacity"
             >
               <CardAvatar
                 src={avatarSrc}
@@ -111,12 +110,14 @@ export const Card: React.FC<CardProps> = ({
 
   if (href) {
     return (
-      <Link
-        href={href}
-        className="block w-full self-stretch no-underline text-inherit hover:opacity-95 transition-opacity"
-      >
+      <div className="relative w-full self-stretch hover:opacity-95 transition-opacity">
+        <Link
+          href={href}
+          className="absolute inset-0 no-underline"
+          aria-label="View post"
+        />
         {inner}
-      </Link>
+      </div>
     );
   }
 

@@ -27,13 +27,8 @@ import {
   getMyPosts,
   getMyGroups,
   getUserProfile,
-  getFollowRequests,
-  acceptFollowRequest,
-  declineFollowRequest,
   removeFollower,
   unfollowUser,
-  getForumUsers,
-  type FollowRelationship,
 } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 
@@ -64,35 +59,16 @@ type RelationUser = {
   email?: string;
 };
 
-function toRelationUserFromProfilePayload(profilePayload: any, fallbackUserID: string): RelationUser {
-  if (profilePayload?.privateProfile) {
-    return {
-      user_id: fallbackUserID,
-      nickname: profilePayload.nickname,
-      first_name: profilePayload.first_name,
-      last_name: profilePayload.last_name,
-    };
-  }
-
-  const user = profilePayload?.user ?? {};
-  return {
-    user_id: user.id || fallbackUserID,
-    nickname: user.nickname,
-    first_name: user.first_name,
-    last_name: user.last_name,
-    email: user.email,
-  };
-}
 
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setIsLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [activeTab, setActiveTab] = useState('Posts');
-  const [isUploading, setIsUploading] = useState(false);
+  const [, setIsUploading] = useState(false);
   const [myPosts, setMyPosts] = useState<any[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
@@ -103,60 +79,22 @@ export default function ProfilePage() {
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [followers, setFollowers] = useState<RelationUser[]>([]);
   const [following, setFollowing] = useState<RelationUser[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<FollowRelationship[]>([]);
-  const [followDataLoading, setFollowDataLoading] = useState(false);
+  const [, setFollowDataLoading] = useState(false);
   const [followDataError, setFollowDataError] = useState<string | null>(null);
   const [followActionUserId, setFollowActionUserId] = useState<string | null>(null);
-  const [showFollowersList, setShowFollowersList] = useState(false);
-  const [showFollowingList, setShowFollowingList] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [directoryById, setDirectoryById] = useState<Record<string, RelationUser>>({});
 
-  const formatRelationName = (entry: RelationUser | undefined): string => {
-    if (!entry) return 'Unknown user';
-    const fullName = [entry.first_name, entry.last_name].filter(Boolean).join(' ').trim();
-    return fullName || entry.nickname || entry.email || entry.user_id;
-  };
-
-  const getUserLabel = (userId: string): string => {
-    const fromDirectory = directoryById[userId];
-    if (fromDirectory) return formatRelationName(fromDirectory);
-
-    const fromFollowers = followers.find((item) => item.user_id === userId);
-    if (fromFollowers) return formatRelationName(fromFollowers);
-
-    const fromFollowing = following.find((item) => item.user_id === userId);
-    if (fromFollowing) return formatRelationName(fromFollowing);
-
-    return userId;
-  };
 
   const refreshFollowData = useCallback(async (userId: string) => {
     setFollowDataLoading(true);
     setFollowDataError(null);
 
     try {
-      const [profileResult, requestsResult, usersResult] = await Promise.allSettled([
-        getUserProfile(userId),
-        getFollowRequests(),
-        getForumUsers(),
-      ]);
-
-      const profileView =
-        profileResult.status === 'fulfilled' ? profileResult.value : null;
-      const requests =
-        requestsResult.status === 'fulfilled' ? requestsResult.value : { pending: [], accepted: [] };
-      const users =
-        usersResult.status === 'fulfilled' ? usersResult.value : [];
-
+      const profileView = await getUserProfile(userId);
       if (profileView && !profileView.privateProfile) {
-        const followerList = Array.isArray(profileView.followers) ? profileView.followers as RelationUser[] : [];
-        const followingList = Array.isArray(profileView.following) ? profileView.following as RelationUser[] : [];
-
-        setFollowers(followerList);
-        setFollowing(followingList);
-
+        setFollowers(Array.isArray(profileView.followers) ? profileView.followers as RelationUser[] : []);
+        setFollowing(Array.isArray(profileView.following) ? profileView.following as RelationUser[] : []);
         setUser((prev) => {
           if (!prev) return prev;
           return {
@@ -165,54 +103,9 @@ export default function ProfilePage() {
             followingCount: profileView.counts.following,
           };
         });
-      } else if (profileResult.status === 'rejected') {
-        // Keep existing lists/counts when profile relationship fetch fails.
-        console.warn('Failed to refresh relation lists from profile endpoint:', profileResult.reason);
       }
-
-      setPendingRequests(Array.isArray(requests.pending) ? requests.pending : []);
-      const pendingRequestList = Array.isArray(requests.pending) ? requests.pending : [];
-
-      const byId = (users || []).reduce<Record<string, RelationUser>>((acc, item) => {
-        acc[item.id] = {
-          user_id: item.id,
-          nickname: item.nickname,
-          first_name: item.first_name,
-          last_name: item.last_name,
-          email: item.email,
-        };
-        return acc;
-      }, {});
-
-      // Pending follow requests only include IDs, so load sender profile snippets
-      // to avoid showing raw UUIDs in the UI.
-      const missingPendingSenderIDs = Array.from(
-        new Set(
-          pendingRequestList
-            .map((request) => request?.follower_id)
-            .filter((id): id is string => Boolean(id) && !byId[id]),
-        ),
-      );
-
-      if (missingPendingSenderIDs.length > 0) {
-        const pendingSenderProfiles = await Promise.allSettled(
-          missingPendingSenderIDs.map((senderID) => getUserProfile(senderID)),
-        );
-
-        pendingSenderProfiles.forEach((result, index) => {
-          if (result.status !== 'fulfilled') return;
-          const senderID = missingPendingSenderIDs[index];
-          byId[senderID] = toRelationUserFromProfilePayload(result.value, senderID);
-        });
-      }
-
-      setDirectoryById(byId);
-
-      if (requestsResult.status === 'rejected') {
-        setFollowDataError('Some follow data could not be loaded. Please refresh.');
-      }
-    } catch (err: any) {
-      setFollowDataError(err?.message ?? 'Failed to load follower data');
+    } catch (err: unknown) {
+      console.warn('Failed to refresh relation lists:', err);
     } finally {
       setFollowDataLoading(false);
     }
@@ -391,32 +284,6 @@ export default function ProfilePage() {
     await refreshFollowData(currentUserId);
   };
 
-  const handleAcceptRequest = async (followerId: string) => {
-    setFollowActionUserId(followerId);
-    setFollowDataError(null);
-    try {
-      await acceptFollowRequest(followerId);
-      await reloadFollowData();
-    } catch (err: any) {
-      setFollowDataError(err?.message ?? 'Failed to accept follow request');
-    } finally {
-      setFollowActionUserId(null);
-    }
-  };
-
-  const handleDeclineRequest = async (followerId: string) => {
-    setFollowActionUserId(followerId);
-    setFollowDataError(null);
-    try {
-      await declineFollowRequest(followerId);
-      await reloadFollowData();
-    } catch (err: any) {
-      setFollowDataError(err?.message ?? 'Failed to decline follow request');
-    } finally {
-      setFollowActionUserId(null);
-    }
-  };
-
   const handleRemoveFollower = async (followerId: string) => {
     setFollowActionUserId(followerId);
     setFollowDataError(null);
@@ -491,44 +358,11 @@ export default function ProfilePage() {
           <p className="mt-4 text-regular text-parea-black">{followDataError}</p>
         )}
 
-        <section className="mt-6 rounded border border-parea-black bg-parea-white p-4">
-          <h2 className="text-small font-medium uppercase text-parea-black">Pending Follow Requests</h2>
-          {followDataLoading ? (
-            <p className="mt-3 text-regular text-parea-black">Loading follow requests...</p>
-          ) : pendingRequests.length === 0 ? (
-            <p className="mt-3 text-regular text-parea-black">No pending follow requests.</p>
-          ) : (
-            <ul className="mt-3 flex flex-col gap-3">
-              {pendingRequests.map((request) => (
-                <li key={`${request.follower_id}:${request.followee_id}`} className="flex flex-wrap items-center gap-2">
-                  <span className="text-regular text-parea-black">{getUserLabel(request.follower_id)}</span>
-                  <button
-                    type="button"
-                    onClick={() => { void handleAcceptRequest(request.follower_id); }}
-                    disabled={followActionUserId === request.follower_id}
-                    className="rounded border border-parea-black bg-parea-yellow px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { void handleDeclineRequest(request.follower_id); }}
-                    disabled={followActionUserId === request.follower_id}
-                    className="rounded border border-parea-black bg-parea-white px-3 py-1 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Decline
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
         {/* Placeholder for tabs and content below */}
-        <div className="mt-8">
+        <div className="mt-8 max-w-312 w-full">
           <div className="flex items-center justify-between gap-6">
             <Tabs
-              tabs={['Posts', 'Events', 'Reactions', 'Groups']}
+              tabs={['Posts', 'Events', 'Groups']}
               defaultTab="Posts"
               onTabChange={(tab) => setActiveTab(tab)}
             />
@@ -583,8 +417,8 @@ export default function ProfilePage() {
                 )}
               </>
             )}
-            {activeTab === 'Events' && <p className="text-regular text-parea-black">Events content...</p>}
-            {activeTab === 'Reactions' && <p className="text-regular text-parea-black">Reactions content...</p>}
+            {activeTab === 'Events' && <p className="text-regular text-parea-black">No events yet.</p>}
+
             {activeTab === 'Groups' && (
               <>
                 {groupsLoading && <p className="text-regular text-parea-black">Loading groups...</p>}

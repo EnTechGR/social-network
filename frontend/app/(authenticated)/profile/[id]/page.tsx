@@ -45,7 +45,7 @@ export default function UserProfilePage() {
   const [followRequested, setFollowRequested] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [postImagesById, setPostImagesById] = useState<Record<string, string | undefined>>({});
+  const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; commentCount?: number }>>({});
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<DirectChatMessage[]>([]);
@@ -95,7 +95,7 @@ export default function UserProfilePage() {
     if (!profile || profile.privateProfile) return;
     const posts = Array.isArray(profile.posts) ? profile.posts : [];
     if (posts.length === 0) {
-      setPostImagesById({});
+      setPostMetaById({});
       return;
     }
 
@@ -112,7 +112,7 @@ export default function UserProfilePage() {
         );
 
         if (uniqueIds.length === 0) {
-          if (!cancelled) setPostImagesById({});
+          if (!cancelled) setPostMetaById({});
           return;
         }
 
@@ -123,22 +123,23 @@ export default function UserProfilePage() {
               const firstImage = detail?.images?.[0];
               const rawUrl = firstImage?.thumbnail_url || firstImage?.url || undefined;
               const imageUrl = getPostImageUrl(rawUrl);
-              return [postId, imageUrl] as const;
+              const commentCount = typeof detail?.comment_count === 'number' ? detail.comment_count : undefined;
+              return [postId, { imageUrl, commentCount }] as const;
             } catch {
-              return [postId, undefined] as const;
+              return [postId, {}] as const;
             }
           }),
         );
 
         if (cancelled) return;
 
-        const map: Record<string, string | undefined> = {};
-        for (const [postId, imageUrl] of entries) {
-          map[postId] = imageUrl;
+        const map: Record<string, { imageUrl?: string; commentCount?: number }> = {};
+        for (const [postId, meta] of entries) {
+          map[postId] = meta;
         }
-        setPostImagesById(map);
+        setPostMetaById(map);
       } catch {
-        if (!cancelled) setPostImagesById({});
+        if (!cancelled) setPostMetaById({});
       }
     })();
 
@@ -318,9 +319,9 @@ export default function UserProfilePage() {
           onFollowingClick={handleFollowingClick}
         />
 
-        <div className="mt-8 max-w-311.5 w-full flex items-center justify-between">
+        <div className="mt-8 max-w-312 w-full flex items-center justify-between">
           <Tabs
-            tabs={['Posts', 'Events', 'Reactions', 'Groups']}
+            tabs={['Posts', 'Events', 'Groups']}
             defaultTab="Posts"
             onTabChange={(tab) => setActiveTab(tab)}
           />
@@ -348,7 +349,7 @@ export default function UserProfilePage() {
           )}
         </div>
 
-        <div className="mt-6 max-w-311.5 w-full">
+        <div className="mt-6 max-w-312 w-full">
           {activeTab === 'Posts' && (
             <>
               {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
@@ -357,8 +358,8 @@ export default function UserProfilePage() {
                 <div className="flex flex-col items-start gap-0">
                   {profile.posts.map((post: any, index: number) => {
                     const postId = post.id || post.post_id;
-                    const enrichedImage = postId ? postImagesById[postId] : undefined;
-                    const rawImagePath = enrichedImage || post.image_url || post.thumbnail_url;
+                    const meta = postId ? (postMetaById[postId] ?? {}) : {};
+                    const rawImagePath = meta.imageUrl || post.image_url || post.thumbnail_url;
                     const imageSrc = getPostImageUrl(rawImagePath);
                     return (
                       <Card
@@ -373,7 +374,7 @@ export default function UserProfilePage() {
                         content={post.content}
                         href={postId ? `/post/${postId}` : undefined}
                         imagePriority={index === 0}
-                        commentCount={post.comment_count || 0}
+                        commentCount={meta.commentCount ?? 0}
                       />
                     );
                   })}
@@ -381,9 +382,9 @@ export default function UserProfilePage() {
               )}
             </>
           )}
-          {activeTab === 'Events' && <p>Events content...</p>}
-          {activeTab === 'Reactions' && <p>Reactions content...</p>}
-          {activeTab === 'Groups' && <p>Groups content...</p>}
+          {activeTab === 'Events' && <p className="text-regular text-parea-black">No events yet.</p>}
+
+          {activeTab === 'Groups' && <p className="text-regular text-parea-black">No groups yet.</p>}
         </div>
 
         <ChatModal

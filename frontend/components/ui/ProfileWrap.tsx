@@ -39,11 +39,11 @@ interface ProfileWrapProps {
 /**
  * Info row component for displaying label-value pairs
  */
-function InfoRow({ 
-  label, 
-  children 
-}: { 
-  label: string; 
+function InfoRow({
+  label,
+  children
+}: {
+  label: string;
   children: React.ReactNode;
 }) {
   return (
@@ -57,11 +57,11 @@ function InfoRow({
 /**
  * Count badge component for followers/following numbers
  */
-function CountBadge({ 
-  count, 
-  onClick 
-}: { 
-  count: number; 
+function CountBadge({
+  count,
+  onClick
+}: {
+  count: number;
   onClick?: () => void;
 }) {
   const baseStyles = `
@@ -73,7 +73,7 @@ function CountBadge({
     font-medium
     tabular-nums
   `;
-  
+
   if (onClick) {
     return (
       <button
@@ -85,7 +85,7 @@ function CountBadge({
       </button>
     );
   }
-  
+
   return <span className={baseStyles}>{count}</span>;
 }
 
@@ -103,9 +103,9 @@ export default function ProfileWrap({
       className={`
         flex
         flex-col lg:flex-row
-        max-w-[1246px]
+        max-w-312
         w-full
-        min-h-[309px]
+        min-h-77
         p-6 lg:p-8
         justify-center
         items-start lg:items-start
@@ -174,7 +174,7 @@ export default function ProfileWrap({
       </div>
 
       {/* Column 2: User Details */}
-      <div className="flex flex-col items-start gap-3 min-w-[280px]">
+      <div className="flex flex-col items-start gap-3 min-w-70">
         {/* Username */}
         <InfoRow label="Username">@{user.username}</InfoRow>
 
@@ -191,23 +191,23 @@ export default function ProfileWrap({
         {/* Public Profile Toggle */}
         {isSelf && (
           <>
-        <div className="flex w-full justify-between items-center gap-4">
-          <span className="font-medium"> {user.isPublic ? 'Public Profile' : 'Private Profile'}</span>
-          <ToggleButton
-            isOn={user.isPublic}
-            onChange={onTogglePublic}
-            aria-label="Toggle public profile visibility"
-          />
-        </div>
+            <div className="flex w-full justify-between items-center gap-4">
+              <span className="font-medium"> {user.isPublic ? 'Public Profile' : 'Private Profile'}</span>
+              <ToggleButton
+                isOn={user.isPublic}
+                onChange={onTogglePublic}
+                aria-label="Toggle public profile visibility"
+              />
+            </div>
 
-        {/* Helper text for public profile */}
-        <p className="text-small text-parea-black/70 self-start">
-          {user.isPublic 
-            ? 'Your profile can be seen by everyone.' 
-            : 'Your profile is private.'}
-        </p>
-        </>
-      )}
+            {/* Helper text for public profile */}
+            <p className="text-small text-parea-black/70 self-start">
+              {user.isPublic
+                ? 'Your profile can be seen by everyone.'
+                : 'Your profile is private.'}
+            </p>
+          </>
+        )}
 
         {/* Followers */}
         <div className="flex w-full justify-between items-center gap-4">

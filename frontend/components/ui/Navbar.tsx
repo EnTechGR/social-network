@@ -133,6 +133,9 @@ export const Navbar = () => {
     <>
       <nav
         className="
+        sticky
+        top-0
+        z-50
         w-full
         border-b
         border-parea-black

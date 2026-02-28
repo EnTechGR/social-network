@@ -373,7 +373,6 @@ export default function UserProfilePage() {
                         content={post.content}
                         href={postId ? `/post/${postId}` : undefined}
                         imagePriority={index === 0}
-                        likeCount={post.like_count || 0}
                         commentCount={post.comment_count || 0}
                       />
                     );
@@ -390,7 +389,7 @@ export default function UserProfilePage() {
         <ChatModal
           isOpen={chatModalOpen}
           onClose={() => setChatModalOpen(false)}
-          userName={userForWrap.name}
+          userName={userForWrap.username}
           userAvatar={userForWrap.avatarUrl}
           selfAvatar={selfAvatarUrl}
           controlledMessages={chatMessages.map((m) => ({

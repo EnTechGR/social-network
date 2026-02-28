@@ -80,14 +80,11 @@ export const Card: React.FC<CardProps> = ({
           </p>
         </div>
         <div className="flex justify-between items-center w-full self-stretch mt-4">
-          {userHref && !href ? (
+          {userHref ? (
             <Link
               href={userHref}
               className="no-underline text-inherit hover:opacity-90 transition-opacity"
-              onClick={(e) => {
-                // Prevent the parent card link (href) from firing when clicking the avatar
-                e.stopPropagation();
-              }}
+              onClick={(e) => e.stopPropagation()}
             >
               <CardAvatar
                 src={avatarSrc}

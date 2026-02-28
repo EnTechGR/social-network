@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -9,6 +10,7 @@ import {
   getAllGroups,
   getMemberEventsForSearch,
   type SearchEventItem,
+  getAvatarUrl,
 } from '@/lib/api';
 import Tabs from './Tabs';
 import { MessageCircle } from 'lucide-react';
@@ -173,11 +175,9 @@ function EventSuggestion({
 
 function UserSuggestion({
   user,
-  isLast,
   onClose,
 }: {
   user: ForumUser;
-  isLast: boolean;
   onClose?: () => void;
 }) {
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || user.nickname;
@@ -186,11 +186,16 @@ function UserSuggestion({
     <Link
       href={`/profile/${user.id}`}
       onClick={onClose}
-      className={[
-        'flex w-full items-center justify-between gap-3 bg-parea-white px-6 py-4 no-underline transition-colors duration-200 hover:bg-parea-yellow',
-        isLast ? '' : 'border-b border-parea-border',
-      ].join(' ')}
+      className="flex w-full items-center gap-3 bg-parea-white px-6 py-4 no-underline transition-colors duration-200 hover:bg-parea-yellow not-last:border-b not-last:border-parea-border"
     >
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={getAvatarUrl(user.avatar?.thumbnail_path || user.avatar?.file_path)}
+          alt={fullName}
+          fill
+          className="object-cover"
+        />
+      </div>
       <div className="flex min-w-0 flex-col">
         <span className="truncate font-sans text-base font-semibold text-parea-black">{fullName}</span>
         <span className="truncate font-mono text-xs uppercase tracking-wide text-parea-black/60">@{user.nickname}</span>
@@ -404,11 +409,10 @@ export default function SearchSuggestions({ query = '', onClose }: SearchSuggest
 
       {activeTab === 'Users' && !isLoading && !error && filteredUsers.length > 0 && (
         <div className="max-h-105 overflow-y-auto">
-          {filteredUsers.map((user, index) => (
+          {filteredUsers.map((user) => (
             <UserSuggestion
               key={user.id}
               user={user}
-              isLast={index === filteredUsers.length - 1}
               onClose={onClose}
             />
           ))}

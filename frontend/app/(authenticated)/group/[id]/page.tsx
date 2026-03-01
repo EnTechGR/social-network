@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { use, useState, useEffect, useRef } from 'react';
+import { Smile } from 'lucide-react';
 import GroupWrap from '@/components/ui/GroupWrap';
 import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
@@ -115,10 +116,23 @@ export default function GroupDetailPage({
   const [chatMessages, setChatMessages] = useState<GroupChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [chatSending, setChatSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  const chatInputBarRef = useRef<HTMLDivElement | null>(null);
   const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; avatarUrl?: string }>>({});
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const close = (e: MouseEvent) => {
+      if (chatInputBarRef.current && !chatInputBarRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showEmojiPicker]);
 
   useEffect(() => {
     if (!groupId) {
@@ -778,7 +792,34 @@ export default function GroupDetailPage({
                       {chatError && (
                         <p className="mb-2 text-small text-parea-black">{chatError}</p>
                       )}
-                      <div className="flex gap-2">
+                      <div ref={chatInputBarRef} className="relative flex gap-2 items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowEmojiPicker((v) => !v)}
+                          className="w-9 h-9 flex items-center justify-center rounded border border-parea-black/20 hover:bg-parea-black/5 transition-colors shrink-0"
+                          aria-label="Add emoji"
+                        >
+                          <Smile className="w-5 h-5 text-parea-black" />
+                        </button>
+                        {showEmojiPicker && (
+                          <div className="absolute bottom-full left-0 mb-1 p-2 bg-white border border-parea-black shadow-[4px_4px_0_0_#000] max-h-32 overflow-y-auto z-10">
+                            <div className="grid grid-cols-10 gap-1">
+                              {['😊', '👍', '❤️', '😂', '🔥', '😍', '😢', '😭', '😁', '😀', '😎', '🤔', '🙄', '👋', '✌️', '😘', '🎉', '💯', '🙏', '✨', '😅', '🥳', '😇', '🤗', '😴', '😤', '🤷', '👏', '💪', '✅'].map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  className="w-7 h-7 flex items-center justify-center text-lg hover:bg-parea-yellow/50 rounded transition-colors"
+                                  onClick={() => {
+                                    setChatInput((v) => v + emoji);
+                                    setShowEmojiPicker(false);
+                                  }}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <input
                           type="text"
                           value={chatInput}
@@ -790,7 +831,7 @@ export default function GroupDetailPage({
                             }
                           }}
                           placeholder="Type a message..."
-                          className="flex-1 rounded border border-parea-black bg-parea-white px-3 py-2 text-regular text-parea-black focus:outline-none"
+                          className="flex-1 min-w-0 rounded border border-parea-black bg-parea-white px-3 py-2 text-regular text-parea-black focus:outline-none"
                         />
                         <button
                           type="button"

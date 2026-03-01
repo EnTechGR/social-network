@@ -2,8 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Smile } from 'lucide-react';
 import IconButton from './IconButtons';
 import Image from 'next/image';
+
+const EMOJI_LIST = ['😊', '👍', '❤️', '😂', '🔥', '😍', '😢', '😭', '😁', '😀', '😎', '🤔', '🙄', '👋', '✌️', '😘', '🎉', '💯', '🙏', '✨', '😅', '🥳', '😇', '🤗', '😴', '😤', '🤷', '👏', '💪', '✅'];
 
 interface Message {
   id: string;
@@ -53,13 +56,26 @@ export default function ChatModal({
 }: ChatModalProps) {
   const [internalMessages, setInternalMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputBarRef = useRef<HTMLDivElement>(null);
 
   const messages = controlledMessages ?? internalMessages;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const close = (e: MouseEvent) => {
+      if (inputBarRef.current && !inputBarRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showEmojiPicker]);
 
   if (!isOpen && !preview) return null;
 
@@ -195,14 +211,44 @@ export default function ChatModal({
       </div>
 
       {/* ===== INPUT BAR ===== */}
-      <div className="shrink-0 flex items-center bg-parea-white border-t border-parea-black pl-4 pr-8 py-4 gap-4">
+      <div ref={inputBarRef} className="shrink-0 relative flex items-center bg-parea-white border-t border-parea-black pl-4 pr-8 py-4 gap-2">
+        <button
+          type="button"
+          onClick={() => setShowEmojiPicker((v) => !v)}
+          className="w-9 h-9 flex items-center justify-center rounded border border-parea-black/20 hover:bg-parea-black/5 transition-colors shrink-0"
+          aria-label="Add emoji"
+        >
+          <Smile className="w-5 h-5 text-parea-black" />
+        </button>
+        {showEmojiPicker && (
+          <div
+            className="absolute bottom-full left-4 right-20 mb-1 p-2 bg-white border border-parea-black shadow-[4px_4px_0_0_#000] max-h-32 overflow-y-auto"
+            role="listbox"
+          >
+            <div className="grid grid-cols-10 gap-1">
+              {EMOJI_LIST.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="w-7 h-7 flex items-center justify-center text-lg hover:bg-parea-yellow/50 rounded transition-colors"
+                  onClick={() => {
+                    setInputValue((v) => v + emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message"
-          className="flex-1 bg-transparent text-regular leading-relaxed text-black placeholder:text-black/60 focus:outline-none"
+          className="flex-1 min-w-0 bg-transparent text-regular leading-relaxed text-black placeholder:text-black/60 focus:outline-none"
           style={{ fontFamily: 'var(--font-inter), sans-serif' }}
         />
         <IconButton

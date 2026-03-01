@@ -362,7 +362,7 @@ export default function ProfilePage() {
         <div className="mt-8 max-w-312 w-full">
           <div className="flex items-center justify-between gap-6">
             <Tabs
-              tabs={['Posts', 'Events', 'Groups']}
+              tabs={['Posts', 'Groups']}
               defaultTab="Posts"
               onTabChange={(tab) => setActiveTab(tab)}
             />
@@ -417,8 +417,6 @@ export default function ProfilePage() {
                 )}
               </>
             )}
-            {activeTab === 'Events' && <p className="text-regular text-parea-black">No events yet.</p>}
-
             {activeTab === 'Groups' && (
               <>
                 {groupsLoading && <p className="text-regular text-parea-black">Loading groups...</p>}

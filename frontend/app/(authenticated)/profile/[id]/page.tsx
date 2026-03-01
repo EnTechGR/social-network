@@ -425,7 +425,7 @@ export default function UserProfilePage({
 
         <div className="mt-8 max-w-312 w-full flex items-center justify-between">
           <Tabs
-            tabs={['Posts', 'Events', 'Groups']}
+            tabs={['Posts', 'Groups']}
             defaultTab="Posts"
             onTabChange={(tab) => setActiveTab(tab)}
           />
@@ -486,8 +486,6 @@ export default function UserProfilePage({
               )}
             </>
           )}
-          {activeTab === 'Events' && <p className="text-regular text-parea-black">No events yet.</p>}
-
           {activeTab === 'Groups' && <p className="text-regular text-parea-black">No groups yet.</p>}
         </div>
 

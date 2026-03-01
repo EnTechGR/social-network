@@ -1,7 +1,7 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { use, useState, useEffect, useRef } from 'react';
 import GroupWrap from '@/components/ui/GroupWrap';
 import Tabs from '@/components/ui/Tabs';
 import Card from '@/components/ui/Card';
@@ -17,6 +17,7 @@ import {
   getProfile,
   getUserProfile,
   inviteToGroup,
+  leaveGroup,
   requestToJoinGroup,
   getPendingGroupRequests,
   approveGroupRequest,
@@ -80,9 +81,14 @@ function mergeGroupChatMessages(
   return sortChatMessages(Array.from(byID.values()));
 }
 
-export default function GroupDetailPage() {
-  const params = useParams();
-  const groupId = typeof params?.id === 'string' ? params.id : '';
+export default function GroupDetailPage({
+  params,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const resolvedParams = use(params);
+  const router = useRouter();
+  const groupId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';
   const [group, setGroup] = useState<any | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isMember, setIsMember] = useState(false);
@@ -101,6 +107,7 @@ export default function GroupDetailPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [followers, setFollowers] = useState<FollowerUser[]>([]);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinPending, setJoinPending] = useState(false);
@@ -126,8 +133,9 @@ export default function GroupDetailPage() {
       .then(([g, profile]) => {
         if (cancelled) return;
         setGroup(g);
-        setCurrentUserId(profile?.id ?? null);
-        setIsOwner(Boolean(g?.owner_id && profile?.id && g.owner_id === profile.id));
+        const pid = (profile as any)?.id ?? (profile as any)?.user_id ?? (profile as any)?.user?.id;
+        setCurrentUserId(pid ?? null);
+        setIsOwner(Boolean(g?.owner_id && pid && g.owner_id === pid));
       })
       .catch((err: any) => {
         if (cancelled) return;
@@ -410,8 +418,19 @@ export default function GroupDetailPage() {
     return () => { cancelled = true; };
   }, [showMembersModal, groupId]);
 
-  const handleLeaveGroup = () => {
-    alert('Leaving groups is not available in this build yet.');
+  const handleLeaveGroup = async () => {
+    if (!groupId) return;
+    try {
+      await leaveGroup(groupId);
+      setIsMember(false);
+      setMembers([]);
+      setPosts([]);
+      setEvents([]);
+      setPendingRequests([]);
+      router.push('/feed');
+    } catch (err: any) {
+      alert(err?.message ?? 'Failed to leave group');
+    }
   };
 
   const handleMembersClick = () => {
@@ -420,7 +439,11 @@ export default function GroupDetailPage() {
 
   const handleInvite = async () => {
     try {
-      const profileId = currentUserId ?? (await getProfile())?.id;
+      let profileId = currentUserId;
+      if (!profileId) {
+        const me = await getProfile();
+        profileId = (me as any)?.id ?? (me as any)?.user_id ?? (me as any)?.user?.id;
+      }
       if (!profileId) {
         alert('Unable to get your profile. Please try logging in again.');
         return;
@@ -438,19 +461,17 @@ export default function GroupDetailPage() {
       const memberIds = new Set((members ?? []).map((m: any) => m.user_id));
       const followersList = Array.isArray(userProfile.followers) ? userProfile.followers as FollowerUser[] : [];
 
-      if (followersList.length === 0) {
-        alert('You don\'t have any followers yet. Only your followers can be invited to this group.');
-        return;
-      }
-
       const inviteCandidates = followersList.filter((f) => f.user_id && !memberIds.has(f.user_id));
 
-      if (inviteCandidates.length === 0) {
-        alert('All of your followers are already members of this group.');
+      if (followersList.length === 0) {
+        setFollowers([]);
+        setInviteMessage('You don\'t have any followers yet. Only your followers can be invited to this group.');
+        setShowInviteModal(true);
         return;
       }
 
       setFollowers(inviteCandidates);
+      setInviteMessage(inviteCandidates.length === 0 ? 'All your followers are already members of this group.' : null);
       setShowInviteModal(true);
     } catch (err: any) {
       console.error('Failed to load followers:', err);
@@ -817,11 +838,12 @@ export default function GroupDetailPage() {
 
       <FollowersModal
         isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        heading="Members"
+        onClose={() => { setShowInviteModal(false); setInviteMessage(null); }}
+        heading="Invite to group"
         users={followers}
-        onInvite={handleInviteUser}
+        onInvite={followers.length > 0 ? handleInviteUser : undefined}
         isActionLoading={inviteLoading}
+        emptyMessage={inviteMessage ?? undefined}
       />
 
       <FollowersModal

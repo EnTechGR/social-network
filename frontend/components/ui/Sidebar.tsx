@@ -130,6 +130,7 @@ export default function Sidebar() {
   const [isLoadingGroupInvites, setIsLoadingGroupInvites] = useState(false);
   const [hasUnreadChats, setHasUnreadChats] = useState(false);
   const [groupInviteActionId, setGroupInviteActionId] = useState<string | null>(null);
+  const [groupInviteActionError, setGroupInviteActionError] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -406,17 +407,22 @@ export default function Sidebar() {
     invite: any,
     action: 'accept' | 'decline',
   ) => {
-    setGroupInviteActionId(invite.id);
+    const inviteId = (invite.id ?? invite.invite_id ?? '').trim();
+    if (!inviteId) return;
+    setGroupInviteActionId(inviteId);
+    setGroupInviteActionError(null);
 
     try {
       if (action === 'accept') {
-        await acceptGroupInvite(invite.id);
+        await acceptGroupInvite(inviteId);
       } else {
-        await declineGroupInvite(invite.id);
+        await declineGroupInvite(inviteId);
       }
 
-      setGroupInvites((prev) => prev.filter((item) => item.id !== invite.id));
+      setGroupInvites((prev) => prev.filter((item) => (item.id ?? item.invite_id) !== inviteId));
     } catch (error) {
+      const msg = error instanceof Error ? error.message : `Failed to ${action} invite`;
+      setGroupInviteActionError(msg);
       console.error(`Failed to ${action} group invite:`, error);
     } finally {
       setGroupInviteActionId(null);
@@ -595,8 +601,21 @@ export default function Sidebar() {
 
                 <div className="flex flex-1 px-4 flex-col items-start gap-2 self-stretch overflow-y-auto">
                   {/* Group Invites Section */}
-                  {(isLoadingGroupInvites || groupInvites.length > 0) && (
+                  {(groupInviteActionError || isLoadingGroupInvites || groupInvites.length > 0) && (
                     <>
+                      {groupInviteActionError && (
+                        <div className="flex py-2 px-4 items-center self-stretch bg-red-100 border border-red-300 rounded mt-2">
+                          <span className="text-red-800 text-sm">{groupInviteActionError}</span>
+                          <button
+                            type="button"
+                            onClick={() => setGroupInviteActionError(null)}
+                            className="ml-2 text-red-600 hover:text-red-800"
+                            aria-label="Dismiss"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
                       <div className="flex py-2 px-2 items-center self-stretch border-b border-parea-black mt-2">
                         <span
                           className="text-parea-black font-mono text-sm font-semibold leading-[150%] uppercase"

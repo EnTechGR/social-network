@@ -971,6 +971,7 @@ export async function acceptGroupInvite(inviteId: string): Promise<any> {
   return fetchAPI<any>(`/api/v1/groups/invites/accept/${inviteId}`, {
     method: 'PUT',
     headers: { 'X-CSRF-Token': csrfToken || '' },
+    body: JSON.stringify({}),
   });
 }
 
@@ -978,6 +979,15 @@ export async function declineGroupInvite(inviteId: string): Promise<any> {
   const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
   return fetchAPI<any>(`/api/v1/groups/invites/decline/${inviteId}`, {
     method: 'PUT',
+    headers: { 'X-CSRF-Token': csrfToken || '' },
+    body: JSON.stringify({}),
+  });
+}
+
+export async function leaveGroup(groupId: string): Promise<void> {
+  const csrfToken = typeof window !== 'undefined' ? localStorage.getItem('csrf_token') : null;
+  return fetchAPI<void>(`/api/v1/groups/leave/${groupId}`, {
+    method: 'POST',
     headers: { 'X-CSRF-Token': csrfToken || '' },
   });
 }

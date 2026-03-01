@@ -1,7 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { use, useState, useEffect } from 'react';
 import PostDetailFrame from '@/components/ui/PostDetailFrame';
 import type { CommentItem } from '@/components/ui/CommentHolder';
 import {
@@ -10,6 +9,7 @@ import {
   getCommentsByPostId,
   getProfile,
   getAvatarUrl,
+  getPostImageUrl,
 } from '@/lib/api';
 
 function formatPostDate(isoDate: string): string {
@@ -32,12 +32,17 @@ function mapCommentToItem(c: any): CommentItem {
     userDate: formatPostDate(c.created_at),
     text: c.content ?? '',
     likeCount: c.like_count ?? 0,
+    imageSrc: getPostImageUrl(c.image_url || c.image_thumbnail_url) || undefined,
   };
 }
 
-export default function PostPage() {
-  const params = useParams();
-  const postId = typeof params?.id === 'string' ? params.id : '';
+export default function PostPage({
+  params,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const resolvedParams = use(params);
+  const postId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';
   const [post, setPost] = useState<any | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,33 +152,37 @@ export default function PostPage() {
     if (!commentText.trim() || submitting || !postId) return;
 
     setSubmitting(true);
+    const text = commentText.trim();
+    const imageFile = commentImage;
+    const hadImage = Boolean(imageFile);
+    setCommentText('');
+    clearCommentImage();
+
     try {
-      const result = await createCommentWithImage(postId, commentText.trim(), commentImage || undefined);
-      
-      // Add the new comment to the list
-      const newComment: CommentItem = {
-        id: result.comment?.id || result.comment?.comment_id || result.id || Date.now().toString(),
-        userId: currentUserId || undefined,
-        avatarSrc: currentUserAvatar || '/user-avatar-default.png',
-        avatarAlt: 'You',
-        userName: 'YOU',
-        userDate: formatPostDate(new Date().toISOString()),
-        text: commentText.trim(),
-        likeCount: 0,
-        imageSrc: commentImagePreview || undefined,
-      };
-      
-      setComments((prev) => [newComment, ...prev]);
-      setCommentText('');
-      clearCommentImage();
-      
-      // Update comment count in post
+      await createCommentWithImage(postId, text, imageFile || undefined);
+
+      if (hadImage) {
+        const commentsList = await getCommentsByPostId(postId);
+        setComments(Array.isArray(commentsList) ? commentsList.map(mapCommentToItem) : []);
+      } else {
+        const newComment: CommentItem = {
+          id: Date.now().toString(),
+          userId: currentUserId || undefined,
+          avatarSrc: currentUserAvatar || '/user-avatar-default.png',
+          avatarAlt: 'You',
+          userName: 'YOU',
+          userDate: formatPostDate(new Date().toISOString()),
+          text,
+          likeCount: 0,
+        };
+        setComments((prev) => [newComment, ...prev]);
+      }
+
       if (post) {
         setPost({ ...post, comment_count: (post.comment_count || 0) + 1 });
       }
     } catch (err: any) {
       console.error('Failed to create comment:', err);
-      // Optionally show error to user
     } finally {
       setSubmitting(false);
     }

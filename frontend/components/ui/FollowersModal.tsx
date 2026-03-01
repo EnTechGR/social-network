@@ -27,13 +27,15 @@ export interface FollowerUser {
 interface FollowersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  heading?: 'Followers' | 'Following' | 'Members';
+  heading?: 'Followers' | 'Following' | 'Members' | 'Invite to group';
   preview?: boolean;
   users?: FollowerUser[];
   onRemoveFollower?: (userId: string) => Promise<void>;
   onUnfollow?: (userId: string) => Promise<void>;
   onInvite?: (userId: string) => Promise<void>;
   isActionLoading?: string | null;
+  /** Custom message when the list is empty (e.g. for invite modal) */
+  emptyMessage?: string;
 }
 
 export default function FollowersModal({
@@ -46,6 +48,7 @@ export default function FollowersModal({
   onUnfollow,
   onInvite,
   isActionLoading = null,
+  emptyMessage,
 }: FollowersModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +83,7 @@ export default function FollowersModal({
       await onRemoveFollower(userId);
     } else if (heading === 'Following' && onUnfollow) {
       await onUnfollow(userId);
-    } else if (heading === 'Members' && onInvite) {
+    } else if ((heading === 'Members' || heading === 'Invite to group') && onInvite) {
       await onInvite(userId);
     }
   };
@@ -211,7 +214,7 @@ export default function FollowersModal({
           >
             {filteredUsers.length === 0 ? (
               <p className="text-regular text-parea-black py-4">
-                {searchQuery ? 'No users found.' : `No ${heading.toLowerCase()} yet.`}
+                {searchQuery ? 'No users found.' : (emptyMessage ?? (heading === 'Invite to group' ? 'No one to invite yet.' : `No ${heading.toLowerCase()} yet.`))}
               </p>
             ) : (
               filteredUsers.map((user) => {
@@ -307,7 +310,7 @@ export default function FollowersModal({
                       >
                         {isActionLoading === user.user_id ? 'Unfollowing...' : 'Unfollow'}
                       </Button>
-                    ) : heading === 'Members' && onInvite ? (
+                    ) : (heading === 'Members' || heading === 'Invite to group') && onInvite ? (
                       <Button
                         variant="tertiary"
                         onClick={() => handleAction(user.user_id)}

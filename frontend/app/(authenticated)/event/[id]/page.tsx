@@ -1,17 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
 import EventDetailFrame from '@/components/ui/EventDetailFrame';
 import type { RsvpOption } from '@/components/ui/EventInfoBar';
-import FollowersModal, { type FollowerUser } from '@/components/ui/FollowersModal';
 import {
   getEventById,
   voteOnEvent,
-  getProfile,
-  getUserProfile,
-  getGroupMembers,
-  inviteToGroup,
 } from '@/lib/api';
 
 function formatDateParts(iso: string): { date: string; time: string } {
@@ -53,17 +47,18 @@ function uiToChoice(choice: RsvpOption): 'going' | 'not going' | 'maybe' | null 
   }
 }
 
-export default function EventPage() {
-  const params = useParams();
-  const eventId = typeof params?.id === 'string' ? params.id : '';
+export default function EventPage({
+  params,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const resolvedParams = use(params);
+  const eventId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';
   const [eventData, setEventData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rsvpValue, setRsvpValue] = useState<RsvpOption>('RSVP');
   const [isVoting, setIsVoting] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteCandidates, setInviteCandidates] = useState<FollowerUser[]>([]);
-  const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   const loadEvent = async () => {
     if (!eventId) return;
@@ -107,89 +102,6 @@ export default function EventPage() {
     }
   };
 
-  const handleInviteClick = async () => {
-    if (!eventData?.group_id) {
-      alert('This event is not linked to a group.');
-      return;
-    }
-
-    const groupId = eventData.group_id as string;
-
-    try {
-      const me = await getProfile();
-      const profileId = me?.id;
-
-      if (!profileId) {
-        alert('Unable to get your profile. Please try logging in again.');
-        return;
-      }
-
-      const userProfile = await getUserProfile(profileId);
-
-      if (userProfile.privateProfile) {
-        alert('Unable to load followers from a private profile.');
-        setInviteCandidates([]);
-        setShowInviteModal(true);
-        return;
-      }
-
-      const members = await getGroupMembers(groupId);
-      const memberIds = new Set(
-        (Array.isArray(members) ? members : []).map((m: any) => m.user_id),
-      );
-
-      const followersList = Array.isArray(userProfile.followers)
-        ? (userProfile.followers as FollowerUser[])
-        : [];
-
-      if (followersList.length === 0) {
-        alert("You don't have any followers yet. Only your followers can be invited to this group.");
-        return;
-      }
-
-      const candidates = followersList.filter(
-        (f) => f.user_id && !memberIds.has(f.user_id),
-      );
-
-      if (candidates.length === 0) {
-        alert('All of your followers are already members of this group.');
-        return;
-      }
-
-      setInviteCandidates(candidates);
-      setShowInviteModal(true);
-    } catch (err: any) {
-      console.error('Failed to load followers for invite:', err);
-      alert(err?.message || 'Failed to load followers. Please try again.');
-    }
-  };
-
-  const handleInviteUser = async (userId: string) => {
-    if (!eventData?.group_id) return;
-    const groupId = eventData.group_id as string;
-
-    setInviteLoading(userId);
-    try {
-      await inviteToGroup(groupId, userId);
-      setInviteCandidates((prev) => prev.filter((u) => u.user_id !== userId));
-    } catch (err: any) {
-      const message = err?.message || 'Failed to invite user';
-      const normalized = String(message).toLowerCase();
-
-      // Backend correctly blocks duplicate pending invites; handle it as a non-fatal state.
-      if (normalized.includes('pending invite')) {
-        setInviteCandidates((prev) => prev.filter((u) => u.user_id !== userId));
-        alert('This user already has a pending invite.');
-        return;
-      }
-
-      console.error('Failed to invite user:', err);
-      alert(message);
-    } finally {
-      setInviteLoading(null);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-parea-white px-16 py-12">
@@ -223,19 +135,11 @@ export default function EventPage() {
           eventText={eventData.description || ''}
           rsvpValue={rsvpValue}
           onRsvpSelect={handleRsvpSelect}
-          onInviteClick={handleInviteClick}
+          groupId={eventData.group_id}
         />
         {isVoting && (
           <p className="mt-4 text-small text-parea-black">Updating your RSVP...</p>
         )}
-        <FollowersModal
-          isOpen={showInviteModal}
-          onClose={() => setShowInviteModal(false)}
-          heading="Members"
-          users={inviteCandidates}
-          onInvite={handleInviteUser}
-          isActionLoading={inviteLoading}
-        />
       </div>
     </div>
   );

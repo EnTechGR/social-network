@@ -13,7 +13,8 @@ export interface EventDetailFrameProps {
   time?: string;
   rsvpValue?: RsvpOption;
   onRsvpSelect?: (option: RsvpOption) => void;
-  onInviteClick?: () => void;
+  /** When set, Back button links to this group page instead of feed */
+  groupId?: string;
 }
 
 export function EventDetailFrame({
@@ -24,17 +25,19 @@ export function EventDetailFrame({
   time,
   rsvpValue,
   onRsvpSelect,
-  onInviteClick,
+  groupId,
 }: EventDetailFrameProps) {
+  const backHref = groupId ? `/group/${groupId}` : '/feed';
+  const backLabel = groupId ? 'Back to group' : 'Back to feed';
   return (
     <div className="flex flex-col items-start gap-9 self-stretch">
       {/* Inner: back button + title (same as post detail frame) */}
       <div className="flex flex-col items-start gap-6 self-stretch">
         <div className="flex justify-start items-center gap-2 self-stretch">
-          <Link href="/feed" aria-label="Back to feed">
+          <Link href={backHref} aria-label={backLabel}>
             <IconButton
               variant="arrow-left"
-              aria-label="Back to feed"
+              aria-label={backLabel}
               text="BACK"
             />
           </Link>
@@ -59,7 +62,6 @@ export function EventDetailFrame({
           time={time}
           rsvpValue={rsvpValue}
           onRsvpSelect={onRsvpSelect}
-          onInviteClick={onInviteClick}
         />
         {(eventText != null && eventText !== '') && (
           <div className="w-full px-8 pb-6">

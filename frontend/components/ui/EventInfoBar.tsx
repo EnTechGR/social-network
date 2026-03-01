@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Calendar, Clock } from 'lucide-react';
-import Button from './Button';
 import DropdownButton from './DropdownButton';
 
 export type RsvpOption = 'RSVP' | 'GOING' | 'NOT GOING' | 'MAYBE';
@@ -13,7 +12,6 @@ export interface EventInfoBarProps {
   time?: string;
   rsvpValue?: RsvpOption;
   onRsvpSelect?: (option: RsvpOption) => void;
-  onInviteClick?: () => void;
   className?: string;
 }
 
@@ -27,7 +25,6 @@ export function EventInfoBar({
   time,
   rsvpValue,
   onRsvpSelect,
-  onInviteClick,
   className = '',
 }: EventInfoBarProps) {
   const [selectedRsvp, setSelectedRsvp] = useState<RsvpOption>(rsvpValue ?? 'RSVP');
@@ -80,9 +77,6 @@ export function EventInfoBar({
           onValueChange={handleRsvpChange}
           aria-label="RSVP options"
         />
-        <Button variant="primary" size="sm" onClick={onInviteClick}>
-          INVITE
-        </Button>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { use, useState, useEffect } from 'react';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
 import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
@@ -14,6 +13,7 @@ import {
   getProfile,
   unfollowUser,
   getPostById,
+  getPostsByUserId,
   getPostImageUrl,
   getChatConversation,
   sendChatMessage,
@@ -21,6 +21,31 @@ import {
 } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import ChatModal from '@/components/ui/ChatModal';
+
+const PENDING_FOLLOW_STORAGE_KEY = 'follow_requests_pending';
+
+function getPendingFollowIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(PENDING_FOLLOW_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPendingFollow(userId: string) {
+  const ids = getPendingFollowIds();
+  if (ids.includes(userId)) return;
+  ids.push(userId);
+  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
+}
+
+function removePendingFollow(userId: string) {
+  const ids = getPendingFollowIds().filter((x) => x !== userId);
+  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
+}
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -32,9 +57,13 @@ function formatPostDate(isoDate: string): string {
   }
 }
 
-export default function UserProfilePage() {
-  const params = useParams<{ id: string }>();
-  const id = params?.id as string;
+export default function UserProfilePage({
+  params,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const resolvedParams = use(params);
+  const id = resolvedParams?.id as string;
   const [profile, setProfile] = useState<Awaited<ReturnType<typeof getUserProfile>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +81,36 @@ export default function UserProfilePage() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
   const [selfAvatarUrl, setSelfAvatarUrl] = useState('/user-avatar-default.png');
+  const [profilePosts, setProfilePosts] = useState<any[]>([]);
+  const [refetching, setRefetching] = useState(false);
+
+  const refetchProfile = async () => {
+    if (!id) return;
+    setRefetching(true);
+    try {
+      const [data, me] = await Promise.all([getUserProfile(id), getProfile()]);
+      setProfile(data);
+      if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
+      setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
+      if (data.privateProfile) {
+        setShowPrivateModal(true);
+        setFollowRequested(getPendingFollowIds().includes(id));
+      } else {
+        removePendingFollow(id);
+        setFollowRequested(false);
+        if (!data.is_own_profile && me?.id) {
+          const followerIds = Array.isArray(data.followers)
+            ? data.followers.map((f) => (f as any)?.user_id).filter(Boolean)
+            : [];
+          setIsFollowing(followerIds.includes(me.id));
+        }
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load profile');
+    } finally {
+      setRefetching(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -61,8 +120,6 @@ export default function UserProfilePage() {
       setIsLoading(true);
       setError(null);
       setFollowError(null);
-      setFollowRequested(false);
-      setIsFollowing(false);
       setIsSubmittingFollow(false);
       try {
         const [data, me] = await Promise.all([getUserProfile(id), getProfile()]);
@@ -70,12 +127,19 @@ export default function UserProfilePage() {
         setProfile(data);
         if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
         setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
-        if (data.privateProfile) setShowPrivateModal(true);
-        if (!data.privateProfile && !data.is_own_profile && me?.id) {
-          const followerIds = Array.isArray(data.followers)
-            ? data.followers.map((f) => (f as any)?.user_id).filter(Boolean)
-            : [];
-          setIsFollowing(followerIds.includes(me.id));
+        if (data.privateProfile) {
+          setShowPrivateModal(true);
+          setFollowRequested(getPendingFollowIds().includes(id));
+          setIsFollowing(false);
+        } else {
+          removePendingFollow(id);
+          setFollowRequested(false);
+          if (!data.is_own_profile && me?.id) {
+            const followerIds = Array.isArray(data.followers)
+              ? data.followers.map((f) => (f as any)?.user_id).filter(Boolean)
+              : [];
+            setIsFollowing(followerIds.includes(me.id));
+          }
         }
       } catch (err: unknown) {
         if (cancelled) return;
@@ -89,11 +153,34 @@ export default function UserProfilePage() {
     return () => { cancelled = true; };
   }, [id]);
 
+  useEffect(() => {
+    if (!id || !profile?.privateProfile) return;
+    const onFocus = () => refetchProfile();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [id, profile?.privateProfile]);
+
+  useEffect(() => {
+    if (!id || !profile || profile.privateProfile) {
+      setProfilePosts([]);
+      return;
+    }
+    let cancelled = false;
+    getPostsByUserId(id)
+      .then((list) => {
+        if (!cancelled) setProfilePosts(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (!cancelled) setProfilePosts([]);
+      });
+    return () => { cancelled = true; };
+  }, [id, profile]);
+
   // Enrich this user's posts with the same image URLs used by the main feed,
-  // by fetching each post's full detail once profile.posts is available.
+  // by fetching each post's full detail once profilePosts is available.
   useEffect(() => {
     if (!profile || profile.privateProfile) return;
-    const posts = Array.isArray(profile.posts) ? profile.posts : [];
+    const posts = profilePosts;
     if (posts.length === 0) {
       setPostMetaById({});
       return;
@@ -146,7 +233,7 @@ export default function UserProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [profile]);
+  }, [profile, profilePosts]);
 
   const requestFollow = async () => {
     if (!id || followRequested || isFollowing) return;
@@ -159,8 +246,10 @@ export default function UserProfilePage() {
       if (relationship.status === 'accepted') {
         setIsFollowing(true);
         setFollowRequested(false);
+        removePendingFollow(id);
       } else {
         setFollowRequested(true);
+        addPendingFollow(id);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to follow user';
@@ -169,8 +258,10 @@ export default function UserProfilePage() {
       if (normalized.includes('already')) {
         if (profile && !profile.privateProfile) {
           setIsFollowing(true);
+          removePendingFollow(id);
         } else {
           setFollowRequested(true);
+          addPendingFollow(id);
         }
         setFollowError(null);
         return;
@@ -192,6 +283,7 @@ export default function UserProfilePage() {
       await unfollowUser(id);
       setIsFollowing(false);
       setFollowRequested(false);
+      removePendingFollow(id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to unfollow user';
       setFollowError(message);
@@ -259,14 +351,26 @@ export default function UserProfilePage() {
       <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-7xl mx-auto">
           <p className="text-regular text-parea-black mb-4">{profile.message}</p>
-          <button
-            type="button"
-            onClick={() => setShowPrivateModal(true)}
-            disabled={followRequested}
-            className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90"
-          >
-            {followRequested ? 'Follow request sent' : 'Send follow request'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPrivateModal(true)}
+              disabled={followRequested}
+              className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90"
+            >
+              {followRequested ? 'Follow request sent' : 'Send follow request'}
+            </button>
+            {followRequested && (
+              <button
+                type="button"
+                onClick={() => refetchProfile()}
+                disabled={refetching}
+                className="rounded border border-parea-black bg-parea-white px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60"
+              >
+                {refetching ? 'Checking...' : 'Check again'}
+              </button>
+            )}
+          </div>
           {followError && (
             <p className="text-regular text-parea-black mt-3">{followError}</p>
           )}
@@ -352,11 +456,11 @@ export default function UserProfilePage() {
         <div className="mt-6 max-w-312 w-full">
           {activeTab === 'Posts' && (
             <>
-              {!Array.isArray(profile.posts) || profile.posts.length === 0 ? (
+              {profilePosts.length === 0 ? (
                 <p className="text-regular text-parea-black">No posts yet.</p>
               ) : (
                 <div className="flex flex-col items-start gap-0">
-                  {profile.posts.map((post: any, index: number) => {
+                  {profilePosts.map((post: any, index: number) => {
                     const postId = post.id || post.post_id;
                     const meta = postId ? (postMetaById[postId] ?? {}) : {};
                     const rawImagePath = meta.imageUrl || post.image_url || post.thumbnail_url;

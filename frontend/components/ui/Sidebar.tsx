@@ -443,15 +443,15 @@ export default function Sidebar() {
 
   return (
     <div ref={sidebarRef}>
-      {/* Main Sidebar — single layout, width transitions */}
+      {/* Main Sidebar — z-60 when expanded (step 2) so it appears above navbar, else z-50 */}
       <aside
         className={`
-          fixed left-0 top-0 h-screen z-50
+          fixed left-0 top-0 h-screen
           flex flex-col items-start
           bg-parea-black border-r border-parea-black
           overflow-hidden
           transition-[width] duration-300 ease-in-out
-          ${isOpen ? 'w-79' : 'w-18'}
+          ${isOpen ? 'w-79 z-60' : 'w-18 z-50'}
         `}
       >
         {/* Top section: toggle + logo */}
@@ -562,14 +562,14 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Drawer (Chat or Notifications) */}
+      {/* Drawer (Chat or Notifications) — z-40 when closed (below main sidebar), z-60 when open (above navbar) */}
       <aside
         className={`
-          fixed left-18 top-0 h-screen w-79 z-40
+          fixed left-18 top-0 h-screen w-79
           flex flex-col items-start
           bg-parea-white border-r border-parea-black
           transition-transform duration-300 ease-in-out
-          ${activeDrawer ? 'translate-x-0' : '-translate-x-full'}
+          ${activeDrawer ? 'translate-x-0 z-60' : '-translate-x-full z-40'}
         `}
       >
           {(activeDrawer || lastDrawer) === 'chat' ? (

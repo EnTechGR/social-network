@@ -2,9 +2,15 @@ package group
 
 import (
 	"database/sql"
+	"errors"
 	"social-network/models"
 	"social-network/utils"
 	"time"
+)
+
+var (
+	ErrInviteNotRecipient    = errors.New("invite not addressed to user")
+	ErrInviteAlreadyHandled  = errors.New("invite already responded")
 )
 
 type GroupInviteRepository struct {
@@ -166,4 +172,79 @@ func (r *GroupInviteRepository) HasPendingInvite(groupID, userID string) (bool, 
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// AcceptInviteForUser accepts an invite atomically and ensures group membership.
+// It is idempotent: when the invite is already accepted, membership is ensured and nil is returned.
+func (r *GroupInviteRepository) AcceptInviteForUser(inviteID, userID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var groupID, toUserID, status string
+	err = tx.QueryRow(
+		`SELECT group_id, to_user_id, status FROM group_invites WHERE invite_id = ?`,
+		inviteID,
+	).Scan(&groupID, &toUserID, &status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return sql.ErrNoRows
+		}
+		return err
+	}
+
+	if toUserID != userID {
+		return ErrInviteNotRecipient
+	}
+
+	if status == "declined" {
+		return ErrInviteAlreadyHandled
+	}
+
+	if _, err := tx.Exec(
+		`INSERT OR IGNORE INTO group_members (group_id, user_id, joined_at) VALUES (?, ?, ?)`,
+		groupID, userID, time.Now(),
+	); err != nil {
+		return err
+	}
+
+	if status == "accepted" {
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if _, err := tx.Exec(
+		`DELETE FROM group_invites
+		 WHERE group_id = ? AND to_user_id = ? AND status = 'accepted' AND invite_id <> ?`,
+		groupID, userID, inviteID,
+	); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	result, err := tx.Exec(
+		`UPDATE group_invites SET status = 'accepted', responded_at = ? WHERE invite_id = ?`,
+		now, inviteID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

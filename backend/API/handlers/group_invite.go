@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -217,43 +218,22 @@ func (h *GroupInviteHandler) AcceptInvite(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Get invite details
-	invite, err := h.InviteRepo.GetByID(inviteID)
-	if err != nil {
-		log.Printf("Failed to get invite: %v", err)
-		utils.ErrorResponse(w, "Failed to retrieve invitation", http.StatusInternalServerError)
-		return
-	}
-
-	if invite == nil {
-		utils.ErrorResponse(w, "Invitation not found", http.StatusNotFound)
-		return
-	}
-
-	// Verify the invite is for the current user
-	if invite.ToUserID != user.ID {
-		utils.ErrorResponse(w, "You can only accept your own invitations", http.StatusForbidden)
-		return
-	}
-
-	// Check if invite is still pending
-	if invite.Status != "pending" {
-		utils.ErrorResponse(w, "This invitation has already been responded to", http.StatusBadRequest)
-		return
-	}
-
-	// Update invite status
-	if err := h.InviteRepo.UpdateStatus(inviteID, "accepted"); err != nil {
-		log.Printf("Failed to update invite status: %v", err)
-		utils.ErrorResponse(w, "Failed to accept invitation", http.StatusInternalServerError)
-		return
-	}
-
-	// Add user to group
-	if err := h.MemberRepo.AddMember(invite.GroupID, user.ID); err != nil {
-		log.Printf("Failed to add member: %v", err)
-		utils.ErrorResponse(w, "Failed to join group", http.StatusInternalServerError)
-		return
+	if err := h.InviteRepo.AcceptInviteForUser(inviteID, user.ID); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			utils.ErrorResponse(w, "Invitation not found", http.StatusNotFound)
+			return
+		case errors.Is(err, group.ErrInviteNotRecipient):
+			utils.ErrorResponse(w, "You can only accept your own invitations", http.StatusForbidden)
+			return
+		case errors.Is(err, group.ErrInviteAlreadyHandled):
+			utils.ErrorResponse(w, "This invitation has already been responded to", http.StatusBadRequest)
+			return
+		default:
+			log.Printf("Failed to accept invite: %v", err)
+			utils.ErrorResponse(w, "Failed to accept invitation", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	utils.JSONResponse(w, map[string]string{

@@ -8,6 +8,8 @@ interface CardAvatarProps {
   subtitle?: string;
 }
 
+const DEFAULT_AVATAR_SRC = '/user-avatar-default.png';
+
 export const CardAvatar: React.FC<CardAvatarProps> = ({
   src,
   alt,
@@ -21,14 +23,12 @@ export const CardAvatar: React.FC<CardAvatarProps> = ({
       gap-4
       self-stretch">
       <div className="relative w-12 h-12 rounded-full shrink-0 aspect-square overflow-hidden bg-parea-grey">
-        {src ? (
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            className="object-cover object-center"
-          />
-        ) : null}
+        <Image
+          src={src || DEFAULT_AVATAR_SRC}
+          alt={alt}
+          fill
+          className="object-cover object-center"
+        />
       </div>
       <div className="flex
         flex-col

@@ -24,6 +24,8 @@ interface CardProps {
   imagePriority?: boolean;
   /** Comment count for the post */
   commentCount?: number;
+  /** Hide reactions/comment icon area (used for event cards) */
+  hideReactions?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -40,6 +42,7 @@ export const Card: React.FC<CardProps> = ({
   href,
   imagePriority,
   commentCount = 0,
+  hideReactions = false,
 }) => {
   const inner = (
     <div className="flex
@@ -100,9 +103,11 @@ export const Card: React.FC<CardProps> = ({
               subtitle={userDate}
             />
           )}
-          <ReactionHolder
-            commentCount={commentCount}
-          />
+          {!hideReactions && (
+            <ReactionHolder
+              commentCount={commentCount}
+            />
+          )}
         </div>
       </div>
     </div>

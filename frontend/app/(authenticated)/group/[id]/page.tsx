@@ -25,6 +25,7 @@ import {
   denyGroupRequest,
   getGroupChatMessages,
   sendGroupChatMessage,
+  getAvatarUrl,
   getPostImageUrl,
   getPostById,
   type GroupChatMessage,
@@ -122,6 +123,7 @@ export default function GroupDetailPage({
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
   const chatInputBarRef = useRef<HTMLDivElement | null>(null);
   const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; avatarUrl?: string; commentCount?: number }>>({});
+  const [eventCreatorAvatarById, setEventCreatorAvatarById] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!showEmojiPicker) return;
@@ -289,6 +291,60 @@ export default function GroupDetailPage({
       });
     return () => { cancelled = true; };
   }, [groupId, isMember]);
+
+  useEffect(() => {
+    if (!Array.isArray(events) || events.length === 0) {
+      setEventCreatorAvatarById({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      const creatorIDs = Array.from(
+        new Set(
+          events
+            .map((event: any) => event?.creator_id)
+            .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+        ),
+      );
+
+      if (creatorIDs.length === 0) {
+        if (!cancelled) setEventCreatorAvatarById({});
+        return;
+      }
+
+      const entries = await Promise.all(
+        creatorIDs.map(async (creatorID) => {
+          try {
+            const profile = await getUserProfile(creatorID);
+            const profileAny = profile as any;
+            const avatarPath =
+              profileAny?.user?.avatar?.thumbnail_path ||
+              profileAny?.user?.avatar?.file_path ||
+              profileAny?.avatar?.thumbnail_path ||
+              profileAny?.avatar?.file_path;
+            const avatarUrl = avatarPath ? getAvatarUrl(avatarPath) : '/user-avatar-default.png';
+            return [creatorID, avatarUrl] as const;
+          } catch {
+            return [creatorID, '/user-avatar-default.png'] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const map: Record<string, string> = {};
+      for (const [creatorID, avatarUrl] of entries) {
+        map[creatorID] = avatarUrl;
+      }
+      setEventCreatorAvatarById(map);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [events]);
 
   useEffect(() => {
     if (!groupId || !isMember || activeTab !== 'Chat') return;
@@ -707,7 +763,7 @@ export default function GroupDetailPage({
                               ? post.comments.length
                               : 0;
 
-                      const avatarSrc = meta.avatarUrl || '';
+                      const avatarSrc = meta.avatarUrl || '/user-avatar-default.png';
                       const avatarAlt = post.nickname ?? 'Author';
                       const userName = (post.nickname ?? 'User').toUpperCase();
 
@@ -742,19 +798,44 @@ export default function GroupDetailPage({
                 {!eventsLoading && events.length > 0 && (
                   <div className="flex flex-col items-start gap-0">
                     {events.map((ev) => (
-                      <Card
-                        key={ev.id ?? ev.event_id}
-                        imageType="post"
-                        hideImage
-                        avatarSrc=""
-                        avatarAlt={ev.creator_nickname ?? 'Creator'}
-                        userName={(ev.creator_nickname ?? 'User').toUpperCase()}
-                        userDate={formatDate(ev.event_time ?? ev.created_at)}
-                        title={ev.title}
-                        content={ev.description}
-                        href={`/event/${ev.id ?? ev.event_id}`}
-                        imagePriority={false}
-                      />
+                      (() => {
+                        const creatorID = ev.creator_id ?? ev.creatorId;
+                        const creatorMember = Array.isArray(members)
+                          ? members.find((member: any) => {
+                              const memberID = member?.user_id ?? member?.id;
+                              return memberID === creatorID;
+                            })
+                          : undefined;
+                        const creatorFromMember =
+                          creatorMember?.nickname ||
+                          [creatorMember?.first_name, creatorMember?.last_name].filter(Boolean).join(' ').trim();
+                        const creatorName =
+                          ev.creator_nickname ||
+                          ev.creator_name ||
+                          creatorFromMember ||
+                          creatorID ||
+                          'User';
+                        const creatorAvatarSrc =
+                          (typeof creatorID === 'string' && eventCreatorAvatarById[creatorID]) ||
+                          '/user-avatar-default.png';
+
+                        return (
+                          <Card
+                            key={ev.id ?? ev.event_id}
+                            imageType="post"
+                            hideImage
+                            hideReactions
+                            avatarSrc={creatorAvatarSrc}
+                            avatarAlt={creatorName}
+                            userName={String(creatorName).toUpperCase()}
+                            userDate={formatDate(ev.event_time ?? ev.created_at)}
+                            title={ev.title}
+                            content={ev.description}
+                            href={`/event/${ev.id ?? ev.event_id}`}
+                            imagePriority={false}
+                          />
+                        );
+                      })()
                     ))}
                   </div>
                 )}

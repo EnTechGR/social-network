@@ -121,7 +121,7 @@ export default function GroupDetailPage({
   const [chatError, setChatError] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
   const chatInputBarRef = useRef<HTMLDivElement | null>(null);
-  const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; avatarUrl?: string }>>({});
+  const [postMetaById, setPostMetaById] = useState<Record<string, { imageUrl?: string; avatarUrl?: string; commentCount?: number }>>({});
 
   useEffect(() => {
     if (!showEmojiPicker) return;
@@ -244,16 +244,21 @@ export default function GroupDetailPage({
               const firstImage = detail?.images?.[0];
               const imageUrl = firstImage?.thumbnail_url || firstImage?.url || undefined;
 
-              return [postId, { avatarUrl, imageUrl }] as const;
+              const commentCount =
+                typeof detail?.comment_count === 'number'
+                  ? detail.comment_count
+                  : undefined;
+
+              return [postId, { avatarUrl, imageUrl, commentCount }] as const;
             } catch {
-              return [postId, { avatarUrl: undefined, imageUrl: undefined }] as const;
+              return [postId, { avatarUrl: undefined, imageUrl: undefined, commentCount: undefined }] as const;
             }
           }),
         );
 
         if (cancelled) return;
 
-        const map: Record<string, { imageUrl?: string; avatarUrl?: string }> = {};
+        const map: Record<string, { imageUrl?: string; avatarUrl?: string; commentCount?: number }> = {};
         for (const [id, meta] of entries) {
           map[id] = meta;
         }
@@ -693,6 +698,14 @@ export default function GroupDetailPage({
                       const meta = postMetaById[post.id] || {};
                       const rawImagePath = meta.imageUrl || post.thumbnail_url || post.image_url;
                       const imageUrl = getPostImageUrl(rawImagePath);
+                      const commentCount =
+                        typeof post.comment_count === 'number'
+                          ? post.comment_count
+                          : typeof meta.commentCount === 'number'
+                            ? meta.commentCount
+                            : Array.isArray(post.comments)
+                              ? post.comments.length
+                              : 0;
 
                       const avatarSrc = meta.avatarUrl || '';
                       const avatarAlt = post.nickname ?? 'Author';
@@ -711,6 +724,7 @@ export default function GroupDetailPage({
                           content={post.content}
                           href={`/post/${post.id}`}
                           imagePriority={index === 0}
+                          commentCount={commentCount}
                         />
                       );
                     })}

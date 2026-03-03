@@ -205,15 +205,27 @@ export default function UserProfilePage({
 
         const entries = await Promise.all(
           uniqueIds.map(async (postId) => {
+            const postFromList = posts.find((p: any) => (p?.id || p?.post_id) === postId);
+            const listCommentCount =
+              typeof postFromList?.comment_count === 'number'
+                ? postFromList.comment_count
+                : Array.isArray(postFromList?.comments)
+                  ? postFromList.comments.length
+                  : undefined;
+
             try {
               const detail = await getPostById(postId);
               const firstImage = detail?.images?.[0];
               const rawUrl = firstImage?.thumbnail_url || firstImage?.url || undefined;
-              const imageUrl = getPostImageUrl(rawUrl);
-              const commentCount = typeof detail?.comment_count === 'number' ? detail.comment_count : undefined;
+              const imageUrl = getPostImageUrl(rawUrl) || getPostImageUrl(postFromList?.thumbnail_url || postFromList?.image_url);
+              const commentCount =
+                typeof detail?.comment_count === 'number'
+                  ? detail.comment_count
+                  : listCommentCount;
               return [postId, { imageUrl, commentCount }] as const;
             } catch {
-              return [postId, {}] as const;
+              const imageUrl = getPostImageUrl(postFromList?.thumbnail_url || postFromList?.image_url);
+              return [postId, { imageUrl, commentCount: listCommentCount }] as const;
             }
           }),
         );

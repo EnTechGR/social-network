@@ -23,8 +23,8 @@ import {
   getAvatarUrl,
   getPostImageUrl,
   getPostsByUserId,
+  getPostById,
   getFeed,
-  getMyPosts,
   getMyGroups,
   getUserProfile,
   removeFollower,
@@ -195,28 +195,59 @@ export default function ProfilePage() {
     setPostsLoading(true);
     setPostsError(null);
 
-    // Load enriched "my posts" view first
-    getMyPosts()
-      .then((data) => {
-        if (cancelled) return;
-        setMyPosts(Array.isArray(data) ? data : []);
-      })
-      .catch(async (err) => {
+    // Load posts from stable endpoint and enrich missing comment counts.
+    getPostsByUserId(currentUserId)
+      .then(async (basic) => {
         if (cancelled) return;
 
-        // Fallback to simpler posts-by-user endpoint if enriched view fails
-        console.warn('Failed to load full my-posts payload, falling back to basic posts list:', err);
-        try {
-          const basic = await getPostsByUserId(currentUserId);
-          if (!cancelled) {
-            setMyPosts(Array.isArray(basic) ? basic : []);
-          }
-        } catch (fallbackErr: any) {
-          if (!cancelled) {
-            setPostsError(fallbackErr?.message ?? err?.message ?? 'Failed to load posts');
-            setMyPosts([]);
-          }
+        const list = Array.isArray(basic) ? basic : [];
+        const ids = list
+          .map((p: any) => p?.id || p?.post_id)
+          .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+
+        const uniqueIds = Array.from(new Set(ids));
+        const detailEntries = await Promise.all(
+          uniqueIds.map(async (id) => {
+            try {
+              const detail = await getPostById(id);
+              return [id, detail] as const;
+            } catch {
+              return [id, null] as const;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        const detailsById: Record<string, any> = {};
+        for (const [id, detail] of detailEntries) {
+          detailsById[id] = detail;
         }
+
+        const merged = list.map((post: any) => {
+          const id = post?.id || post?.post_id;
+          const detail = id ? detailsById[id] : null;
+          const commentCount =
+            typeof post?.comment_count === 'number'
+              ? post.comment_count
+              : typeof detail?.comment_count === 'number'
+                ? detail.comment_count
+                : Array.isArray(post?.comments)
+                  ? post.comments.length
+                  : 0;
+
+          return {
+            ...post,
+            comment_count: commentCount,
+          };
+        });
+
+        setMyPosts(merged);
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        setPostsError(err?.message ?? 'Failed to load posts');
+        setMyPosts([]);
       })
       .finally(() => {
         if (!cancelled) setPostsLoading(false);
@@ -392,6 +423,12 @@ export default function ProfilePage() {
                       const feedImage = feedImagesByPostId[post.id];
                       const rawImagePath = feedImage || post.thumbnail_url || post.image_url;
                       const imageUrl = getPostImageUrl(rawImagePath);
+                      const commentCount =
+                        typeof post.comment_count === 'number'
+                          ? post.comment_count
+                          : Array.isArray(post.comments)
+                            ? post.comments.length
+                            : 0;
 
                       const avatarSrc = user?.avatarUrl || '/user-avatar-default.png';
                       const avatarLabel = user?.username || post.nickname || 'Author';
@@ -410,6 +447,7 @@ export default function ProfilePage() {
                           content={post.content}
                           href={`/post/${post.id}`}
                           imagePriority={index === 0}
+                          commentCount={commentCount}
                         />
                       );
                     })}

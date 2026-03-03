@@ -121,18 +121,9 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			// Image field is zero-valued (nil) for standard text messages
 		}
 
-		canDeliverRealtime, err := h.MessageRepo.CanDeliverMessageRealtime(user.ID, req.ReceiverID)
-		if err != nil {
-			log.Printf("Failed to verify realtime chat delivery: %v", err)
-			// Best effort fallback: keep sender's active sessions in sync.
-			h.Hub.SendChatMessageNotification(user.ID, msgWithUser)
-		} else if canDeliverRealtime {
-			// Send to both recipient and sender (for multi-device sender sync).
-			h.Hub.SendChatMessage(req.ReceiverID, msgWithUser)
-		} else {
-			// Receiver is not eligible for live delivery; still sync sender sessions.
-			h.Hub.SendChatMessageNotification(user.ID, msgWithUser)
-		}
+		// Send to both recipient and sender (for multi-device sender sync).
+		// Realtime delivery should not be gated here after CanUsersMessage has already passed.
+		h.Hub.SendChatMessage(req.ReceiverID, msgWithUser)
 	}
 
 	// 3. Send HTTP success response back to the sender.

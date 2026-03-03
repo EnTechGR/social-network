@@ -31,6 +31,11 @@ type WebSocketEnvelope = {
   timestamp?: string;
 };
 
+type DirectChatWSData = {
+  sender_id?: string;
+  receiver_id?: string;
+};
+
 const DEFAULT_AVATAR = '/user-avatar-default.png';
 
 function buildWebSocketURL(): string {
@@ -129,6 +134,7 @@ export default function Sidebar() {
   const [groupInvites, setGroupInvites] = useState<any[]>([]);
   const [isLoadingGroupInvites, setIsLoadingGroupInvites] = useState(false);
   const [hasUnreadChats, setHasUnreadChats] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState('');
   const [groupInviteActionId, setGroupInviteActionId] = useState<string | null>(null);
   const [groupInviteActionError, setGroupInviteActionError] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -195,6 +201,9 @@ export default function Sidebar() {
   useEffect(() => {
     getProfile()
       .then((p) => {
+        if (typeof p?.id === 'string') {
+          setCurrentUserId(p.id);
+        }
         const path = p?.avatar?.file_path || p?.avatar?.thumbnail_path;
         setAvatarUrl(getAvatarUrl(path));
       })
@@ -241,10 +250,22 @@ export default function Sidebar() {
       for (const payload of payloads) {
         try {
           const parsed = JSON.parse(payload) as WebSocketEnvelope;
-          if (parsed.type !== 'notification' || !parsed.data) {
+          if (parsed.type === 'notification' && parsed.data) {
+            pushNotification(parsed.data as NotificationItem);
             continue;
           }
-          pushNotification(parsed.data as NotificationItem);
+
+          if (parsed.type === 'chat' && parsed.data) {
+            const msg = parsed.data as DirectChatWSData;
+            if (msg.receiver_id && msg.receiver_id === currentUserId && msg.sender_id !== currentUserId) {
+              setHasUnreadChats(true);
+            }
+            continue;
+          }
+
+          if (parsed.type === 'group_chat' && parsed.data) {
+            setHasUnreadChats(true);
+          }
         } catch (error) {
           console.error('Failed to parse websocket message:', error);
         }
@@ -308,7 +329,7 @@ export default function Sidebar() {
         wsRef.current = null;
       }
     };
-  }, []);
+  }, [currentUserId]);
 
   const handleToggle = () => {
     if (activeDrawer) {

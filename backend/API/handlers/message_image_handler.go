@@ -283,18 +283,8 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 
 	// 9. Broadcast message via WebSocket when realtime delivery rules are met.
 	if h.Hub != nil {
-		canDeliverRealtime, err := h.MessageRepo.CanDeliverMessageRealtime(user.ID, receiverID)
-		if err != nil {
-			log.Printf("Failed to verify realtime chat delivery for image message: %v", err)
-			// Best effort fallback: keep sender's active sessions in sync.
-			h.Hub.SendChatMessageNotification(user.ID, messageWithImage)
-		} else if canDeliverRealtime {
-			// Send to both recipient and sender (for multi-device sender sync).
-			h.Hub.SendChatMessage(receiverID, messageWithImage)
-		} else {
-			// Receiver is not eligible for live delivery; still sync sender sessions.
-			h.Hub.SendChatMessageNotification(user.ID, messageWithImage)
-		}
+		// Realtime delivery should not be gated here after CanUsersMessage has already passed.
+		h.Hub.SendChatMessage(receiverID, messageWithImage)
 	}
 
 	// 10. Send HTTP success response (for sender's immediate display)

@@ -416,7 +416,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 		Path:     "/",
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   false, // TODO: Set to true in production with HTTPS
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 

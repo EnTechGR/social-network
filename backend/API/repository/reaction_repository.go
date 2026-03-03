@@ -79,7 +79,7 @@ func (r *ReactionRepository) ToggleReaction(userID, targetType, targetID string,
 
 // GetReactionsByPostWithUser returns reactions for a post with usernames
 func (r *ReactionRepository) GetReactionsByPostWithUser(postID string) ([]models.ReactionWithUser, error) {
-	query := `SELECT r.user_id, u.username, r.reaction_type, r.post_id, r.created_at
+	query := `SELECT r.user_id, u.nickname, r.reaction_type, r.post_id, r.created_at
                           FROM reactions r JOIN user u ON r.user_id = u.user_id
                           WHERE r.post_id = ?`
 	rows, err := r.db.Query(query, postID)
@@ -101,7 +101,7 @@ func (r *ReactionRepository) GetReactionsByPostWithUser(postID string) ([]models
 
 // GetReactionsByCommentWithUser returns reactions for a comment with usernames
 func (r *ReactionRepository) GetReactionsByCommentWithUser(commentID string) ([]models.ReactionWithUser, error) {
-	query := `SELECT r.user_id, u.username, r.reaction_type, r.comment_id, r.created_at
+	query := `SELECT r.user_id, u.nickname, r.reaction_type, r.comment_id, r.created_at
                           FROM reactions r JOIN user u ON r.user_id = u.user_id
                           WHERE r.comment_id = ?`
 	rows, err := r.db.Query(query, commentID)

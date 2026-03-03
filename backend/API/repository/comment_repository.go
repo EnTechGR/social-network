@@ -64,7 +64,7 @@ func (r *CommentRepository) Create(comment models.Comment) (*models.Comment, err
 
 // // repository/comment_repository.go
 func (r *CommentRepository) GetCommentsByPostWithUser(postID string) ([]models.CommentWithUser, error) {
-	query := `SELECT c.comment_id, c.post_id, c.user_id, u.username, c.content, c.created_at, c.updated_at
+	query := `SELECT c.comment_id, c.post_id, c.user_id, u.nickname, c.content, c.created_at, c.updated_at
 			  FROM comments c JOIN user u ON c.user_id = u.user_id
 			  WHERE c.post_id = ?`
 

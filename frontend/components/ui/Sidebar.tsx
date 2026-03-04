@@ -369,7 +369,15 @@ export default function Sidebar() {
     try {
       // For follow requests, dismiss should behave like decline so sender can re-request later.
       if (notification.type === 'follow_request' && notification.from_user_id) {
-        await declineFollowRequest(notification.from_user_id);
+        try {
+          await declineFollowRequest(notification.from_user_id);
+        } catch (error) {
+          const message = error instanceof Error ? error.message.toLowerCase() : '';
+          // If request is already gone, treat it as already declined.
+          if (!message.includes('not found')) {
+            console.error('Failed to decline follow request on dismiss:', error);
+          }
+        }
       }
       await hideNotification(notification.id);
       setNotifications((prev) => prev.filter((item) => item.id !== notification.id));

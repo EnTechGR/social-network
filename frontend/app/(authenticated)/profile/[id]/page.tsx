@@ -24,6 +24,31 @@ import {
 import Button from '@/components/ui/Button';
 import ChatModal from '@/components/ui/ChatModal';
 
+const PENDING_FOLLOW_STORAGE_KEY = 'follow_requests_pending';
+
+function getPendingFollowIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(PENDING_FOLLOW_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPendingFollow(userId: string) {
+  const ids = getPendingFollowIds();
+  if (ids.includes(userId)) return;
+  ids.push(userId);
+  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
+}
+
+function removePendingFollow(userId: string) {
+  const ids = getPendingFollowIds().filter((x) => x !== userId);
+  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
+}
+
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
   try {
@@ -72,10 +97,10 @@ export default function UserProfilePage({
       if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
       setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
       if (data.privateProfile) {
-        // Keep current request state for private profiles so UI doesn't "unlock" unexpectedly.
-        setFollowRequested((prev) => prev);
+        setFollowRequested(getPendingFollowIds().includes(id));
       } else {
         setFollowRequested(false);
+        removePendingFollow(id);
         if (!data.is_own_profile && me?.id) {
           const followerIds = Array.isArray(data.followers)
             ? data.followers.map((f) => (f as any)?.user_id).filter(Boolean)
@@ -106,11 +131,11 @@ export default function UserProfilePage({
         if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
         setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
         if (data.privateProfile) {
-          // Keep current request state for private profiles so UI doesn't "unlock" unexpectedly.
-          setFollowRequested((prev) => prev);
+          setFollowRequested(getPendingFollowIds().includes(id));
           setIsFollowing(false);
         } else {
           setFollowRequested(false);
+          removePendingFollow(id);
           if (!data.is_own_profile && me?.id) {
             const followerIds = Array.isArray(data.followers)
               ? data.followers.map((f) => (f as any)?.user_id).filter(Boolean)
@@ -286,8 +311,10 @@ export default function UserProfilePage({
       if (relationship.status === 'accepted') {
         setIsFollowing(true);
         setFollowRequested(false);
+        removePendingFollow(id);
       } else {
         setFollowRequested(true);
+        addPendingFollow(id);
       }
       setFollowError(null);
     } catch (err: unknown) {
@@ -297,8 +324,10 @@ export default function UserProfilePage({
       if (normalized.includes('already')) {
         if (profile && !profile.privateProfile) {
           setIsFollowing(true);
+          removePendingFollow(id);
         } else {
           setFollowRequested(true);
+          addPendingFollow(id);
         }
         setFollowError(null);
         return;
@@ -320,6 +349,9 @@ export default function UserProfilePage({
       await unfollowUser(id);
       setIsFollowing(false);
       setFollowRequested(false);
+      removePendingFollow(id);
+      // Re-check profile visibility immediately (private profiles should lock right away).
+      await refetchProfile();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to unfollow user';
       setFollowError(message);
@@ -336,9 +368,18 @@ export default function UserProfilePage({
       // Backend delete endpoint removes both accepted and pending relationships.
       await unfollowUser(id);
       setFollowRequested(false);
+      removePendingFollow(id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to cancel follow request';
-      setFollowError(message);
+      const normalized = message.toLowerCase();
+      // Stale local pending state: clear it so user can send a fresh request.
+      if (normalized.includes('not found') || normalized.includes('already')) {
+        setFollowRequested(false);
+        removePendingFollow(id);
+        setFollowError(null);
+      } else {
+        setFollowError(message);
+      }
     } finally {
       setIsSubmittingFollow(false);
     }

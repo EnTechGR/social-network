@@ -6,6 +6,7 @@ import { MessageCircle, Bell, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Button from './Button';
 import SidebarToggle from './SidebarToggle';
 import ChatDrawer from './ChatDrawer';
 import {
@@ -364,10 +365,14 @@ export default function Sidebar() {
     }
   };
 
-  const handleDeleteNotification = async (notificationId: string) => {
+  const handleDeleteNotification = async (notification: NotificationItem) => {
     try {
-      await hideNotification(notificationId);
-      setNotifications((prev) => prev.filter((notification) => notification.id !== notificationId));
+      // For follow requests, dismiss should behave like decline so sender can re-request later.
+      if (notification.type === 'follow_request' && notification.from_user_id) {
+        await declineFollowRequest(notification.from_user_id);
+      }
+      await hideNotification(notification.id);
+      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
     } catch (error) {
       console.error('Failed to delete notification:', error);
       void loadNotifications();
@@ -398,7 +403,18 @@ export default function Sidebar() {
       setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
     } catch (error) {
       console.error(`Failed to ${action} follow request:`, error);
-      setFollowRequestActionError(`Failed to ${action} follow request`);
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('not found')) {
+        setFollowRequestActionError('Follow request not found.');
+        try {
+          await hideNotification(notification.id);
+        } catch {
+          // ignore secondary cleanup failure
+        }
+        setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+      } else {
+        setFollowRequestActionError(`Failed to ${action} follow request`);
+      }
     } finally {
       setFollowRequestActionId(null);
     }
@@ -620,7 +636,7 @@ export default function Sidebar() {
                   </button>
                 </div>
 
-                <div className="flex flex-1 px-4 flex-col items-start gap-2 self-stretch overflow-y-auto">
+                <div className="flex flex-1 px-4 pt-3 pb-3 flex-col items-start gap-2 self-stretch overflow-y-auto">
                   {/* Group Invites Section */}
                   {(groupInviteActionError || isLoadingGroupInvites || groupInvites.length > 0) && (
                     <>
@@ -669,24 +685,26 @@ export default function Sidebar() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <button
+                              <Button
+                                variant="primary"
+                                size="sm"
                                 onClick={() => {
                                   void handleGroupInviteAction(invite, 'accept');
                                 }}
                                 disabled={groupInviteActionId === invite.id}
-                                className="rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 Accept
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => {
                                   void handleGroupInviteAction(invite, 'decline');
                                 }}
                                 disabled={groupInviteActionId === invite.id}
-                                className="rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 Decline
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ))
@@ -744,7 +762,8 @@ export default function Sidebar() {
                       const isFollowRequest = notification.type === 'follow_request';
                       const dismissButton = (
                         <button
-                          onClick={() => { void handleDeleteNotification(notification.id); }}
+                          type="button"
+                          onClick={() => { void handleDeleteNotification(notification); }}
                           className="w-6 h-6 flex items-center justify-center hover:opacity-70 transition-opacity cursor-pointer shrink-0"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -755,7 +774,9 @@ export default function Sidebar() {
                       return (
                         <div
                           key={notification.id}
-                          className={`flex flex-col py-2 px-4 gap-2 self-stretch rounded-lg transition-colors ${notification.read ? 'bg-parea-white' : 'bg-parea-yellow/30'}`}
+                          className={`flex flex-col py-2 px-4 gap-2 self-stretch rounded-lg transition-colors ${
+                            notification.read ? 'bg-parea-white' : 'bg-parea-yellow/30'
+                          } ${href ? 'cursor-pointer hover:bg-parea-yellow/40' : ''}`}
                         >
                           <div className="flex items-start gap-2">
                             {/* Text + buttons column */}
@@ -764,7 +785,7 @@ export default function Sidebar() {
                                 <Link
                                   href={href}
                                   onClick={() => { setActiveDrawer(null); setIsOpen(false); }}
-                                  className="no-underline hover:opacity-70 transition-opacity"
+                                  className="no-underline hover:opacity-70 transition-opacity cursor-pointer"
                                 >
                                   <span
                                     className="text-parea-black text-sm font-medium leading-[150%]"
@@ -783,20 +804,24 @@ export default function Sidebar() {
                               )}
                               {isFollowRequest && (
                                 <div className="flex gap-2">
-                                  <button
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
                                     onClick={() => { void handleFollowRequestAction(notification, 'accept'); }}
                                     disabled={followRequestActionId === notification.id}
-                                    className="flex-1 rounded border border-parea-black bg-parea-yellow px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex-1"
                                   >
                                     Accept
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
                                     onClick={() => { void handleFollowRequestAction(notification, 'decline'); }}
                                     disabled={followRequestActionId === notification.id}
-                                    className="flex-1 rounded border border-parea-black bg-parea-white px-2 py-1 text-xs font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex-1"
                                   >
                                     Decline
-                                  </button>
+                                  </Button>
                                 </div>
                               )}
                             </div>

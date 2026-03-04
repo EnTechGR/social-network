@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from 'react';
 import ProfileWrap from '@/components/ui/ProfileWrap';
 import Tabs from '@/components/ui/Tabs';
-import PrivateProfileModal from '@/components/ui/PrivateProfileModal';
+import Avatar from '@/components/ui/Avatar';
 import Card from '@/components/ui/Card';
 import FollowersModal from '@/components/ui/FollowersModal';
 import {
@@ -23,31 +23,6 @@ import {
 } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import ChatModal from '@/components/ui/ChatModal';
-
-const PENDING_FOLLOW_STORAGE_KEY = 'follow_requests_pending';
-
-function getPendingFollowIds(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(PENDING_FOLLOW_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function addPendingFollow(userId: string) {
-  const ids = getPendingFollowIds();
-  if (ids.includes(userId)) return;
-  ids.push(userId);
-  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
-}
-
-function removePendingFollow(userId: string) {
-  const ids = getPendingFollowIds().filter((x) => x !== userId);
-  localStorage.setItem(PENDING_FOLLOW_STORAGE_KEY, JSON.stringify(ids));
-}
 
 function formatPostDate(isoDate: string): string {
   if (!isoDate) return '';
@@ -70,7 +45,6 @@ export default function UserProfilePage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('Posts');
-  const [showPrivateModal, setShowPrivateModal] = useState(false);
   const [isSubmittingFollow, setIsSubmittingFollow] = useState(false);
   const [followError, setFollowError] = useState<string | null>(null);
   const [followRequested, setFollowRequested] = useState(false);
@@ -98,10 +72,9 @@ export default function UserProfilePage({
       if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
       setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
       if (data.privateProfile) {
-        setShowPrivateModal(true);
-        setFollowRequested(getPendingFollowIds().includes(id));
+        // Keep current request state for private profiles so UI doesn't "unlock" unexpectedly.
+        setFollowRequested((prev) => prev);
       } else {
-        removePendingFollow(id);
         setFollowRequested(false);
         if (!data.is_own_profile && me?.id) {
           const followerIds = Array.isArray(data.followers)
@@ -133,11 +106,10 @@ export default function UserProfilePage({
         if (me?.id) setCurrentUserId(typeof me.id === 'string' ? me.id : '');
         setSelfAvatarUrl(getAvatarUrl(me?.avatar?.thumbnail_path || me?.avatar?.file_path));
         if (data.privateProfile) {
-          setShowPrivateModal(true);
-          setFollowRequested(getPendingFollowIds().includes(id));
+          // Keep current request state for private profiles so UI doesn't "unlock" unexpectedly.
+          setFollowRequested((prev) => prev);
           setIsFollowing(false);
         } else {
-          removePendingFollow(id);
           setFollowRequested(false);
           if (!data.is_own_profile && me?.id) {
             const followerIds = Array.isArray(data.followers)
@@ -304,7 +276,7 @@ export default function UserProfilePage({
   }, [profile, profilePosts]);
 
   const requestFollow = async () => {
-    if (!id || followRequested || isFollowing) return;
+    if (!id || isFollowing || isSubmittingFollow) return;
 
     setIsSubmittingFollow(true);
     setFollowError(null);
@@ -314,11 +286,10 @@ export default function UserProfilePage({
       if (relationship.status === 'accepted') {
         setIsFollowing(true);
         setFollowRequested(false);
-        removePendingFollow(id);
       } else {
         setFollowRequested(true);
-        addPendingFollow(id);
       }
+      setFollowError(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to follow user';
       const normalized = message.toLowerCase();
@@ -326,10 +297,8 @@ export default function UserProfilePage({
       if (normalized.includes('already')) {
         if (profile && !profile.privateProfile) {
           setIsFollowing(true);
-          removePendingFollow(id);
         } else {
           setFollowRequested(true);
-          addPendingFollow(id);
         }
         setFollowError(null);
         return;
@@ -351,9 +320,24 @@ export default function UserProfilePage({
       await unfollowUser(id);
       setIsFollowing(false);
       setFollowRequested(false);
-      removePendingFollow(id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to unfollow user';
+      setFollowError(message);
+    } finally {
+      setIsSubmittingFollow(false);
+    }
+  };
+
+  const handleCancelFollowRequest = async () => {
+    if (!id || !followRequested) return;
+    setIsSubmittingFollow(true);
+    setFollowError(null);
+    try {
+      // Backend delete endpoint removes both accepted and pending relationships.
+      await unfollowUser(id);
+      setFollowRequested(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to cancel follow request';
       setFollowError(message);
     } finally {
       setIsSubmittingFollow(false);
@@ -424,40 +408,65 @@ export default function UserProfilePage({
     return (
       <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-7xl mx-auto">
-          <p className="text-regular text-parea-black mb-4">{profile.message}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowPrivateModal(true)}
-              disabled={followRequested}
-              className="rounded border border-parea-black bg-parea-yellow px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90"
-            >
-              {followRequested ? 'Follow request sent' : 'Send follow request'}
-            </button>
-            {followRequested && (
-              <button
-                type="button"
-                onClick={() => refetchProfile()}
-                disabled={refetching}
-                className="rounded border border-parea-black bg-parea-white px-4 py-2 text-small font-medium uppercase text-parea-black hover:opacity-90 disabled:opacity-60"
-              >
-                {refetching ? 'Checking...' : 'Check again'}
-              </button>
-            )}
+          <div className="max-w-312 w-full rounded border border-parea-border bg-parea-white shadow-[8px_8px_0_0_var(--parea-black)] p-8">
+            <div className="flex flex-col items-center text-center gap-4">
+              <Avatar
+                type={privateProfileAvatarSrc ? 'image' : 'user'}
+                src={privateProfileAvatarSrc}
+                alt={`${name}'s avatar`}
+                size="xl"
+              />
+              <h2 className="label-lg uppercase text-parea-black">
+                {name}
+              </h2>
+            </div>
           </div>
+
+          <div className="mt-8 max-w-312 w-full flex items-center justify-between">
+            <Tabs
+              tabs={['Posts', 'Groups']}
+              defaultTab="Posts"
+              onTabChange={(tab) => setActiveTab(tab)}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => { void requestFollow().catch(() => { }); }}
+                disabled={isSubmittingFollow || followRequested}
+              >
+                {isSubmittingFollow ? 'Sending...' : (followRequested ? 'Follow request sent' : 'Send follow request')}
+              </Button>
+              {followRequested && (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => { void handleCancelFollowRequest(); }}
+                  disabled={isSubmittingFollow}
+                >
+                  Cancel request
+                </Button>
+              )}
+            </div>
+          </div>
+
           {followError && (
             <p className="text-regular text-parea-black mt-3">{followError}</p>
           )}
+
+          <div className="mt-6 max-w-312 w-full">
+            {activeTab === 'Posts' && (
+              <p className="text-regular text-parea-black">
+                Private user - send a follow request to view posts.
+              </p>
+            )}
+            {activeTab === 'Groups' && (
+              <p className="text-regular text-parea-black">
+                Private user - send a follow request to view groups.
+              </p>
+            )}
+          </div>
         </div>
-        <PrivateProfileModal
-          isOpen={showPrivateModal}
-          onClose={() => setShowPrivateModal(false)}
-          userName={name}
-          avatarSrc={privateProfileAvatarSrc}
-          onSendRequest={requestFollow}
-          isSubmitting={isSubmittingFollow}
-          errorMessage={followError}
-        />
       </main>
     );
   }
@@ -511,7 +520,7 @@ export default function UserProfilePage({
               <Button
                 variant="secondary"
                 size="md"
-                disabled={isSubmittingFollow}
+                disabled={isSubmittingFollow || (!isFollowing && followRequested)}
                 onClick={() => {
                   if (isFollowing) void handleUnfollow();
                   else void requestFollow().catch(() => { });

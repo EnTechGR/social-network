@@ -476,20 +476,70 @@ export default function GroupDetailPage({
   useEffect(() => {
     if (!showMembersModal || !groupId) return;
     let cancelled = false;
-    getGroupMembers(groupId)
-      .then((list) => {
-        if (cancelled) return;
-        setMembersModalUsers(
-          (Array.isArray(list) ? list : []).map((m: any) => ({
-            user_id: m.user_id,
-            nickname: m.nickname,
-            first_name: m.first_name,
-            last_name: m.last_name,
-            email: m.email,
-          }))
+    (async () => {
+      try {
+        const list = await getGroupMembers(groupId);
+        const rawMembers = Array.isArray(list) ? list : [];
+        const membersWithAvatar = await Promise.all(
+          rawMembers.map(async (m: any) => {
+            const baseUser: FollowerUser = {
+              user_id: m.user_id,
+              nickname: m.nickname,
+              first_name: m.first_name,
+              last_name: m.last_name,
+              email: m.email,
+              avatar: m.avatar,
+              avatar_path: m.avatar_path,
+              avatar_thumbnail_path: m.avatar_thumbnail_path,
+              avatar_url: m.avatar_url,
+              avatar_thumb_url: m.avatar_thumb_url,
+            };
+
+            const hasAvatarData = Boolean(
+              m?.avatar?.thumbnail_path ||
+              m?.avatar?.file_path ||
+              m?.avatar_thumbnail_path ||
+              m?.avatar_path ||
+              m?.avatar_thumb_url ||
+              m?.avatar_url,
+            );
+
+            if (hasAvatarData || !m?.user_id) {
+              return baseUser;
+            }
+
+            try {
+              const profile = await getUserProfile(m.user_id);
+              const p = profile as any;
+              return {
+                ...baseUser,
+                avatar: baseUser.avatar ?? p?.user?.avatar ?? p?.avatar,
+                avatar_path:
+                  baseUser.avatar_path ??
+                  p?.avatar_path ??
+                  p?.user?.avatar?.file_path ??
+                  p?.avatar?.file_path,
+                avatar_thumbnail_path:
+                  baseUser.avatar_thumbnail_path ??
+                  p?.avatar_thumbnail_path ??
+                  p?.user?.avatar?.thumbnail_path ??
+                  p?.avatar?.thumbnail_path,
+                avatar_url: baseUser.avatar_url ?? p?.avatar_url,
+                avatar_thumb_url: baseUser.avatar_thumb_url ?? p?.avatar_thumb_url,
+              } as FollowerUser;
+            } catch {
+              return baseUser;
+            }
+          }),
         );
-      })
-      .catch(() => { if (!cancelled) setMembersModalUsers([]); });
+
+        if (!cancelled) {
+          setMembersModalUsers(membersWithAvatar);
+        }
+      } catch {
+        if (!cancelled) setMembersModalUsers([]);
+      }
+    })();
     return () => { cancelled = true; };
   }, [showMembersModal, groupId]);
 

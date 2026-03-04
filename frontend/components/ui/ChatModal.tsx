@@ -13,12 +13,14 @@ interface Message {
   text: string;
   sender: 'self' | 'other';
   avatarUrl?: string;
+  senderName?: string;
 }
 
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   preview?: boolean;
+  showAvatars?: boolean;
   /** Display name of the other user */
   userName: string;
   /** Avatar URL of the other user */
@@ -47,6 +49,7 @@ export default function ChatModal({
   isOpen,
   onClose,
   preview = false,
+  showAvatars = true,
   userName,
   userAvatar = '/user-avatar-default.png',
   selfAvatar = '/user-avatar-default.png',
@@ -139,7 +142,7 @@ export default function ChatModal({
               className={`flex gap-4 items-start ${isSelf ? 'justify-end' : ''}`}
             >
               {/* Other user avatar (left) */}
-              {!isSelf && (
+              {showAvatars && !isSelf && (
                 <div className="w-12 h-12 rounded-full overflow-hidden relative shrink-0">
                   <Image src={avatar} alt="User" fill className="object-cover" />
                 </div>
@@ -151,6 +154,14 @@ export default function ChatModal({
                   isSelf ? 'bg-parea-yellow/50' : 'bg-white'
                 }`}
               >
+                {msg.senderName && (
+                  <p
+                    className="mb-1 text-xs font-semibold uppercase tracking-wide text-parea-black/70"
+                    style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
+                  >
+                    {msg.senderName}
+                  </p>
+                )}
                 <p
                   className="text-regular leading-relaxed text-black"
                   style={{ fontFamily: 'var(--font-inter), sans-serif' }}
@@ -199,7 +210,7 @@ export default function ChatModal({
               </div>
 
               {/* Self avatar (right) */}
-              {isSelf && (
+              {showAvatars && isSelf && (
                 <div className="w-12 h-12 rounded-full overflow-hidden relative shrink-0">
                   <Image src={avatar} alt="You" fill className="object-cover" />
                 </div>

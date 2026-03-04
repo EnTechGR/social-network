@@ -429,6 +429,7 @@ const chatModalMessages = useMemo(() => {
       id: msg.message_id,
       text: msg.content,
       sender: (msg.sender_id === currentUserId ? 'self' : 'other') as 'self' | 'other',
+      senderName: msg.sender_id === currentUserId ? 'You' : (msg.sender_name || 'User'),
     }));
   }, [groupMessages, currentUserId]);
 
@@ -536,9 +537,6 @@ const chatModalMessages = useMemo(() => {
                 className="flex h-14 items-center px-4 py-2 w-full hover:bg-parea-grey/30 transition-colors"
               >
                 <div className="flex flex-1 gap-2 items-center min-w-0">
-                  <div className="relative shrink-0 size-10 rounded-full overflow-hidden bg-parea-grey">
-                    <Image src="/user-avatar-default.png" alt="" fill className="object-cover" />
-                  </div>
                   <p className="font-mono text-base font-medium uppercase tracking-[-0.16px] text-parea-black truncate">
                     {group.title}
                   </p>
@@ -565,6 +563,7 @@ const chatModalMessages = useMemo(() => {
         <ChatModal
           isOpen={chatModalOpen}
           onClose={() => { setChatModalOpen(false); setSelectedGroup(null); setGroupMessages([]); }}
+          showAvatars={false}
           userName={selectedGroup.title}
           controlledMessages={groupChatModalMessages}
           onSendMessage={(text) => { void sendGroupMessage(text); }}

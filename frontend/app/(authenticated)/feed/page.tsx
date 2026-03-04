@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFeed, getMyGroups, getGroupPosts } from '@/lib/api';
+import { getFeed, getMyGroups, getGroupPosts, getPostById, getAvatarUrl } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 import Card from '@/components/ui/Card';
 import Tabs from '@/components/ui/Tabs';
@@ -33,6 +33,7 @@ interface FeedPost {
 
 interface GroupPost {
   id: string;
+  user_id: string;
   title: string;
   content: string;
   created_at: string;
@@ -58,6 +59,7 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState('Posts');
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [groupPosts, setGroupPosts] = useState<GroupPost[]>([]);
+  const [groupPostAvatarById, setGroupPostAvatarById] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,6 +132,50 @@ export default function FeedPage() {
     };
   }, [router, activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== 'Groups' || groupPosts.length === 0) {
+      setGroupPostAvatarById({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          groupPosts.map(async (post) => {
+            try {
+              const detail = await getPostById(post.id);
+              const rawAvatar =
+                detail?.author_avatar_thumb_url ||
+                detail?.author_avatar_url ||
+                '';
+              const avatar = rawAvatar
+                ? (/^https?:\/\//i.test(rawAvatar) ? rawAvatar : getAvatarUrl(rawAvatar))
+                : '/user-avatar-default.png';
+              return [post.id, avatar] as const;
+            } catch {
+              return [post.id, '/user-avatar-default.png'] as const;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        for (const [postId, avatar] of entries) {
+          map[postId] = avatar;
+        }
+        setGroupPostAvatarById(map);
+      } catch {
+        if (!cancelled) setGroupPostAvatarById({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, groupPosts]);
+
   return (
     <div className="min-h-screen bg-parea-white p-8">
       <div className="max-w-4xl mx-auto">
@@ -186,7 +232,7 @@ export default function FeedPage() {
                     <Card
                       key={`${post.group_id}-${post.id}`}
                       imageType="post"
-                      avatarSrc="/user-avatar-default.png"
+                      avatarSrc={groupPostAvatarById[post.id] || '/user-avatar-default.png'}
                       avatarAlt={post.nickname || 'User'}
                       userName={(post.nickname || 'User').toUpperCase()}
                       userDate={`${formatPostDate(post.created_at)} · ${post.group_title}`}

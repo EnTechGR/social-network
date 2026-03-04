@@ -749,6 +749,14 @@ export async function getUserProfile(userId: string): Promise<{
   nickname?: string;
   first_name?: string;
   last_name?: string;
+  avatar?: {
+    file_path?: string;
+    thumbnail_path?: string;
+  };
+  avatar_path?: string;
+  avatar_thumbnail_path?: string;
+  avatar_url?: string;
+  avatar_thumb_url?: string;
 } | {
   privateProfile: false;
   user: any;
@@ -772,6 +780,11 @@ export async function getUserProfile(userId: string): Promise<{
       nickname: (data as any).nickname,
       first_name: (data as any).first_name,
       last_name: (data as any).last_name,
+      avatar: (data as any).avatar,
+      avatar_path: (data as any).avatar_path,
+      avatar_thumbnail_path: (data as any).avatar_thumbnail_path,
+      avatar_url: (data as any).avatar_url,
+      avatar_thumb_url: (data as any).avatar_thumb_url,
     };
   }
 

@@ -353,12 +353,18 @@ export default function UserProfilePage({
 
   if (profile.privateProfile) {
     const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.nickname || 'User';
-    const privateProfileAvatarPath =
+    const privateProfileAvatarRaw =
       (profile as any)?.avatar?.thumbnail_path ||
       (profile as any)?.avatar?.file_path ||
+      (profile as any)?.avatar_thumbnail_path ||
+      (profile as any)?.avatar_path ||
+      (profile as any)?.avatar_thumb_url ||
+      (profile as any)?.avatar_url ||
       (profile as any)?.user?.avatar?.thumbnail_path ||
       (profile as any)?.user?.avatar?.file_path;
-    const privateProfileAvatarSrc = privateProfileAvatarPath ? getAvatarUrl(privateProfileAvatarPath) : undefined;
+    const privateProfileAvatarSrc = privateProfileAvatarRaw
+      ? (/^https?:\/\//i.test(privateProfileAvatarRaw) ? privateProfileAvatarRaw : getAvatarUrl(privateProfileAvatarRaw))
+      : undefined;
     return (
       <main className="min-h-screen bg-parea-white px-16 py-12">
         <div className="max-w-7xl mx-auto">

@@ -17,6 +17,8 @@ import {
   getPostImageUrl,
   getChatConversation,
   sendChatMessage,
+  getAllGroups,
+  getGroupMembers,
   type DirectChatMessage,
 } from '@/lib/api';
 import Button from '@/components/ui/Button';
@@ -83,6 +85,9 @@ export default function UserProfilePage({
   const [selfAvatarUrl, setSelfAvatarUrl] = useState('/user-avatar-default.png');
   const [profilePosts, setProfilePosts] = useState<any[]>([]);
   const [refetching, setRefetching] = useState(false);
+  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
 
   const refetchProfile = async () => {
     if (!id) return;
@@ -175,6 +180,57 @@ export default function UserProfilePage({
       });
     return () => { cancelled = true; };
   }, [id, profile]);
+
+  useEffect(() => {
+    if (!id || !profile || profile.privateProfile || activeTab !== 'Groups') {
+      return;
+    }
+
+    let cancelled = false;
+    setGroupsLoading(true);
+    setGroupsError(null);
+
+    (async () => {
+      try {
+        const allGroups = await getAllGroups();
+        const groups = Array.isArray(allGroups) ? allGroups : [];
+
+        const membershipChecks = await Promise.all(
+          groups.map(async (group: any) => {
+            const groupId = group?.id;
+            if (typeof groupId !== 'string' || groupId.length === 0) {
+              return null;
+            }
+
+            try {
+              const members = await getGroupMembers(groupId);
+              const list = Array.isArray(members) ? members : [];
+              const isMember = list.some((member: any) => {
+                const memberId = member?.user_id ?? member?.id;
+                return memberId === id;
+              });
+              return isMember ? group : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+        setUserGroups(membershipChecks.filter(Boolean));
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setUserGroups([]);
+        setGroupsError(err instanceof Error ? err.message : 'Failed to load groups');
+      } finally {
+        if (!cancelled) setGroupsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, id, profile]);
 
   // Enrich this user's posts with the same image URLs used by the main feed,
   // by fetching each post's full detail once profilePosts is available.
@@ -504,7 +560,40 @@ export default function UserProfilePage({
               )}
             </>
           )}
-          {activeTab === 'Groups' && <p className="text-regular text-parea-black">No groups yet.</p>}
+          {activeTab === 'Groups' && (
+            <>
+              {groupsLoading && <p className="text-regular text-parea-black">Loading groups...</p>}
+              {!groupsLoading && groupsError && <p className="text-regular text-parea-black">{groupsError}</p>}
+              {!groupsLoading && !groupsError && userGroups.length === 0 && (
+                <p className="text-regular text-parea-black">No groups yet.</p>
+              )}
+              {!groupsLoading && !groupsError && userGroups.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {userGroups.map((g) => (
+                    <a
+                      key={g.id}
+                      href={`/group/${g.id}`}
+                      className="border border-parea-black p-6 bg-white cursor-pointer hover:shadow-[4px_4px_0_0_#000] transition-shadow no-underline"
+                    >
+                      <h3 className="text-2xl font-bold text-parea-black mb-2">
+                        {g.title ?? g.name ?? 'Group'}
+                      </h3>
+                      {g.description && (
+                        <p className="text-regular text-parea-black/70 mb-3">
+                          {g.description}
+                        </p>
+                      )}
+                      <div className="flex gap-4 text-sm text-parea-black/60">
+                        <span>{g.member_count || 0} members</span>
+                        <span>•</span>
+                        <span>Created by {g.owner_nickname || 'Unknown'}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <ChatModal

@@ -443,6 +443,17 @@ const chatModalMessages = useMemo(() => {
     }
   }, [selectedGroup, mergeGroupMessage]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { groupId, groupTitle } = (e as CustomEvent<{ groupId: string; groupTitle: string }>).detail;
+      setActiveTab('GROUP CHATS');
+      setChatModalOpen(true);
+      void openGroupConversation({ id: groupId, title: groupTitle });
+    };
+    window.addEventListener('openGroupChat', handler);
+    return () => window.removeEventListener('openGroupChat', handler);
+  }, [openGroupConversation]);
+
   const handleCloseChatModal = useCallback(() => {
     setChatModalOpen(false);
     setSelectedDirectUser(null);

@@ -340,6 +340,13 @@ export default function Sidebar() {
     setIsOpen(!isOpen);
   };
 
+  useEffect(() => {
+    const handler = () => handleDrawerOpen('chat');
+    window.addEventListener('openGroupChat', handler);
+    return () => window.removeEventListener('openGroupChat', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleDrawerOpen = (type: 'chat' | 'notifications') => {
     if (activeDrawer === type) {
       setActiveDrawer(null);

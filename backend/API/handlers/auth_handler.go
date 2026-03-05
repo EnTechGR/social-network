@@ -416,7 +416,7 @@ func (h *AuthHandler) createUserSession(w http.ResponseWriter, r *http.Request, 
 		Path:     "/",
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   utils.CookieSecureEnabled(),
 		SameSite: http.SameSiteLaxMode,
 	})
 

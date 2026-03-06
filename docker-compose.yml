@@ -1,0 +1,81 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# Social Network – Docker Compose
+#
+# Services
+#   backend   Go API  → http://localhost:8080
+#   frontend  Next.js → http://localhost:8081
+#
+# Both services share the "social-network" bridge network so
+# server-side Next.js calls can reach the backend via the
+# hostname "backend" (e.g. http://backend:8080).
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Go Backend ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend/API
+      dockerfile: Dockerfile
+    container_name: social-network-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"        # Exposed to host so the browser can reach the API directly
+    environment:
+      # Allow the frontend origin for CORS (browser sends requests from here)
+      FRONTEND_ORIGIN: "http://localhost:8081"
+      # Set to "false" while running over plain HTTP locally
+      COOKIE_SECURE: "false"
+      # Optionally override with "production" to tighten security
+      APP_ENV: "development"
+    volumes:
+      - backend-db:/app/database      # Persist the SQLite database
+      - backend-uploads:/app/uploads  # Persist user-uploaded images
+    networks:
+      - social-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Next.js Frontend ────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Inlined at build-time. The browser talks to the backend
+        # through the host-exposed port (localhost:8080).
+        NEXT_PUBLIC_API_URL: "http://localhost:8080"
+    container_name: social-network-frontend
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      # Server-side (SSR) API calls use the internal Docker hostname
+      # so they never leave the Docker network.
+      INTERNAL_API_URL: "http://backend:8080"
+      NODE_ENV: "production"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - social-network
+
+# ─────────────────────────────────────────────────────────────
+# Named volumes – data persists between container restarts
+# ─────────────────────────────────────────────────────────────
+volumes:
+  backend-db:
+  backend-uploads:
+
+# ─────────────────────────────────────────────────────────────
+# Shared bridge network
+# ─────────────────────────────────────────────────────────────
+networks:
+  social-network:
+    driver: bridge

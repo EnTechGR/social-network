@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  groupId: string;
+  groupId?: string;
   onSuccess?: () => void;
 }
 
@@ -41,7 +41,7 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
     setError(null);
     setIsSubmitting(true);
     try {
-      const result = await createGroupEvent(groupId, {
+      const result = await createGroupEvent(groupId ?? '', {
         title: title.trim(),
         description: description.trim(),
         event_time: new Date(eventTime).toISOString(),
@@ -60,8 +60,8 @@ export default function CreateEventModal({ isOpen, onClose, groupId, onSuccess }
       } else {
         onSuccess?.();
       }
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to create event.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create event.');
     } finally {
       setIsSubmitting(false);
     }

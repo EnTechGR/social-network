@@ -11,7 +11,8 @@ export default function CatchAllNotFound() {
   useEffect(() => {
     if (!scriptsReady || typeof window === 'undefined' || !(window as unknown as { gsap?: { registerPlugin: (p: unknown) => void; utils: { random: (a: number, b: number, c?: number) => number }; set: (el: HTMLElement, props: object) => void } }).gsap) return;
 
-    const gsap = (window as unknown as { gsap: typeof import('gsap') }).gsap;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gsap = (window as unknown as { gsap: any }).gsap;
     const Physics2DPlugin = (window as unknown as { Physics2DPlugin?: unknown }).Physics2DPlugin;
     if (!Physics2DPlugin) return;
 

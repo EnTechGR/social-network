@@ -177,7 +177,7 @@ export default function ComponentsPage() {
       {/* Create Event Modal */}
       <section className="mb-12">
         <h2 className="text-h4 mb-6 border-b border-parea-black pb-2">Create Event Modal</h2>
-        <CreateEventModal isOpen={false} onClose={() => { }} preview />
+        <CreateEventModal isOpen={false} onClose={() => { }} />
       </section>
 
       {/* Followers Modal */}

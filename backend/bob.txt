@@ -1,3 +1,0 @@
-{"user":{"id":"ec680cd9-d3b4-42a0-b1dc-1dafd890ce06","nickname":"bob1","email":"bob1@example.com","first_name":"Bob1","last_name":"Two1","date_of_birth":"1991-02-02T00:00:00Z","about_me":"","gender":"male","is_private":false,"created_at":"2026-01-10T15:26:08.151556167+02:00"},"id":"pGfMBpZi_7C9j9TzpeogxEyM7_4oSIaqXHG1ciTmqO0=","csrf_token":"j0lkTDhaHbzhKfwjr7sV0asLtVJK9LYRb-OndZP6rDU="}
-
-{"csrf_token":"ef64jbIVndg3SmD4fOM0wL1mpwjYKPZMKtLNak9_NgM=","message":"Login successful","user":{"id":"ec680cd9-d3b4-42a0-b1dc-1dafd890ce06","nickname":"bob1","email":"bob1@example.com","first_name":"Bob1","last_name":"Two1","date_of_birth":"1991-02-02T00:00:00Z","about_me":"","gender":"male","is_private":false,"created_at":"2026-01-10T15:26:08.151556167+02:00"}}

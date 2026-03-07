@@ -1,5 +1,0 @@
-.env
-.env.docker
-backend/API/.env
-backend/API/.env.docker
-**/node_modules

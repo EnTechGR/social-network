@@ -1,3 +1,0 @@
-{"user":{"id":"6014c12f-c6a1-4780-88ec-36e7f6f5db83","nickname":"alice1","email":"alice1@example.com","first_name":"Alice1","last_name":"One1","date_of_birth":"1990-01-01T00:00:00Z","about_me":"","gender":"female","is_private":false,"created_at":"2026-01-10T15:27:10.632515797+02:00"},"id":"ffTmIj9T3Ny1bKoLbN_uxAj3-F-QnDMeMBi_JKOcMII=","csrf_token":"5SagMoJpfG5n9VzZhp9-038fPNXEDY578F0ZZO24HJk="}
-
-{"csrf_token":"lN98DDKtCN4R_i0dXYWLW_IT6lI8RyoSFCYgR9l24IE=","message":"Login successful","user":{"id":"6014c12f-c6a1-4780-88ec-36e7f6f5db83","nickname":"alice1","email":"alice1@example.com","first_name":"Alice1","last_name":"One1","date_of_birth":"1990-01-01T00:00:00Z","about_me":"","gender":"female","is_private":false,"created_at":"2026-01-10T15:27:10.632515797+02:00"}}

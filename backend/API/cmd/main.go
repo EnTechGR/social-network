@@ -1,7 +1,7 @@
 // @title           Social-network Application API
 // @version         1.0
 // @description     This is the API documentation for the social-network application.
-// @host            localhost:8080 
+// @host            localhost:8080
 // @BasePath        /api/v1
 
 package main
@@ -11,9 +11,9 @@ import (
 	"log"
 	"net/http"
 
-	"social-network/models"
-	"social-network/routes"
-	"social-network/utils"
+	"social-network/pkg/models"
+	"social-network/pkg/routes"
+	"social-network/pkg/utils"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-	
+
 	// Initialize database
 	db, err := models.InitDB()
 	if err != nil {
